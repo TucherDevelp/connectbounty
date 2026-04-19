@@ -1,0 +1,6 @@
+{
+  "name": "connectbounty",
+  "version": "1.0.0",
+  "main": "server/app.js",
+  "type": "commonjs"
+}
