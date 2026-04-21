@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Connect Bounty – Die Plattform für Bonusprogramme und Personalvermittlung. Inseriere Bonusprogramme, finde Vermittler und verdiene Provisionen." />
+  <meta name="theme-color" content="#0A0A0F" />
+  <title>Connect Bounty – Bonus-Vermittlungsplattform</title>
+
+  <!-- Design System -->
+  <link rel="stylesheet" href="/styles/index.css" />
+  <link rel="stylesheet" href="/styles/animations.css" />
+  <link rel="stylesheet" href="/styles/components.css" />
+</head>
+<body>
+
+  <!-- ── Splash Screen ─────────────────────────── -->
+  <div id="splash">
+    <div class="splash-logo-wrap">
+      <!-- Rundes Bonbon mit Wrapper-Enden: Papier wird aufgezogen, Dollar-Muenze erscheint -->
+      <svg class="splash-candy" id="splash-candy-svg" viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="coinGrad" cx="38%" cy="35%">
+            <stop offset="0%" stop-color="#FFE79A"/>
+            <stop offset="30%" stop-color="#F5C33B"/>
+            <stop offset="65%" stop-color="#E5A620"/>
+            <stop offset="100%" stop-color="#C48B10"/>
+          </radialGradient>
+          <radialGradient id="coinEdge" cx="50%" cy="55%">
+            <stop offset="80%" stop-color="#D4981A"/>
+            <stop offset="100%" stop-color="#A07010"/>
+          </radialGradient>
+          <radialGradient id="wrapBallGrad" cx="45%" cy="40%">
+            <stop offset="0%" stop-color="#FFD76E"/>
+            <stop offset="45%" stop-color="#F5A623"/>
+            <stop offset="85%" stop-color="#E08D15"/>
+            <stop offset="100%" stop-color="#C47A10"/>
+          </radialGradient>
+          <linearGradient id="wrapEndL" x1="1" y1="0.3" x2="0" y2="0.6">
+            <stop offset="0%" stop-color="#F5A623"/>
+            <stop offset="100%" stop-color="#D4891A"/>
+          </linearGradient>
+          <linearGradient id="wrapEndR" x1="0" y1="0.3" x2="1" y2="0.6">
+            <stop offset="0%" stop-color="#F5A623"/>
+            <stop offset="100%" stop-color="#D4891A"/>
+          </linearGradient>
+          <linearGradient id="shineGrad" x1="0" y1="0" x2="1" y2="0.8">
+            <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
+            <stop offset="40%" stop-color="rgba(255,255,255,0.7)"/>
+            <stop offset="60%" stop-color="rgba(255,255,255,0.7)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+          </linearGradient>
+          <clipPath id="leftHalf"><rect x="0" y="0" width="150" height="160"/></clipPath>
+          <clipPath id="rightHalf"><rect x="150" y="0" width="150" height="160"/></clipPath>
+        </defs>
+
+        <!-- SCHICHT 1: Dollar-Muenze (anfangs verdeckt) -->
+        <g id="coin" opacity="0">
+          <ellipse cx="150" cy="108" rx="32" ry="5" fill="rgba(0,0,0,0.2)"/>
+          <ellipse cx="150" cy="82" rx="44" ry="44" fill="url(#coinEdge)"/>
+          <circle cx="150" cy="80" r="42" fill="url(#coinGrad)"/>
+          <circle cx="150" cy="80" r="36" fill="none" stroke="#C48B10" stroke-width="1.5"/>
+          <circle cx="150" cy="80" r="34" fill="none" stroke="#FFE79A" stroke-width="0.7" opacity="0.4"/>
+          <text x="150" y="94" text-anchor="middle" font-family="'Georgia',serif" font-size="44" font-weight="bold" fill="#8B6914" opacity="0.85">$</text>
+          <ellipse cx="132" cy="62" rx="18" ry="12" fill="rgba(255,255,255,0.4)" transform="rotate(-25 132 62)"/>
+          <ellipse cx="128" cy="57" rx="9" ry="5" fill="rgba(255,255,255,0.65)" transform="rotate(-30 128 57)"/>
+          <ellipse id="coin-shine" cx="150" cy="80" rx="42" ry="42" fill="url(#shineGrad)" opacity="0"/>
+        </g>
+
+        <!-- SCHICHT 2: Linke Wrapper-Haelfte (runde Halbkugel + gedrehtes Papier-Ende) -->
+        <g id="wrap-left">
+          <!-- Runde linke Haelfte der Bonbon-Verpackung -->
+          <g clip-path="url(#leftHalf)">
+            <circle cx="150" cy="80" r="46" fill="url(#wrapBallGrad)"/>
+            <ellipse cx="128" cy="60" rx="20" ry="14" fill="rgba(255,255,255,0.3)" transform="rotate(-20 128 60)"/>
+            <ellipse cx="122" cy="54" rx="10" ry="6" fill="rgba(255,255,255,0.45)" transform="rotate(-25 122 54)"/>
+            <!-- Knitter-Falten -->
+            <path d="M130 38 Q125 80 130 122" stroke="rgba(180,120,20,0.15)" stroke-width="1.5" fill="none"/>
+            <path d="M115 42 Q112 80 115 118" stroke="rgba(180,120,20,0.1)" stroke-width="1" fill="none"/>
+          </g>
+          <!-- Gedrehtes Papier-Ende links (wie echt getwistetes Bonbon-Papier) -->
+          <path d="M104 80 L68 80 Q58 78 48 66 C40 56 28 50 18 55 C10 60 16 70 26 68 Q36 66 48 72 L68 80 Q58 82 48 94 C40 104 28 110 18 105 C10 100 16 90 26 92 Q36 94 48 88 L68 80" fill="url(#wrapEndL)" opacity="0.95"/>
+          <!-- Knoten am Uebergang Kugel/Papier -->
+          <ellipse cx="104" cy="80" rx="7" ry="20" fill="#C47A10" opacity="0.4"/>
+          <ellipse cx="104" cy="80" rx="4" ry="16" fill="#A06610" opacity="0.2"/>
+        </g>
+
+        <!-- SCHICHT 3: Rechte Wrapper-Haelfte -->
+        <g id="wrap-right">
+          <g clip-path="url(#rightHalf)">
+            <circle cx="150" cy="80" r="46" fill="url(#wrapBallGrad)"/>
+            <ellipse cx="168" cy="60" rx="14" ry="10" fill="rgba(255,255,255,0.15)" transform="rotate(15 168 60)"/>
+            <path d="M170 38 Q175 80 170 122" stroke="rgba(180,120,20,0.15)" stroke-width="1.5" fill="none"/>
+            <path d="M185 42 Q188 80 185 118" stroke="rgba(180,120,20,0.1)" stroke-width="1" fill="none"/>
+          </g>
+          <!-- Gedrehtes Papier-Ende rechts -->
+          <path d="M196 80 L232 80 Q242 78 252 66 C260 56 272 50 282 55 C290 60 284 70 274 68 Q264 66 252 72 L232 80 Q242 82 252 94 C260 104 272 110 282 105 C290 100 284 90 274 92 Q264 94 252 88 L232 80" fill="url(#wrapEndR)" opacity="0.95"/>
+          <ellipse cx="196" cy="80" rx="7" ry="20" fill="#C47A10" opacity="0.4"/>
+          <ellipse cx="196" cy="80" rx="4" ry="16" fill="#A06610" opacity="0.2"/>
+        </g>
+
+        <!-- Sparkles (nach Enthuellen) -->
+        <g id="sparkles" opacity="0">
+          <polygon points="55,22 58,30 67,30 60,35 62,44 55,39 48,44 50,35 43,30 52,30" fill="#FFD76E"/>
+          <polygon points="245,28 247,34 253,34 248,38 250,44 245,40 240,44 242,38 237,34 243,34" fill="#F5A623" opacity="0.8"/>
+          <circle cx="80" cy="140" r="3" fill="#FFD76E"/>
+          <circle cx="220" cy="138" r="2.5" fill="#F5A623"/>
+          <polygon points="150,12 152,19 158,19 153,23 155,29 150,25 145,29 147,23 142,19 148,19" fill="#FFE79A"/>
+          <circle cx="35" cy="95" r="2" fill="#FFD76E"/>
+          <circle cx="265" cy="90" r="2.5" fill="#F5A623"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="splash-brand">
+      <div class="splash-brand-name">CONNECT <span>BOUNTY</span></div>
+      <div class="splash-tagline">Deine Plattform für Bonus-Vermittlungen</div>
+    </div>
+  </div>
+
+  <!-- Splash-Animations-Script -->
+  <script>
+    function playSplashAnimation() {
+      const candy = document.getElementById('splash-candy-svg');
+      const wrapL = document.getElementById('wrap-left');
+      const wrapR = document.getElementById('wrap-right');
+      const coin = document.getElementById('coin');
+      const coinShine = document.getElementById('coin-shine');
+      const sparkles = document.getElementById('sparkles');
+
+      if (!candy) return;
+
+      // Reset
+      candy.style.opacity = '0';
+      candy.style.transform = 'scale(0.4) rotate(-8deg)';
+      if (coin) { coin.style.opacity = '0'; coin.style.transform = ''; }
+      if (coinShine) coinShine.style.opacity = '0';
+
+      // Phase 1: Verpacktes Bonbon erscheint (runde Kugel mit Papier-Enden)
+      setTimeout(function() {
+        candy.style.transition = 'opacity 0.4s ease, transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        candy.style.opacity = '1';
+        candy.style.transform = 'scale(1) rotate(0deg)';
+      }, 150);
+
+      // Phase 2: Linke runde Haelfte loest sich – Papier verzerrt sich realistisch
+      setTimeout(function() {
+        wrapL.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease 0.6s';
+        wrapL.style.transformOrigin = '104px 80px';
+        wrapL.style.transform = 'translateX(-60px) rotate(-25deg) scaleX(0.7) skewY(8deg)';
+        wrapL.style.opacity = '0';
+      }, 1000);
+
+      // Phase 2b: Rechte Haelfte loest sich
+      setTimeout(function() {
+        wrapR.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease 0.6s';
+        wrapR.style.transformOrigin = '196px 80px';
+        wrapR.style.transform = 'translateX(60px) rotate(25deg) scaleX(0.7) skewY(-8deg)';
+        wrapR.style.opacity = '0';
+      }, 1150);
+
+      // Phase 3: Dollar-Muenze erscheint mit Bounce
+      setTimeout(function() {
+        if (coin) {
+          coin.style.transition = 'opacity 0.3s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          coin.style.opacity = '1';
+          coin.style.transform = 'scale(1.05)';
+        }
+      }, 1400);
+
+      // Phase 3b: Muenze settled
+      setTimeout(function() {
+        if (coin) {
+          coin.style.transition = 'transform 0.3s ease';
+          coin.style.transform = 'scale(1)';
+        }
+      }, 1800);
+
+      // Phase 4: Glanz-Sweep ueber Muenze
+      setTimeout(function() {
+        if (coinShine) {
+          coinShine.style.transition = 'opacity 0.25s ease';
+          coinShine.style.opacity = '0.8';
+          setTimeout(function() {
+            coinShine.style.transition = 'opacity 0.5s ease';
+            coinShine.style.opacity = '0';
+          }, 350);
+        }
+      }, 2000);
+
+      // Phase 5: Sparkles
+      setTimeout(function() {
+        sparkles.style.transition = 'opacity 0.4s ease';
+        sparkles.style.opacity = '1';
+        var els = sparkles.querySelectorAll('circle, polygon');
+        for (var i = 0; i < els.length; i++) {
+          els[i].style.animation = 'sparkle ' + (0.5 + i * 0.08) + 's ease ' + (i * 0.04) + 's infinite alternate';
+        }
+      }, 2100);
+    }
+
+    // Replay (nach Registrierung etc.)
+    window.replaySplash = function() {
+      var splash = document.getElementById('splash');
+      var wrapL = document.getElementById('wrap-left');
+      var wrapR = document.getElementById('wrap-right');
+      var coin = document.getElementById('coin');
+      var coinShine = document.getElementById('coin-shine');
+      var sparkles = document.getElementById('sparkles');
+
+      splash.style.display = 'flex';
+      splash.classList.remove('hiding');
+      splash.style.opacity = '1';
+      var wraps = [wrapL, wrapR];
+      for (var i = 0; i < wraps.length; i++) {
+        wraps[i].style.transform = '';
+        wraps[i].style.opacity = '';
+        wraps[i].style.transition = '';
+      }
+      if (coin) { coin.style.opacity = '0'; coin.style.transform = ''; coin.style.transition = ''; }
+      if (coinShine) { coinShine.style.opacity = '0'; coinShine.style.transition = ''; }
+      sparkles.style.opacity = '0';
+      var sEls = sparkles.querySelectorAll('circle, polygon');
+      for (var j = 0; j < sEls.length; j++) { sEls[j].style.animation = ''; }
+
+      playSplashAnimation();
+
+      setTimeout(function() {
+        splash.classList.add('hiding');
+        setTimeout(function() { splash.style.display = 'none'; }, 700);
+      }, 3200);
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      playSplashAnimation();
+    });
+  </script>
+
+  <!-- ── Desktop Navbar ────────────────────────── -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo" onclick="navigate('/')">
+        <!-- Mini Bonbon Logo -->
+        <svg class="nav-logo-icon" viewBox="0 0 50 30" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="navGrad" cx="42%" cy="36%">
+              <stop offset="0%" stop-color="#FFD76E"/>
+              <stop offset="40%" stop-color="#F5A623"/>
+              <stop offset="100%" stop-color="#C47A10"/>
+            </radialGradient>
+          </defs>
+          <!-- Linkes Wrapper-Papier -->
+          <path d="M16 15 L5 10 C3 9 1 11 2 12.5 C3 14 5.5 14 7 13 L16 15 Z" fill="#F5A623"/>
+          <path d="M16 15 L6 17 C4 17.5 3 19.5 4.5 20.5 C6 21.5 8 20 9 18.5 L16 15 Z" fill="#FFD76E" opacity="0.7"/>
+          <!-- Rechtes Wrapper-Papier -->
+          <path d="M34 15 L45 10 C47 9 49 11 48 12.5 C47 14 44.5 14 43 13 L34 15 Z" fill="#F5A623"/>
+          <path d="M34 15 L44 17 C46 17.5 47 19.5 45.5 20.5 C44 21.5 42 20 41 18.5 L34 15 Z" fill="#FFD76E" opacity="0.7"/>
+          <!-- Bonbon-Kugel -->
+          <circle cx="25" cy="15" r="11" fill="url(#navGrad)"/>
+          <ellipse cx="21" cy="11" rx="4" ry="3" fill="rgba(255,255,255,0.4)" transform="rotate(-20 21 11)"/>
+          <ellipse cx="19.5" cy="10" rx="2" ry="1.3" fill="rgba(255,255,255,0.55)" transform="rotate(-25 19.5 10)"/>
+        </svg>
+        <div class="nav-logo-text">CONNECT <span>BOUNTY</span></div>
+      </div>
+
+      <div class="nav-links" id="nav-links">
+        <a class="nav-link" data-route="/" onclick="navigate('/')">Startseite</a>
+        <a class="nav-link" data-route="/marketplace" onclick="navigate('/marketplace')">Marketplace</a>
+        <a class="nav-link" data-route="/referral" onclick="navigate('/referral')">Referral</a>
+      </div>
+
+      <div class="nav-actions" id="nav-actions">
+        <!-- Wird via JS befuellt: Login-Button oder User-Avatar -->
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Mobile Bottom Nav ──────────────────────── -->
+  <nav id="bottom-nav">
+    <div class="bottom-nav-inner">
+      <div class="bottom-nav-item" data-route="/" onclick="navigate('/')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Start
+      </div>
+      <div class="bottom-nav-item" data-route="/marketplace" onclick="navigate('/marketplace')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        </svg>
+        Marktplatz
+      </div>
+      <div class="bottom-nav-item" data-route="/create" onclick="navigate('/create')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        Inserieren
+      </div>
+      <div class="bottom-nav-item" data-route="/referral" onclick="navigate('/referral')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Referral
+      </div>
+      <div class="bottom-nav-item" data-route="/profile" onclick="navigate('/profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+        Profil
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main App ───────────────────────────────── -->
+  <div id="app">
+    <!-- Wird via JS gerendert -->
+  </div>
+
+  <!-- ── Toast Container ────────────────────────── -->
+  <div id="toast-container"></div>
+
+  <!-- ── Scripts ───────────────────────────────────-->
+  <script src="/src/store.js"></script>
+  <script src="/src/router.js"></script>
+  <script src="/src/api/auth.api.js"></script>
+  <script src="/src/api/listings.api.js"></script>
+  <script src="/src/api/user.api.js"></script>
+  <script src="/src/components/toast.js"></script>
+  <script src="/src/components/navbar.js"></script>
+  <script src="/src/pages/home.js"></script>
+  <script src="/src/pages/marketplace.js"></script>
+  <script src="/src/pages/listing-detail.js"></script>
+  <script src="/src/pages/create-listing.js"></script>
+  <script src="/src/pages/login.js"></script>
+  <script src="/src/pages/register.js"></script>
+  <script src="/src/pages/profile.js"></script>
+  <script src="/src/pages/referral.js"></script>
+  <script src="/src/pages/payment.js"></script>
+  <script src="/src/app.js"></script>
+</body>
+</html>

@@ -1,6 +1,18 @@
 {
   "name": "connectbounty",
   "version": "1.0.0",
+  "description": "Connect Bounty – Digital Bonus Referral Platform",
   "main": "server/app.js",
-  "type": "commonjs"
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/app.js",
+    "dev": "/usr/share/nodejs/corepack/shims/npm run start"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.6.0",
+    "@google/generative-ai": "^0.21.0"
+  }
 }
