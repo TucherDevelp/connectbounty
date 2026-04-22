@@ -16,20 +16,25 @@ const CAT_ICONS = {
 
 function renderListingCard(l) {
   const icon = CAT_ICONS[l.category] || '💰';
+  const safeCompany = escapeHtml(l.company);
+  const safeTitle = escapeHtml(l.title);
+  const safeLocation = escapeHtml(l.location || '');
+  const safeDesc = escapeHtml(l.description || '');
+
   return `
     <div class="listing-card" onclick="navigate('/marketplace/${l.id}')">
       <div class="listing-card-header">
         <div>
           <div style="font-size:1.5rem;margin-bottom:4px;">${icon}</div>
-          <div class="listing-card-company">${l.company}</div>
+          <div class="listing-card-company">${safeCompany}</div>
         </div>
         <div class="listing-card-bonus">${l.bonus.toLocaleString('de-DE')} ${l.currency}</div>
       </div>
-      <div class="listing-card-title">${l.title}</div>
-      ${l.location ? `<div class="listing-card-location">📍 ${l.location}</div>` : ''}
-      <div class="listing-card-desc">${l.description || ''}</div>
+      <div class="listing-card-title">${safeTitle}</div>
+      ${safeLocation ? `<div class="listing-card-location">📍 ${safeLocation}</div>` : ''}
+      <div class="listing-card-desc">${safeDesc}</div>
       <div class="listing-card-footer">
-        <span class="badge badge-muted">${CATEGORIES.find(c => c.id === l.category)?.label || l.category}</span>
+        <span class="badge badge-muted">${CATEGORIES.find(c => c.id === l.category)?.label || escapeHtml(l.category)}</span>
         <span class="text-xs text-muted">${new Date(l.created_at).toLocaleDateString('de-DE')}</span>
       </div>
     </div>

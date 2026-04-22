@@ -5,7 +5,7 @@ function renderHome() {
       <div class="container">
         <div class="anim-fade-in-up">
           <div class="badge badge-primary mb-4" style="display:inline-flex;align-items:center;gap:6px;">
-            <svg viewBox="0 0 50 30" width="26" height="16" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="heroGrad" cx="42%" cy="36%"><stop offset="0%" stop-color="#FFD76E"/><stop offset="40%" stop-color="#F5A623"/><stop offset="100%" stop-color="#C47A10"/></radialGradient></defs><path d="M16 15 L5 10 C3 9 1 11 2 12.5 C3 14 5.5 14 7 13 L16 15 Z" fill="#F5A623"/><path d="M16 15 L6 17 C4 17.5 3 19.5 4.5 20.5 C6 21.5 8 20 9 18.5 L16 15 Z" fill="#FFD76E" opacity="0.7"/><path d="M34 15 L45 10 C47 9 49 11 48 12.5 C47 14 44.5 14 43 13 L34 15 Z" fill="#F5A623"/><path d="M34 15 L44 17 C46 17.5 47 19.5 45.5 20.5 C44 21.5 42 20 41 18.5 L34 15 Z" fill="#FFD76E" opacity="0.7"/><circle cx="25" cy="15" r="11" fill="url(#heroGrad)"/><ellipse cx="21" cy="11" rx="4" ry="3" fill="rgba(255,255,255,0.4)" transform="rotate(-20 21 11)"/></svg>
+            <img src="/assets/bonbon-logo.svg" alt="" width="28" height="17" style="vertical-align:middle;" />
             Jetzt im Beta
           </div>
           <h1 class="text-display hero-title">

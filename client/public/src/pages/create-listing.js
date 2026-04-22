@@ -102,7 +102,14 @@ async function submitListing(e) {
     btn.disabled = false;
     btn.textContent = 'Inserat veröffentlichen';
   } else {
-    Toast.success('Inserat erstellt!', 'Dein Bonusprogramm ist jetzt live.');
-    navigate('/marketplace');
+    document.querySelector('.card').innerHTML = `
+      <div style="text-align:center;padding:32px 0;">
+        <div style="font-size:3rem;margin-bottom:16px;">⏳</div>
+        <h3 class="text-h3" style="margin-bottom:8px;">Inserat eingereicht!</h3>
+        <p class="text-muted" style="line-height:1.6;margin-bottom:24px;">Dein Inserat wurde erfolgreich erstellt und zur Prüfung an einen Administrator gesendet. Es wird veröffentlicht, sobald es genehmigt wurde.</p>
+        <button class="btn btn-secondary" onclick="navigate('/marketplace')">Zurück zum Marktplatz</button>
+      </div>
+    `;
+    Toast.success('Eingereicht', 'Dein Inserat wartet auf Freigabe.');
   }
 }

@@ -4,6 +4,7 @@ const db = require("../config/database");
 const { signToken } = require("../middleware/auth.middleware");
 const { parseBody } = require("../middleware/bodyParser");
 const { sendOK, sendCreated, sendError } = require("../middleware/response.helper");
+const { decryptData } = require("../utils/crypto.util");
 
 // Zufälligen 6-stelligen Referral-Code generieren
 function generateReferralCode() {
@@ -56,23 +57,54 @@ async function register(req, res) {
     }
   }
 
-  const token = signToken({ id, username, email });
-  sendCreated(res, { token, user: { id, username, email, referralCode: myReferralCode } });
+  // Wir generieren zwar einen Token für interne Zwecke (falls noetig), aber senden ihn nicht zurück
+  // Der User muss erst vom Admin freigeschaltet werden.
+  sendCreated(res, { 
+    message: "Registrierung erfolgreich. Dein Account wird nun von einem Administrator geprüft.",
+    pendingApproval: true 
+  });
 }
+
+const loginAttempts = new Map();
 
 async function login(req, res) {
   const body = await parseBody(req);
   const { email, password } = body;
+
+  const ip = req.socket.remoteAddress;
+  const attempts = loginAttempts.get(ip) || { count: 0, time: Date.now() };
+
+  // 1 Minute Sperre nach 5 Fehlversuchen
+  if (attempts.count >= 5 && Date.now() - attempts.time < 60000) {
+    return sendError(res, 429, "Zu viele Login-Versuche. Bitte warte eine Minute.");
+  }
 
   if (!email || !password) {
     return sendError(res, 400, "E-Mail und Passwort erforderlich");
   }
 
   const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
-  if (!user) return sendError(res, 401, "Ungültige Anmeldedaten");
+  if (!user) {
+    loginAttempts.set(ip, { count: attempts.count + 1, time: Date.now() });
+    return sendError(res, 401, "Ungültige Anmeldedaten");
+  }
 
   const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) return sendError(res, 401, "Ungültige Anmeldedaten");
+  if (!valid) {
+    loginAttempts.set(ip, { count: attempts.count + 1, time: Date.now() });
+    return sendError(res, 401, "Ungültige Anmeldedaten");
+  }
+
+  if (user.account_status === 'pending') {
+    return sendError(res, 403, "Dein Account wartet noch auf die Freigabe durch einen Administrator.");
+  }
+  
+  if (user.account_status === 'rejected') {
+    return sendError(res, 403, "Dein Account wurde abgelehnt.");
+  }
+
+  // Reset bei Erfolg
+  loginAttempts.delete(ip);
 
   const token = signToken({ id: user.id, username: user.username, email: user.email });
   sendOK(res, {
@@ -83,6 +115,7 @@ async function login(req, res) {
       email: user.email,
       referralCode: user.referral_code,
       referralPoints: user.referral_points,
+      accountStatus: user.account_status
     },
   });
 }
@@ -95,15 +128,16 @@ function getMe(req, res, user) {
     id: dbUser.id,
     username: dbUser.username,
     email: dbUser.email,
-    realName: dbUser.real_name,
-    dateOfBirth: dbUser.date_of_birth,
+    realName: decryptData(dbUser.real_name),
+    dateOfBirth: decryptData(dbUser.date_of_birth),
     country: dbUser.country,
-    city: dbUser.city,
-    postalCode: dbUser.postal_code,
+    city: decryptData(dbUser.city),
+    postalCode: decryptData(dbUser.postal_code),
     profileVisibility: dbUser.profile_visibility,
     referralCode: dbUser.referral_code,
     referralPoints: dbUser.referral_points,
     kycVerified: !!dbUser.kyc_verified,
+    kycStatus: dbUser.kyc_status,
   });
 }
 

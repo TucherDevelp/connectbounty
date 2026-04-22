@@ -36,6 +36,8 @@ db.exec(`
     payment_bic TEXT DEFAULT '',
     payment_paypal TEXT DEFAULT '',
     kyc_verified INTEGER DEFAULT 0,
+    kyc_status TEXT DEFAULT 'pending',
+    account_status TEXT DEFAULT 'pending',
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -65,8 +67,22 @@ db.exec(`
     FOREIGN KEY (referred_user_id) REFERENCES users(id)
   );
 
+  CREATE TABLE IF NOT EXISTS conversations (
+    id TEXT PRIMARY KEY,
+    listing_id TEXT NOT NULL,
+    applicant_id TEXT NOT NULL,
+    owner_id TEXT NOT NULL,
+    status TEXT DEFAULT 'open',
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (listing_id) REFERENCES listings(id),
+    FOREIGN KEY (applicant_id) REFERENCES users(id),
+    FOREIGN KEY (owner_id) REFERENCES users(id),
+    UNIQUE(listing_id, applicant_id)
+  );
+
   CREATE TABLE IF NOT EXISTS chat_messages (
     id TEXT PRIMARY KEY,
+    conversation_id TEXT,
     listing_id TEXT NOT NULL,
     sender_id TEXT NOT NULL,
     receiver_id TEXT NOT NULL,
@@ -74,6 +90,7 @@ db.exec(`
     ai_flagged INTEGER DEFAULT 0,
     ai_review_note TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id),
     FOREIGN KEY (listing_id) REFERENCES listings(id),
     FOREIGN KEY (sender_id) REFERENCES users(id),
     FOREIGN KEY (receiver_id) REFERENCES users(id)
@@ -88,7 +105,39 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
+  CREATE TABLE IF NOT EXISTS admins (
+    id TEXT PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    reset_code TEXT,
+    reset_expires TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
 `);
+
+// Migration for existing admins table
+try {
+  db.exec(`
+    ALTER TABLE admins ADD COLUMN reset_code TEXT;
+    ALTER TABLE admins ADD COLUMN reset_expires TEXT;
+  `);
+} catch (e) {
+  // Columns already exist or error, ignore
+}
+
+// Migration for users and listings tables (from older versions)
+try {
+  db.exec(`
+    ALTER TABLE users ADD COLUMN account_status TEXT DEFAULT 'pending';
+  `);
+} catch (e) {}
+
+try {
+  db.exec(`
+    ALTER TABLE listings ADD COLUMN status TEXT DEFAULT 'pending';
+  `);
+} catch (e) {}
 
 // Demo-Listings einfügen falls DB leer
 const count = db.prepare("SELECT COUNT(*) as c FROM listings").get();

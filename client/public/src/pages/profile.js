@@ -29,13 +29,13 @@ async function renderProfile() {
         </div>
       </div>
 
-      <!-- Persönliche Daten -->
+      <!-- Persoenliche Daten -->
       <div class="card mb-4">
-        <h3 class="text-h3" style="margin-bottom:var(--sp-4);">Persönliche Daten</h3>
+        <h3 class="text-h3" style="margin-bottom:var(--sp-4);">Persoenliche Daten</h3>
         <form class="flex-col gap-4" onsubmit="saveProfile(event)">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);">
             <div class="form-group">
-              <label class="form-label">Vollständiger Name</label>
+              <label class="form-label">Vollstaendiger Name</label>
               <input class="form-input" id="p-realname" type="text" value="${profile.realName || ''}" placeholder="Max Mustermann" />
             </div>
             <div class="form-group">
@@ -56,7 +56,7 @@ async function renderProfile() {
           <div class="form-group">
             <label class="form-label">Land</label>
             <select class="form-select" id="p-country">
-              ${['Deutschland','Österreich','Schweiz','USA','Vereinigtes Königreich','Andere'].map(c =>
+              ${['Deutschland','Oesterreich','Schweiz','USA','Vereinigtes Koenigreich','Andere'].map(c =>
                 `<option ${profile.country === c ? 'selected' : ''}>${c}</option>`
               ).join('')}
             </select>
@@ -64,7 +64,7 @@ async function renderProfile() {
           <div class="form-group">
             <label class="form-label">Profil-Sichtbarkeit</label>
             <select class="form-select" id="p-visibility">
-              <option value="public" ${profile.profileVisibility === 'public' ? 'selected' : ''}>Öffentlich</option>
+              <option value="public" ${profile.profileVisibility === 'public' ? 'selected' : ''}>Oeffentlich</option>
               <option value="private" ${profile.profileVisibility === 'private' ? 'selected' : ''}>Privat</option>
             </select>
           </div>
@@ -73,10 +73,40 @@ async function renderProfile() {
         </form>
       </div>
 
+      <!-- KYC-Verifizierung -->
+      <div class="card mb-4">
+        <h3 class="text-h3" style="margin-bottom:var(--sp-4);">🛡️ KYC-Verifizierung</h3>
+        <p class="text-sm text-muted mb-4">Lade ein Foto deines Ausweises hoch. Unser System gleicht deinen angegebenen Namen und Geburtsdatum automatisch ab. Bilder werden nach der Prüfung <b>sofort gelöscht</b>.</p>
+        
+        ${profile.kycVerified
+          ? `<div style="display:flex;align-items:center;gap:8px;padding:12px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:var(--r-md);">
+              <span style="font-size:1.5rem;">✅</span>
+              <div>
+                <div style="font-weight:700;color:#22C55E;">Verifiziert</div>
+                <div class="text-sm text-muted">Du kannst Inserenten kontaktieren.</div>
+              </div>
+            </div>`
+          : `<div style="padding:12px;background:var(--c-surface-2);border-radius:var(--r-md);margin-bottom:12px;">
+              ${profile.kycStatus === 'rejected' ? `<div style="color:var(--c-error);margin-bottom:8px;font-weight:600;font-size:0.85rem;">Letzter Versuch fehlgeschlagen. Daten stimmten nicht überein.</div>` : ''}
+              
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="font-size:1.5rem;">⚠️</span>
+                <div>
+                  <div style="font-weight:700;">Nicht verifiziert</div>
+                  <div class="text-sm text-muted">Lade ein klares Foto deines Ausweises hoch.</div>
+                </div>
+              </div>
+              <input type="file" id="kyc-file-input" accept="image/jpeg, image/png" style="margin-bottom: 12px; width: 100%;" />
+              <button class="btn btn-primary btn-full" id="kyc-verify-btn" onclick="doKycVerify()">Jetzt verifizieren</button>
+            </div>`
+        }
+      </div>
+
       <!-- Quick Links -->
       <div class="card" style="display:flex;flex-direction:column;gap:var(--sp-2);">
-        <button class="btn btn-secondary" onclick="navigate('/referral')">🔗 Mein Referral-Code</button>
-        <button class="btn btn-secondary" onclick="navigate('/payment')">💳 Zahlungsmethode & Auszahlung</button>
+        <button class="btn btn-secondary" onclick="navigate('/chat')">Meine Chats</button>
+        <button class="btn btn-secondary" onclick="navigate('/referral')">Mein Referral-Code</button>
+        <button class="btn btn-secondary" onclick="navigate('/payment')">Zahlungsmethode &amp; Auszahlung</button>
       </div>
     </div>
   `;
@@ -84,7 +114,6 @@ async function renderProfile() {
 
 async function saveProfile(e) {
   e.preventDefault();
-  const msgEl = document.getElementById('profile-msg');
   const result = await UserAPI.updateProfile({
     realName: document.getElementById('p-realname').value,
     dateOfBirth: document.getElementById('p-dob').value,
@@ -97,6 +126,36 @@ async function saveProfile(e) {
     Toast.error('Fehler', result.error);
   } else {
     Toast.success('Gespeichert!', 'Profil wurde aktualisiert.');
+  }
+}
+
+async function doKycVerify() {
+  const fileInput = document.getElementById('kyc-file-input');
+  if (!fileInput || !fileInput.files[0]) {
+    return Toast.warning('Datei fehlt', 'Bitte wähle ein Ausweisfoto aus.');
+  }
+
+  const btn = document.getElementById('kyc-verify-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'KI analysiert Ausweis...';
+  }
+
+  const result = await UserAPI.uploadKyc(fileInput.files[0]);
+  
+  if (result.error) {
+    Toast.error('Fehler', result.error);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Jetzt verifizieren';
+    }
+    // Refresh to show rejected state if applicable
+    if (result.error.includes("stimmen nicht überein") || result.error.includes("konnte das Dokument nicht lesen")) {
+      setTimeout(() => navigate('/profile'), 1500);
+    }
+  } else {
+    Toast.success('Verifiziert!', 'Dein KYC-Status wurde aktualisiert.');
+    navigate('/profile');
   }
 }
 

@@ -48,12 +48,13 @@ async function createListing(req, res, user) {
 
   const id = uuidv4();
   db.prepare(`
-    INSERT INTO listings (id, category, company, title, location, bonus, currency, description, is_anonymous, created_by)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO listings (id, category, company, title, location, bonus, currency, description, is_anonymous, status, created_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
   `).run(id, category, company, title, location || "", bonus, currency || "EUR", description || "", isAnonymous !== false ? 1 : 0, user.id);
 
   const created = db.prepare("SELECT * FROM listings WHERE id = ?").get(id);
-  sendCreated(res, created);
+  // Optional: override the return message to indicate pending state
+  sendCreated(res, { ...created, message: "Inserat wurde erstellt und wartet auf Freigabe." });
 }
 
 module.exports = { getListings, getListingById, createListing };

@@ -1,0 +1,113 @@
+<!-- Connect Bounty 3D Cartoon Bonbon Logo -->
+<!-- viewBox 0 0 100 60 – Skaliert sich automatisch -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60">
+  <defs>
+    <!-- 3D Bonbon-Kugel Hauptgradient -->
+    <radialGradient id="cb-ball" cx="40%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#FFE4A0"/>
+      <stop offset="18%" stop-color="#FFD06A"/>
+      <stop offset="40%" stop-color="#F5A623"/>
+      <stop offset="70%" stop-color="#E08D15"/>
+      <stop offset="90%" stop-color="#C47A10"/>
+      <stop offset="100%" stop-color="#A05E08"/>
+    </radialGradient>
+    <!-- Untere Schattierung fuer 3D-Tiefe -->
+    <radialGradient id="cb-shadow" cx="50%" cy="85%" r="50%">
+      <stop offset="0%" stop-color="#8B5A0B" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#8B5A0B" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Oberer Glanz-Highlight -->
+    <radialGradient id="cb-shine" cx="38%" cy="28%" r="35%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="40%" stop-color="#FFFFFF" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Rand-Reflektion (Rim Light) -->
+    <radialGradient id="cb-rim" cx="60%" cy="65%" r="50%">
+      <stop offset="60%" stop-color="transparent"/>
+      <stop offset="85%" stop-color="#FFD76E" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFE4A0" stop-opacity="0.15"/>
+    </radialGradient>
+    <!-- Wrapper-Papier links -->
+    <linearGradient id="cb-wrapL" x1="1" y1="0" x2="0" y2="0.5">
+      <stop offset="0%" stop-color="#F5A623"/>
+      <stop offset="30%" stop-color="#E89418"/>
+      <stop offset="60%" stop-color="#D4891A"/>
+      <stop offset="100%" stop-color="#B87315"/>
+    </linearGradient>
+    <!-- Wrapper-Papier rechts -->
+    <linearGradient id="cb-wrapR" x1="0" y1="0" x2="1" y2="0.5">
+      <stop offset="0%" stop-color="#F5A623"/>
+      <stop offset="30%" stop-color="#E89418"/>
+      <stop offset="60%" stop-color="#D4891A"/>
+      <stop offset="100%" stop-color="#B87315"/>
+    </linearGradient>
+    <!-- Wrapper-Papier Highlight -->
+    <linearGradient id="cb-wrapHL" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FFD76E" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#FFD76E" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Candy-Streifen -->
+    <linearGradient id="cb-stripe" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E88A10" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#D47A08" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#E88A10" stop-opacity="0.3"/>
+    </linearGradient>
+    <!-- Drop-Shadow Filter -->
+    <filter id="cb-ds" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#cb-ds)">
+    <!-- === Linkes Wrapper-Papier (gedreht, am Bonbon befestigt) === -->
+    <g>
+      <!-- Oberes Papierblatt -->
+      <path d="M32 30 L18 28 Q12 25 6 20 C2 17 -1 20 1 23 C3 26 7 26 10 24 Q14 27 18 28 L32 30 Z"
+            fill="url(#cb-wrapL)" opacity="0.95"/>
+      <!-- Unteres Papierblatt -->
+      <path d="M32 30 L18 32 Q12 35 6 40 C2 43 -1 40 1 37 C3 34 7 34 10 36 Q14 33 18 32 L32 30 Z"
+            fill="url(#cb-wrapL)" opacity="0.85"/>
+      <!-- Papier-Highlight -->
+      <path d="M32 30 L20 28 Q14 26 8 22 L20 27 L32 30 Z"
+            fill="#FFD76E" opacity="0.4"/>
+      <!-- Knotenpunkt -->
+      <ellipse cx="32" cy="30" rx="3.5" ry="9" fill="#B87315" opacity="0.45"/>
+      <ellipse cx="32" cy="30" rx="2" ry="7" fill="#A06610" opacity="0.25"/>
+    </g>
+
+    <!-- === Rechtes Wrapper-Papier === -->
+    <g>
+      <path d="M68 30 L82 28 Q88 25 94 20 C98 17 101 20 99 23 C97 26 93 26 90 24 Q86 27 82 28 L68 30 Z"
+            fill="url(#cb-wrapR)" opacity="0.95"/>
+      <path d="M68 30 L82 32 Q88 35 94 40 C98 43 101 40 99 37 C97 34 93 34 90 36 Q86 33 82 32 L68 30 Z"
+            fill="url(#cb-wrapR)" opacity="0.85"/>
+      <path d="M68 30 L80 28 Q86 26 92 22 L80 27 L68 30 Z"
+            fill="#FFD76E" opacity="0.4"/>
+      <ellipse cx="68" cy="30" rx="3.5" ry="9" fill="#B87315" opacity="0.45"/>
+      <ellipse cx="68" cy="30" rx="2" ry="7" fill="#A06610" opacity="0.25"/>
+    </g>
+
+    <!-- === Bonbon-Kugel (3D Cartoon) === -->
+    <!-- Kugel-Schatten darunter -->
+    <ellipse cx="50" cy="51" rx="18" ry="3" fill="rgba(0,0,0,0.15)"/>
+    <!-- Haupt-Kugelkoerper -->
+    <circle cx="50" cy="30" r="22" fill="url(#cb-ball)"/>
+    <!-- 3D Tiefe: Untere Schattierung -->
+    <circle cx="50" cy="30" r="22" fill="url(#cb-shadow)"/>
+    <!-- Candy-Streifen (dezent) -->
+    <path d="M38 14 Q50 10 62 14 Q58 18 50 17 Q42 18 38 14 Z" fill="url(#cb-stripe)" opacity="0.5"/>
+    <path d="M36 42 Q50 48 64 42 Q58 38 50 39 Q42 38 36 42 Z" fill="url(#cb-stripe)" opacity="0.35"/>
+    <!-- Rim-Light fuer 3D-Randbeleuchtung -->
+    <circle cx="50" cy="30" r="22" fill="url(#cb-rim)"/>
+    <!-- Haupt-Glanzpunkt (oben links) -->
+    <ellipse cx="42" cy="20" rx="10" ry="7" fill="rgba(255,255,255,0.55)" transform="rotate(-15 42 20)"/>
+    <ellipse cx="40" cy="18" rx="5" ry="3.5" fill="rgba(255,255,255,0.75)" transform="rotate(-20 40 18)"/>
+    <!-- Kleiner Sekundaer-Glanz (unten rechts) -->
+    <ellipse cx="60" cy="40" rx="4" ry="2.5" fill="rgba(255,255,255,0.15)" transform="rotate(20 60 40)"/>
+    <!-- Oberflaechen-Glanz-Schicht -->
+    <circle cx="50" cy="30" r="22" fill="url(#cb-shine)"/>
+    <!-- Rand-Definition -->
+    <circle cx="50" cy="30" r="22" fill="none" stroke="#B87315" stroke-width="0.6" opacity="0.3"/>
+  </g>
+</svg>

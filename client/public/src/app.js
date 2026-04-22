@@ -25,6 +25,8 @@
   Router.register('/profile', renderProfile);
   Router.register('/referral', renderReferral);
   Router.register('/payment', renderPayment);
+  Router.register('/chat', renderChatList);
+  Router.register('/chat/:id', renderChatDetail);
 
   // ── Initial Render ────────────────────────────
   // Navbar-Actions initial rendern

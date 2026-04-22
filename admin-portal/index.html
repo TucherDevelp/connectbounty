@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Connect Bounty | Admin Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="screen">
+    <div class="card" style="text-align: center; background: transparent; border: none;">
+      <h2>Lade...</h2>
+    </div>
+  </div>
+
+  <!-- Register Screen -->
+  <div id="register-screen" class="screen hidden">
+    <div class="card">
+      <h2>Admin Setup</h2>
+      <p>Erstelle den initialen Administrator-Account. Dieser Vorgang ist nur einmalig möglich.</p>
+      
+      <div class="form-group">
+        <label>Benutzername</label>
+        <input type="text" id="reg-username" placeholder="z.B. admin" />
+      </div>
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" id="reg-email" placeholder="admin@connectbounty.de" />
+      </div>
+      <div class="form-group">
+        <label>Passwort (min. 8 Zeichen)</label>
+        <input type="password" id="reg-password" placeholder="••••••••" />
+      </div>
+      <div class="form-group">
+        <label>API Base URL</label>
+        <input type="text" id="reg-api-url" value="http://localhost:8000" />
+      </div>
+
+      <button onclick="registerAdmin()" class="btn-primary w-full">Administrator anlegen</button>
+      <div id="reg-error" class="error hidden"></div>
+    </div>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="screen hidden">
+    <div class="card">
+      <h2>Admin Login</h2>
+      <p>Melde dich mit deinem Administrator-Account an.</p>
+      
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" id="login-email" placeholder="admin@connectbounty.de" />
+      </div>
+      <div class="form-group">
+        <label>Passwort</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+      <div class="form-group">
+        <label>API Base URL</label>
+        <input type="text" id="login-api-url" value="http://localhost:8000" />
+      </div>
+
+      <button onclick="loginAdmin()" class="btn-primary w-full">Einloggen</button>
+      <div id="login-error" class="error hidden"></div>
+      
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <a href="#" onclick="showForgotPassword()" style="color: var(--primary); text-decoration: none; font-size: 0.9rem;">Passwort vergessen?</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Forgot Password Screen -->
+  <div id="forgot-password-screen" class="screen hidden">
+    <div class="card">
+      <h2>Passwort vergessen</h2>
+      <p>Gib deine E-Mail-Adresse ein. Wir senden dir einen 6-stelligen Code (siehe Backend-Terminal).</p>
+      
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" id="forgot-email" placeholder="admin@connectbounty.de" />
+      </div>
+
+      <button onclick="requestPasswordReset()" class="btn-primary w-full">Code anfordern</button>
+      <button onclick="showLogin()" class="btn-danger w-full" style="margin-top: 10px; background: transparent; border: 1px solid var(--border); color: var(--text);">Abbrechen</button>
+      <div id="forgot-error" class="error hidden"></div>
+      <div id="forgot-success" style="color: var(--success); margin-top: 1rem; font-size: 0.9rem;" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- Reset Password Screen -->
+  <div id="reset-password-screen" class="screen hidden">
+    <div class="card">
+      <h2>Neues Passwort setzen</h2>
+      <p>Gib den 6-stelligen Code ein und wähle ein neues Passwort.</p>
+      
+      <div class="form-group">
+        <label>6-stelliger Code</label>
+        <input type="text" id="reset-code" placeholder="123456" maxlength="6" style="letter-spacing: 0.2em; text-align: center; font-size: 1.2rem;" />
+      </div>
+      <div class="form-group">
+        <label>Neues Passwort (min. 8 Zeichen)</label>
+        <input type="password" id="reset-password" placeholder="••••••••" />
+      </div>
+
+      <button onclick="submitNewPassword()" class="btn-primary w-full">Passwort ändern</button>
+      <button onclick="showLogin()" class="btn-danger w-full" style="margin-top: 10px; background: transparent; border: 1px solid var(--border); color: var(--text);">Abbrechen</button>
+      <div id="reset-error" class="error hidden"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard Screen -->
+  <div id="dashboard-screen" class="screen hidden">
+    <header>
+      <h1>Connect Bounty | Admin Dashboard</h1>
+      <button onclick="logout()" class="btn-danger">Logout</button>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('users')">Pending Users</button>
+      <button class="tab" onclick="switchTab('listings')">Pending Listings</button>
+    </div>
+
+    <main>
+      <!-- Users Tab -->
+      <div id="tab-users" class="tab-content">
+        <div class="actions-bar">
+          <button onclick="loadPendingUsers()">Refresh</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Real Name</th>
+              <th>KYC Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="6" class="text-center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Listings Tab -->
+      <div id="tab-listings" class="tab-content hidden">
+        <div class="actions-bar">
+          <button onclick="loadPendingListings()">Refresh</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Creator</th>
+              <th>Company</th>
+              <th>Title</th>
+              <th>Bonus</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="listings-tbody">
+            <tr><td colspan="6" class="text-center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
