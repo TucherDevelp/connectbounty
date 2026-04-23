@@ -44,12 +44,32 @@ export type AuditAction =
   | "listing.updated"
   | "listing.deleted"
   | "listing.moderated"
+  | "bounty.created"
+  | "bounty.published"
+  | "bounty.updated"
+  | "bounty.closed"
+  | "bounty.cancelled"
+  | "bounty.deleted"
+  | "referral.submitted"
+  | "referral.status_changed"
+  | "referral.withdrawn"
   | "chat.reported"
   | "chat.message_blocked"
   | "payout.requested"
   | "payout.released"
   | "payout.failed"
   | "admin.action";
+
+export type BountyStatus = "draft" | "open" | "closed" | "expired" | "cancelled";
+
+export type ReferralStatus =
+  | "submitted"
+  | "contacted"
+  | "interviewing"
+  | "hired"
+  | "paid"
+  | "rejected"
+  | "withdrawn";
 
 export type Database = {
   public: {
@@ -168,6 +188,129 @@ export type Database = {
           },
         ];
       };
+      bounties: {
+        Row: {
+          id: string;
+          owner_id: string;
+          title: string;
+          description: string;
+          bonus_amount: number;
+          bonus_currency: string;
+          location: string | null;
+          industry: string | null;
+          tags: string[];
+          status: BountyStatus;
+          expires_at: string | null;
+          published_at: string | null;
+          closed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          title: string;
+          description: string;
+          bonus_amount: number;
+          bonus_currency?: string;
+          location?: string | null;
+          industry?: string | null;
+          tags?: string[];
+          status?: BountyStatus;
+          expires_at?: string | null;
+          published_at?: string | null;
+          closed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          title?: string;
+          description?: string;
+          bonus_amount?: number;
+          bonus_currency?: string;
+          location?: string | null;
+          industry?: string | null;
+          tags?: string[];
+          status?: BountyStatus;
+          expires_at?: string | null;
+          published_at?: string | null;
+          closed_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bounties_owner_id_fkey";
+            columns: ["owner_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bounty_referrals: {
+        Row: {
+          id: string;
+          bounty_id: string;
+          referrer_id: string;
+          candidate_name: string;
+          candidate_email: string;
+          candidate_contact: string | null;
+          message: string | null;
+          status: ReferralStatus;
+          status_changed_at: string;
+          status_changed_by: string | null;
+          hired_at: string | null;
+          paid_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          bounty_id: string;
+          referrer_id: string;
+          candidate_name: string;
+          candidate_email: string;
+          candidate_contact?: string | null;
+          message?: string | null;
+          status?: ReferralStatus;
+          status_changed_at?: string;
+          status_changed_by?: string | null;
+          hired_at?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          bounty_id?: string;
+          referrer_id?: string;
+          candidate_name?: string;
+          candidate_email?: string;
+          candidate_contact?: string | null;
+          message?: string | null;
+          status?: ReferralStatus;
+          status_changed_at?: string;
+          status_changed_by?: string | null;
+          hired_at?: string | null;
+          paid_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bounty_referrals_bounty_id_fkey";
+            columns: ["bounty_id"];
+            referencedRelation: "bounties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bounty_referrals_referrer_id_fkey";
+            columns: ["referrer_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           id: number;
@@ -229,11 +372,21 @@ export type Database = {
         };
         Returns: void;
       };
+      is_kyc_approved: {
+        Args: { p_user?: string };
+        Returns: boolean;
+      };
+      owns_bounty: {
+        Args: { p_bounty: string };
+        Returns: boolean;
+      };
     };
     Enums: {
       user_role: UserRole;
       kyc_status: KycStatus;
       audit_action: AuditAction;
+      bounty_status: BountyStatus;
+      referral_status: ReferralStatus;
     };
     CompositeTypes: Record<string, never>;
   };
