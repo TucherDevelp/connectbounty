@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { FieldError, FormAlert } from "@/components/ui/form-error";
 import { loginAction } from "@/lib/auth/actions";
 import { idleAction } from "@/lib/auth/action-result";
+import { GoogleButton } from "@/components/auth/google-button";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -64,6 +65,14 @@ export function LoginForm() {
       </div>
 
       <SubmitButton />
+
+      <div className="relative flex items-center gap-3 py-1">
+        <div className="h-px flex-1 bg-[var(--color-surface-border)]" />
+        <span className="text-xs text-[var(--color-text-faint)]">oder</span>
+        <div className="h-px flex-1 bg-[var(--color-surface-border)]" />
+      </div>
+
+      <GoogleButton label="Mit Google anmelden" />
 
       <p className="text-center text-sm text-[var(--color-text-muted)]">
         Noch kein Konto?{" "}

@@ -25,6 +25,7 @@ const PUBLIC_ROUTES = [
   "/register",
   "/reset",
   "/auth/callback",
+  "/check-email",
   "/legal/terms",
   "/legal/privacy",
 ];
@@ -85,7 +86,12 @@ function applySecurityHeaders(response: NextResponse): void {
 
   // CSP – defensiv. 'unsafe-inline' für Styles/Scripts ist mit Tailwind v4
   // und Next-RSC derzeit nötig und wird in Phase 7 durch Nonces ersetzt.
-  // Supabase wird in connect-src ergänzt, damit Browser-Auth-Calls funktionieren.
+  // Im Dev-Modus benötigt React zusätzlich 'unsafe-eval' für Error-Overlays.
+  const isDev = process.env.NODE_ENV === "development";
+  const scriptSrc = isDev
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    : "script-src 'self' 'unsafe-inline'";
+
   headers.set(
     "Content-Security-Policy",
     [
@@ -93,7 +99,7 @@ function applySecurityHeaders(response: NextResponse): void {
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
-      "script-src 'self' 'unsafe-inline'",
+      scriptSrc,
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
       "frame-ancestors 'none'",
       "base-uri 'self'",

@@ -30,7 +30,7 @@ export default async function DashboardPage() {
           <CardContent>
             <p className="text-sm text-[var(--color-text-muted)]">
               Wird in Phase 2 freigeschaltet. Bis dahin hast du den Status
-              „unverifiziert".
+              „unverifiziert“.
             </p>
           </CardContent>
         </Card>

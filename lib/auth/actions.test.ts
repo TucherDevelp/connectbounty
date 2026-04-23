@@ -1,29 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Supabase + Next-Helpers mocken, bevor actions importiert wird.
-const supabaseAuth = {
-  signInWithPassword: vi.fn(),
-  signUp: vi.fn(),
-  signOut: vi.fn(),
-  resetPasswordForEmail: vi.fn(),
-  updateUser: vi.fn(),
-  getUser: vi.fn(),
-};
+const { supabaseAuth, redirectMock, logAuditEventMock } = vi.hoisted(() => ({
+  supabaseAuth: {
+    signInWithPassword: vi.fn(),
+    signUp: vi.fn(),
+    signOut: vi.fn(),
+    signInWithOAuth: vi.fn(),
+    resetPasswordForEmail: vi.fn(),
+    updateUser: vi.fn(),
+    getUser: vi.fn(),
+  },
+  redirectMock: vi.fn((url: string) => {
+    void url;
+    throw new Error("__NEXT_REDIRECT__");
+  }),
+  logAuditEventMock: vi.fn(),
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServerClient: () => Promise.resolve({ auth: supabaseAuth }),
 }));
-
-const redirectMock = vi.fn((_url: string) => {
-  throw new Error("__NEXT_REDIRECT__");
-});
+vi.mock("@/lib/auth/roles", () => ({ logAuditEvent: logAuditEventMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { idleAction } from "./action-result";
 import {
   loginAction,
+  logoutAction,
   registerAction,
   requestPasswordResetAction,
+  signInWithGoogleAction,
   updatePasswordAction,
 } from "./actions";
 
@@ -36,6 +43,7 @@ function fd(entries: Record<string, string>): FormData {
 beforeEach(() => {
   for (const fn of Object.values(supabaseAuth)) fn.mockReset();
   redirectMock.mockClear();
+  logAuditEventMock.mockClear();
 });
 
 afterEach(() => {
@@ -91,9 +99,10 @@ describe("registerAction", () => {
     if (res.status === "error") expect(res.fieldErrors?.password).toBeDefined();
   });
 
-  it("calls supabase.signUp with redirect URL and displayName", async () => {
+  it("redirects to /check-email on success", async () => {
     supabaseAuth.signUp.mockResolvedValueOnce({ error: null });
-    const res = await registerAction(idleAction, fd(valid));
+    await expect(registerAction(idleAction, fd(valid))).rejects.toThrow("__NEXT_REDIRECT__");
+    expect(redirectMock).toHaveBeenCalledWith("/check-email");
     expect(supabaseAuth.signUp).toHaveBeenCalledWith({
       email: "a@b.de",
       password: "Sicher12345!",
@@ -102,13 +111,68 @@ describe("registerAction", () => {
         data: { display_name: "Olli" },
       },
     });
-    expect(res.status).toBe("ok");
   });
 
   it("returns generic error when supabase fails", async () => {
     supabaseAuth.signUp.mockResolvedValueOnce({ error: new Error("nope") });
     const res = await registerAction(idleAction, fd(valid));
     expect(res.status).toBe("error");
+  });
+});
+
+// ── logoutAction ──────────────────────────────────────────────────────────
+
+describe("logoutAction", () => {
+  it("calls signOut and redirects to /login", async () => {
+    supabaseAuth.signOut.mockResolvedValueOnce({});
+    logAuditEventMock.mockResolvedValueOnce(1);
+    await expect(logoutAction()).rejects.toThrow("__NEXT_REDIRECT__");
+    expect(supabaseAuth.signOut).toHaveBeenCalled();
+    expect(redirectMock).toHaveBeenCalledWith("/login");
+  });
+
+  it("still redirects even when audit logging throws", async () => {
+    supabaseAuth.signOut.mockResolvedValueOnce({});
+    logAuditEventMock.mockRejectedValueOnce(new Error("db error"));
+    await expect(logoutAction()).rejects.toThrow("__NEXT_REDIRECT__");
+    expect(redirectMock).toHaveBeenCalledWith("/login");
+  });
+});
+
+// ── signInWithGoogleAction ─────────────────────────────────────────────────
+
+describe("signInWithGoogleAction", () => {
+  it("redirects to Google OAuth URL on success", async () => {
+    supabaseAuth.signInWithOAuth.mockResolvedValueOnce({
+      data: { url: "https://accounts.google.com/o/oauth2/auth?...&state=xyz" },
+      error: null,
+    });
+    await expect(signInWithGoogleAction()).rejects.toThrow("__NEXT_REDIRECT__");
+    expect(redirectMock).toHaveBeenCalledWith(
+      expect.stringContaining("accounts.google.com"),
+    );
+  });
+
+  it("redirects to /login?error=oauth_init_failed when supabase errors", async () => {
+    supabaseAuth.signInWithOAuth.mockResolvedValueOnce({
+      data: null,
+      error: new Error("provider disabled"),
+    });
+    await expect(signInWithGoogleAction()).rejects.toThrow("__NEXT_REDIRECT__");
+    expect(redirectMock).toHaveBeenCalledWith("/login?error=oauth_init_failed");
+  });
+
+  it("passes redirectTo containing /auth/callback", async () => {
+    supabaseAuth.signInWithOAuth.mockResolvedValueOnce({
+      data: { url: "https://accounts.google.com/auth" },
+      error: null,
+    });
+    await expect(signInWithGoogleAction()).rejects.toThrow("__NEXT_REDIRECT__");
+    const call = supabaseAuth.signInWithOAuth.mock.calls[0] as [
+      { provider: string; options: { redirectTo: string } },
+    ];
+    expect(call[0].provider).toBe("google");
+    expect(call[0].options.redirectTo).toMatch(/\/auth\/callback/);
   });
 });
 
