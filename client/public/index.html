@@ -20,6 +20,20 @@
       <!-- Rundes Bonbon mit Wrapper-Enden: Papier wird aufgezogen, Dollar-Muenze erscheint -->
       <svg class="splash-candy" id="splash-candy-svg" viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
         <defs>
+          <radialGradient id="candyBodyGrad" cx="30%" cy="30%">
+            <stop offset="0%" stop-color="#FFD76E"/>
+            <stop offset="50%" stop-color="#F5A623"/>
+            <stop offset="90%" stop-color="#E08D15"/>
+            <stop offset="100%" stop-color="#C47A10"/>
+          </radialGradient>
+          <linearGradient id="candyEndGradL" x1="1" y1="0.5" x2="0" y2="0.5">
+            <stop offset="0%" stop-color="#E08D15"/>
+            <stop offset="100%" stop-color="#F5A623"/>
+          </linearGradient>
+          <linearGradient id="candyEndGradR" x1="0" y1="0.5" x2="1" y2="0.5">
+            <stop offset="0%" stop-color="#E08D15"/>
+            <stop offset="100%" stop-color="#F5A623"/>
+          </linearGradient>
           <radialGradient id="coinGrad" cx="38%" cy="35%">
             <stop offset="0%" stop-color="#FFE79A"/>
             <stop offset="30%" stop-color="#F5C33B"/>
@@ -30,20 +44,6 @@
             <stop offset="80%" stop-color="#D4981A"/>
             <stop offset="100%" stop-color="#A07010"/>
           </radialGradient>
-          <radialGradient id="wrapBallGrad" cx="45%" cy="40%">
-            <stop offset="0%" stop-color="#FFD76E"/>
-            <stop offset="45%" stop-color="#F5A623"/>
-            <stop offset="85%" stop-color="#E08D15"/>
-            <stop offset="100%" stop-color="#C47A10"/>
-          </radialGradient>
-          <linearGradient id="wrapEndL" x1="1" y1="0.3" x2="0" y2="0.6">
-            <stop offset="0%" stop-color="#F5A623"/>
-            <stop offset="100%" stop-color="#D4891A"/>
-          </linearGradient>
-          <linearGradient id="wrapEndR" x1="0" y1="0.3" x2="1" y2="0.6">
-            <stop offset="0%" stop-color="#F5A623"/>
-            <stop offset="100%" stop-color="#D4891A"/>
-          </linearGradient>
           <linearGradient id="shineGrad" x1="0" y1="0" x2="1" y2="0.8">
             <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
             <stop offset="40%" stop-color="rgba(255,255,255,0.7)"/>
@@ -67,36 +67,24 @@
           <ellipse id="coin-shine" cx="150" cy="80" rx="42" ry="42" fill="url(#shineGrad)" opacity="0"/>
         </g>
 
-        <!-- SCHICHT 2: Linke Wrapper-Haelfte (runde Halbkugel + gedrehtes Papier-Ende) -->
+        <!-- SCHICHT 2: Linke Wrapper-Haelfte -->
         <g id="wrap-left">
-          <!-- Runde linke Haelfte der Bonbon-Verpackung -->
+          <path d="M 120 80 C 80 40, 30 40, 15 50 L 25 65 L 10 80 L 25 95 L 15 110 C 30 120, 80 120, 120 80 Z" fill="url(#candyEndGradL)" stroke="#A06610" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M 115 80 Q 60 70 20 60 M 115 80 Q 50 80 15 80 M 115 80 Q 60 90 20 100" stroke="#C47A10" stroke-width="2" fill="none" opacity="0.6"/>
           <g clip-path="url(#leftHalf)">
-            <circle cx="150" cy="80" r="46" fill="url(#wrapBallGrad)"/>
-            <ellipse cx="128" cy="60" rx="20" ry="14" fill="rgba(255,255,255,0.3)" transform="rotate(-20 128 60)"/>
-            <ellipse cx="122" cy="54" rx="10" ry="6" fill="rgba(255,255,255,0.45)" transform="rotate(-25 122 54)"/>
-            <!-- Knitter-Falten -->
-            <path d="M130 38 Q125 80 130 122" stroke="rgba(180,120,20,0.15)" stroke-width="1.5" fill="none"/>
-            <path d="M115 42 Q112 80 115 118" stroke="rgba(180,120,20,0.1)" stroke-width="1" fill="none"/>
+            <circle cx="150" cy="80" r="46" fill="url(#candyBodyGrad)" stroke="#A06610" stroke-width="2"/>
+            <ellipse cx="130" cy="55" rx="16" ry="8" fill="white" opacity="0.6" transform="rotate(-30 130 55)"/>
+            <ellipse cx="120" cy="48" rx="6" ry="4" fill="white" opacity="0.7" transform="rotate(-30 120 48)"/>
           </g>
-          <!-- Gedrehtes Papier-Ende links (wie echt getwistetes Bonbon-Papier) -->
-          <path d="M104 80 L68 80 Q58 78 48 66 C40 56 28 50 18 55 C10 60 16 70 26 68 Q36 66 48 72 L68 80 Q58 82 48 94 C40 104 28 110 18 105 C10 100 16 90 26 92 Q36 94 48 88 L68 80" fill="url(#wrapEndL)" opacity="0.95"/>
-          <!-- Knoten am Uebergang Kugel/Papier -->
-          <ellipse cx="104" cy="80" rx="7" ry="20" fill="#C47A10" opacity="0.4"/>
-          <ellipse cx="104" cy="80" rx="4" ry="16" fill="#A06610" opacity="0.2"/>
         </g>
 
         <!-- SCHICHT 3: Rechte Wrapper-Haelfte -->
         <g id="wrap-right">
+          <path d="M 180 80 C 220 40, 270 40, 285 50 L 275 65 L 290 80 L 275 95 L 285 110 C 270 120, 220 120, 180 80 Z" fill="url(#candyEndGradR)" stroke="#A06610" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M 185 80 Q 240 70 280 60 M 185 80 Q 250 80 285 80 M 185 80 Q 240 90 280 100" stroke="#C47A10" stroke-width="2" fill="none" opacity="0.6"/>
           <g clip-path="url(#rightHalf)">
-            <circle cx="150" cy="80" r="46" fill="url(#wrapBallGrad)"/>
-            <ellipse cx="168" cy="60" rx="14" ry="10" fill="rgba(255,255,255,0.15)" transform="rotate(15 168 60)"/>
-            <path d="M170 38 Q175 80 170 122" stroke="rgba(180,120,20,0.15)" stroke-width="1.5" fill="none"/>
-            <path d="M185 42 Q188 80 185 118" stroke="rgba(180,120,20,0.1)" stroke-width="1" fill="none"/>
+            <circle cx="150" cy="80" r="46" fill="url(#candyBodyGrad)" stroke="#A06610" stroke-width="2"/>
           </g>
-          <!-- Gedrehtes Papier-Ende rechts -->
-          <path d="M196 80 L232 80 Q242 78 252 66 C260 56 272 50 282 55 C290 60 284 70 274 68 Q264 66 252 72 L232 80 Q242 82 252 94 C260 104 272 110 282 105 C290 100 284 90 274 92 Q264 94 252 88 L232 80" fill="url(#wrapEndR)" opacity="0.95"/>
-          <ellipse cx="196" cy="80" rx="7" ry="20" fill="#C47A10" opacity="0.4"/>
-          <ellipse cx="196" cy="80" rx="4" ry="16" fill="#A06610" opacity="0.2"/>
         </g>
 
         <!-- Sparkles (nach Enthuellen) -->
@@ -143,19 +131,19 @@
         candy.style.transform = 'scale(1) rotate(0deg)';
       }, 150);
 
-      // Phase 2: Linke runde Haelfte loest sich – Papier verzerrt sich realistisch
+      // Phase 2: Linke runde Haelfte loest sich – Papier zieht sich realistisch ab
       setTimeout(function() {
-        wrapL.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease 0.6s';
-        wrapL.style.transformOrigin = '104px 80px';
-        wrapL.style.transform = 'translateX(-60px) rotate(-25deg) scaleX(0.7) skewY(8deg)';
+        wrapL.style.transition = 'transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease 0.6s';
+        wrapL.style.transformOrigin = '150px 80px';
+        wrapL.style.transform = 'translateX(-80px) rotate(-45deg) scale(0.8)';
         wrapL.style.opacity = '0';
       }, 1000);
 
       // Phase 2b: Rechte Haelfte loest sich
       setTimeout(function() {
-        wrapR.style.transition = 'transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease 0.6s';
-        wrapR.style.transformOrigin = '196px 80px';
-        wrapR.style.transform = 'translateX(60px) rotate(25deg) scaleX(0.7) skewY(-8deg)';
+        wrapR.style.transition = 'transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease 0.6s';
+        wrapR.style.transformOrigin = '150px 80px';
+        wrapR.style.transform = 'translateX(80px) rotate(45deg) scale(0.8)';
         wrapR.style.opacity = '0';
       }, 1150);
 

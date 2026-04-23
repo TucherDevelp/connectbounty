@@ -200,6 +200,7 @@ function showDashboard() {
   document.getElementById('dashboard-screen').classList.remove('hidden');
   loadPendingUsers();
   loadPendingListings();
+  loadAllListings();
 }
 
 function switchTab(tabId) {
@@ -312,4 +313,107 @@ async function rejectListing(id) {
   if (!confirm("Dieses Inserat wirklich LÖSCHEN?")) return;
   const res = await apiCall(`/api/admin/listings/${id}/reject`, 'PUT');
   if (res && !res.error) loadPendingListings();
+}
+
+// ─── All Listings Management ────────────────────────────────
+
+// Store all listings temporarily to populate the edit modal easily
+let currentAllListings = [];
+
+async function loadAllListings() {
+  const tbody = document.getElementById('all-listings-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+  
+  const listings = await apiCall('/api/admin/listings/all');
+  if (!listings) return;
+
+  currentAllListings = listings;
+
+  if (listings.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Keine Inserate vorhanden</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = listings.map(l => `
+    <tr>
+      <td title="${l.id}">${l.id.substring(0,8)}...</td>
+      <td><strong>${l.company}</strong></td>
+      <td>${l.title}</td>
+      <td>${l.bonus} ${l.currency}</td>
+      <td>
+        <span style="color: ${l.status === 'active' ? 'var(--success)' : (l.status === 'pending' ? 'var(--primary)' : 'var(--danger)')}">
+          ${l.status}
+        </span>
+      </td>
+      <td class="actions-cell">
+        <button class="btn-sm btn-primary" onclick="editListing('${l.id}')">Bearbeiten</button>
+        <button class="btn-sm btn-danger" onclick="deleteListing('${l.id}')">Löschen</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function editListing(id) {
+  const listing = currentAllListings.find(l => l.id === id);
+  if (!listing) return;
+
+  document.getElementById('edit-id').value = listing.id;
+  document.getElementById('edit-title').value = listing.title;
+  document.getElementById('edit-company').value = listing.company;
+  document.getElementById('edit-category').value = listing.category;
+  document.getElementById('edit-bonus').value = listing.bonus;
+  document.getElementById('edit-status').value = listing.status;
+
+  document.getElementById('edit-error').classList.add('hidden');
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.add('hidden');
+}
+
+async function saveListing() {
+  const id = document.getElementById('edit-id').value;
+  const title = document.getElementById('edit-title').value.trim();
+  const company = document.getElementById('edit-company').value.trim();
+  const category = document.getElementById('edit-category').value;
+  const bonus = parseInt(document.getElementById('edit-bonus').value, 10);
+  const status = document.getElementById('edit-status').value;
+  
+  const err = document.getElementById('edit-error');
+
+  if (!title || !company || isNaN(bonus)) {
+    err.textContent = "Bitte alle Felder korrekt ausfüllen.";
+    err.classList.remove('hidden');
+    return;
+  }
+
+  const res = await fetch(`${BASE_URL}/api/admin/listings/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_TOKEN}`
+    },
+    body: JSON.stringify({ title, company, category, bonus, status })
+  });
+  
+  const data = await res.json();
+  if (res.status !== 200) {
+    err.textContent = data.error || "Fehler beim Speichern";
+    err.classList.remove('hidden');
+    return;
+  }
+
+  closeEditModal();
+  loadAllListings();
+  loadPendingListings(); // Refresh pending tab too, in case status changed
+}
+
+async function deleteListing(id) {
+  if (!confirm("Soll dieses Inserat wirklich ENTGÜLTIG gelöscht werden?")) return;
+  const res = await apiCall(`/api/admin/listings/${id}`, 'DELETE');
+  if (res && !res.error) {
+    loadAllListings();
+    loadPendingListings();
+  }
 }

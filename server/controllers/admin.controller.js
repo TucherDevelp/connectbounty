@@ -55,11 +55,50 @@ function rejectListing(req, res, id) {
   sendOK(res, { message: "Inserat gelöscht (abgelehnt)" });
 }
 
+function getAllListings(req, res) {
+  const listings = db.prepare(`
+    SELECT l.*, u.username as creator_username 
+    FROM listings l 
+    JOIN users u ON l.created_by = u.id 
+    ORDER BY l.created_at DESC
+  `).all();
+  
+  sendOK(res, listings);
+}
+
+async function updateListing(req, res, id) {
+  const { parseBody } = require("../middleware/response.helper");
+  const body = await parseBody(req);
+  const { title, company, category, bonus, status } = body;
+
+  if (!title || !company || !category || bonus == null) {
+    return sendError(res, 400, "Bitte alle Pflichtfelder ausfüllen");
+  }
+
+  const result = db.prepare(`
+    UPDATE listings 
+    SET title = ?, company = ?, category = ?, bonus = ?, status = ?
+    WHERE id = ?
+  `).run(title, company, category, bonus, status, id);
+
+  if (result.changes === 0) return sendError(res, 404, "Inserat nicht gefunden");
+  sendOK(res, { message: "Inserat erfolgreich aktualisiert" });
+}
+
+function deleteListing(req, res, id) {
+  const result = db.prepare("DELETE FROM listings WHERE id = ?").run(id);
+  if (result.changes === 0) return sendError(res, 404, "Inserat nicht gefunden");
+  sendOK(res, { message: "Inserat erfolgreich gelöscht" });
+}
+
 module.exports = {
   getPendingUsers,
   approveUser,
   rejectUser,
   getPendingListings,
   approveListing,
-  rejectListing
+  rejectListing,
+  getAllListings,
+  updateListing,
+  deleteListing
 };

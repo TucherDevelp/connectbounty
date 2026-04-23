@@ -13,7 +13,8 @@ const { corsMiddleware } = require("../middleware/cors.middleware");
 const { sendError } = require("../middleware/response.helper");
 const {
   getPendingUsers, approveUser, rejectUser,
-  getPendingListings, approveListing, rejectListing
+  getPendingListings, approveListing, rejectListing,
+  getAllListings, updateListing, deleteListing
 } = require("../controllers/admin.controller");
 const {
   getAdminStatus, registerAdmin, loginAdmin,
@@ -56,6 +57,11 @@ function handleRoutes(req, res) {
 
       // Listings
       if (path === "/api/admin/listings/pending" && method === "GET") return getPendingListings(req, res);
+      if (path === "/api/admin/listings/all" && method === "GET") return getAllListings(req, res);
+      
+      const listingUpdateMatch = path.match(/^\/api\/admin\/listings\/([^/]+)$/);
+      if (listingUpdateMatch && method === "PUT") return updateListing(req, res, listingUpdateMatch[1]);
+      if (listingUpdateMatch && method === "DELETE") return deleteListing(req, res, listingUpdateMatch[1]);
       
       const listingApproveMatch = path.match(/^\/api\/admin\/listings\/([^/]+)\/approve$/);
       if (listingApproveMatch && method === "PUT") return approveListing(req, res, listingApproveMatch[1]);

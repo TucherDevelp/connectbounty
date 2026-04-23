@@ -119,6 +119,7 @@
     <div class="tabs">
       <button class="tab active" onclick="switchTab('users')">Pending Users</button>
       <button class="tab" onclick="switchTab('listings')">Pending Listings</button>
+      <button class="tab" onclick="switchTab('all-listings')">Alle Inserate</button>
     </div>
 
     <main>
@@ -165,7 +166,72 @@
           </tbody>
         </table>
       </div>
+
+      <!-- All Listings Tab -->
+      <div id="tab-all-listings" class="tab-content hidden">
+        <div class="actions-bar">
+          <button onclick="loadAllListings()">Refresh</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Firma</th>
+              <th>Titel</th>
+              <th>Bonus</th>
+              <th>Status</th>
+              <th>Aktionen</th>
+            </tr>
+          </thead>
+          <tbody id="all-listings-tbody">
+            <tr><td colspan="6" class="text-center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </main>
+  </div>
+
+  <!-- Edit Listing Modal -->
+  <div id="edit-modal" class="screen hidden" style="background: rgba(0,0,0,0.8); z-index: 1000;">
+    <div class="card" style="max-width: 500px; max-height: 90vh; overflow-y: auto;">
+      <h2>Inserat bearbeiten</h2>
+      
+      <input type="hidden" id="edit-id" />
+      
+      <div class="form-group">
+        <label>Titel</label>
+        <input type="text" id="edit-title" />
+      </div>
+      <div class="form-group">
+        <label>Firma</label>
+        <input type="text" id="edit-company" />
+      </div>
+      <div class="form-group">
+        <label>Kategorie</label>
+        <select id="edit-category" style="width: 100%; padding: 0.8rem; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
+          <option value="student-programs">Student Programs</option>
+          <option value="sign-on-bonuses">Sign-On Bonuses</option>
+          <option value="contractor-roles">Contractor Roles</option>
+          <option value="sales-incentives">Sales Incentives</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Bonus (EUR)</label>
+        <input type="number" id="edit-bonus" />
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-status" style="width: 100%; padding: 0.8rem; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px;">
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+
+      <button onclick="saveListing()" class="btn-primary w-full">Speichern</button>
+      <button onclick="closeEditModal()" class="btn-danger w-full" style="margin-top: 10px; background: transparent; border: 1px solid var(--border); color: var(--text);">Abbrechen</button>
+      <div id="edit-error" class="error hidden"></div>
+    </div>
   </div>
 
   <script src="app.js"></script>
