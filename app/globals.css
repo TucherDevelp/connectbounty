@@ -1,57 +1,59 @@
 @import "tailwindcss";
 
 /* ──────────────────────────────────────────────────────────
-   ConnectBounty Design Tokens (Phase 0 baseline).
-   Wird in Phase 8 final ausdifferenziert (seriösere Palette,
-   reduzierte Radien, gedämpfte Shadows). Amber bleibt als
-   Akzent, das Bonbon-Logo bleibt unverändert.
+   ConnectBounty – Design Tokens v2
+   Amber-Akzent + seriöse Slate-Surfaces. Bonbon-Logo + Name
+   bleiben unverändert.
    ────────────────────────────────────────────────────────── */
 @theme {
-  /* Brand */
-  --color-brand-50:  #fff7e6;
-  --color-brand-100: #ffe8b8;
-  --color-brand-200: #ffd680;
-  --color-brand-300: #ffc04d;
-  --color-brand-400: #f5a623;
-  --color-brand-500: #d4891a;
-  --color-brand-600: #a86b12;
-  --color-brand-700: #7a4d0c;
+  /* ── Brand (Amber) ── */
+  --color-brand:      #f5a623;
+  --color-brand-50:   #fff7e6;
+  --color-brand-100:  #ffe8b8;
+  --color-brand-200:  #ffd680;
+  --color-brand-300:  #ffc04d;
+  --color-brand-400:  #f5a623;
+  --color-brand-500:  #d4891a;
+  --color-brand-600:  #a86b12;
+  --color-brand-700:  #7a4d0c;
 
-  /* Slate-basierte Surfaces (statt reinem Schwarz – wirkt seriöser) */
-  --color-surface-bg:    #0b1220;
-  --color-surface-1:     #111827;
-  --color-surface-2:     #1f2937;
-  --color-surface-3:     #374151;
-  --color-surface-border: rgba(255, 255, 255, 0.08);
+  /* ── Surfaces (Deep Slate) ── */
+  --color-surface-bg:     #080f1c;
+  --color-surface-1:      #0f1729;
+  --color-surface-2:      #1a2540;
+  --color-surface-3:      #253050;
+  --color-surface-border: rgba(148, 163, 184, 0.12);
+  --color-surface-hover:  rgba(245, 166, 35, 0.06);
 
-  /* Text */
-  --color-text-primary: #f1f5f9;
+  /* ── Text ── */
+  --color-text-primary: #e2e8f0;
   --color-text-muted:   #94a3b8;
-  --color-text-faint:   #475569;
+  --color-text-faint:   #4b5d76;
 
-  /* Status */
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-error:   #f87171;
-  --color-info:    #60a5fa;
+  /* ── Status ── */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error:   #ef4444;
+  --color-info:    #3b82f6;
 
-  /* Typografie – tatsächliche Family-Variablen werden von next/font im
-     <html>-Element gesetzt; hier definieren wir nur Fallback-Stacks. */
+  /* ── Typografie ── */
   --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", monospace;
 
-  /* Radien (bewusst kleiner – kein Pill-Look mehr) */
+  /* ── Radien ── */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 20px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 1px 3px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.30);
+  --shadow-card-hover: 0 4px 16px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.35);
 }
 
 @layer base {
   *,
   *::before,
-  *::after {
-    box-sizing: border-box;
-  }
+  *::after { box-sizing: border-box; }
 
   html {
     -webkit-text-size-adjust: 100%;
@@ -64,24 +66,50 @@
     background-color: var(--color-surface-bg);
     color: var(--color-text-primary);
     font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
-    line-height: 1.6;
+    line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
-  h1,
-  h2,
-  h3,
-  h4 {
+  h1, h2, h3, h4 {
     font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
     line-height: 1.2;
     margin: 0;
     letter-spacing: -0.01em;
   }
 
-  a {
-    color: inherit;
-    text-decoration: none;
+  a { color: inherit; text-decoration: none; }
+
+  /* Focus-Ring (global, zugänglich) */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-400);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
+}
+
+/* ── Skeleton-Animation ─────────────────────────────────── */
+@layer components {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-2) 25%,
+      var(--color-surface-3) 50%,
+      var(--color-surface-2) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+    border-radius: var(--radius-md);
+  }
+
+  @keyframes skeleton-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Scrollbar (subtiler, dunkel) */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--color-surface-3); border-radius: 3px; }
 }

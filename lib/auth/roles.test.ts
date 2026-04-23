@@ -15,12 +15,15 @@ vi.mock("@/lib/supabase/server", () => ({
 
 import {
   ForbiddenError,
+  KycRequiredError,
   UnauthenticatedError,
   getCurrentUser,
   hasAnyRole,
   hasRole,
+  isKycApproved,
   logAuditEvent,
   requireAnyRole,
+  requireKycApproved,
   requireRole,
   requireUser,
 } from "./roles";
@@ -109,6 +112,43 @@ describe("requireRole / requireAnyRole", () => {
     supabaseMock.auth.getUser.mockResolvedValueOnce({ data: { user: null }, error: null });
     await expect(requireAnyRole(["admin"])).rejects.toBeInstanceOf(UnauthenticatedError);
     expect(supabaseMock.rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe("isKycApproved / requireKycApproved", () => {
+  it("isKycApproved ruft RPC is_kyc_approved und gibt Boolean", async () => {
+    supabaseMock.rpc.mockResolvedValueOnce({ data: true, error: null });
+    expect(await isKycApproved()).toBe(true);
+    expect(supabaseMock.rpc).toHaveBeenCalledWith("is_kyc_approved", {});
+  });
+
+  it("isKycApproved ist false wenn RPC null liefert", async () => {
+    supabaseMock.rpc.mockResolvedValueOnce({ data: null, error: null });
+    expect(await isKycApproved()).toBe(false);
+  });
+
+  it("requireKycApproved wirft KycRequiredError bei unverifizierten Usern", async () => {
+    supabaseMock.auth.getUser.mockResolvedValueOnce({
+      data: { user: { id: "u1" } },
+      error: null,
+    });
+    supabaseMock.rpc.mockResolvedValueOnce({ data: false, error: null });
+    await expect(requireKycApproved()).rejects.toBeInstanceOf(KycRequiredError);
+  });
+
+  it("requireKycApproved wirft UnauthenticatedError ohne Session", async () => {
+    supabaseMock.auth.getUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+    await expect(requireKycApproved()).rejects.toBeInstanceOf(UnauthenticatedError);
+    expect(supabaseMock.rpc).not.toHaveBeenCalled();
+  });
+
+  it("requireKycApproved resolved bei approved User", async () => {
+    supabaseMock.auth.getUser.mockResolvedValueOnce({
+      data: { user: { id: "u1" } },
+      error: null,
+    });
+    supabaseMock.rpc.mockResolvedValueOnce({ data: true, error: null });
+    await expect(requireKycApproved()).resolves.toBeUndefined();
   });
 });
 

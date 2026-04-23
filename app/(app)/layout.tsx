@@ -19,18 +19,52 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center justify-between border-b border-[var(--color-surface-border)] bg-[var(--color-surface-1)] px-6 py-3">
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/assets/bonbon-logo.svg"
-            alt="ConnectBounty"
-            width={32}
-            height={18}
-            priority
-          />
-          <span className="font-display text-base font-semibold tracking-tight">
-            ConnectBounty
-          </span>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/assets/bonbon-logo.svg"
+              alt="ConnectBounty"
+              width={32}
+              height={18}
+              priority
+            />
+            <span className="font-display text-base font-semibold tracking-tight">
+              ConnectBounty
+            </span>
+          </Link>
+          <nav aria-label="Hauptnavigation" className="hidden items-center gap-4 text-sm sm:flex">
+            <Link
+              href="/"
+              className="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)]"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/bounties"
+              className="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)]"
+            >
+              Marktplatz
+            </Link>
+            <Link
+              href="/bounties/mine"
+              className="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)]"
+            >
+              Meine Bounties
+            </Link>
+            <Link
+              href="/referrals/mine"
+              className="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)]"
+            >
+              Empfehlungen
+            </Link>
+            <Link
+              href="/kyc"
+              className="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)]"
+            >
+              KYC
+            </Link>
+          </nav>
+        </div>
 
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-[var(--color-text-muted)] sm:inline">

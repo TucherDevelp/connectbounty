@@ -17,6 +17,8 @@
     "db:migrate": "node --env-file=.env.local scripts/db-migrate.mjs",
     "db:teardown-auth": "node --env-file=.env.local scripts/teardown-auth-schema.mjs",
     "db:verify": "node --env-file=.env.local scripts/verify-schema.mjs",
+    "smoke:bounty": "node --env-file=.env.local scripts/smoke-bounty.mjs",
+    "seed:demo": "node --env-file=.env.local scripts/seed-demo.mjs",
     "prepare": "husky"
   },
   "lint-staged": {

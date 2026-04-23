@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import { KycStatusBadge } from "@/components/kyc/status-badge";
+import { PageHeader } from "@/components/ui/page-header";
 import { requireUser } from "@/lib/auth/roles";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { KycStatus } from "@/lib/supabase/types";
@@ -31,29 +34,61 @@ export default async function KycPage() {
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-12">
-      <header className="mb-8 flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
-            Identitätsprüfung
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Pflicht vor dem Erstellen von Inseraten und dem Empfangen von Auszahlungen.
-          </p>
-        </div>
-        <KycStatusBadge status={status} />
-      </header>
+      <PageHeader
+        title="Identitätsprüfung"
+        description="Pflicht vor dem Erstellen von Inseraten und dem Empfangen von Auszahlungen."
+        actions={<KycStatusBadge status={status} />}
+      />
+
+      {/* Fortschritts-Schritte */}
+      <ol className="mb-8 flex gap-2 overflow-x-auto text-xs sm:gap-0">
+        {(["unverified", "pending", "approved"] as const).map((step, i) => {
+          const labels = ["Nicht geprüft", "In Prüfung", "Verifiziert"];
+          const isDone =
+            (step === "unverified" && ["pending", "approved"].includes(status)) ||
+            (step === "pending" && status === "approved");
+          const isCurrent = step === status || (step === "unverified" && (status === "rejected" || status === "expired"));
+          return (
+            <li key={step} className="flex items-center gap-2 sm:flex-1">
+              <span
+                className={[
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                  isDone
+                    ? "bg-[var(--color-success)] text-black"
+                    : isCurrent
+                    ? "bg-[var(--color-brand)] text-black"
+                    : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)]",
+                ].join(" ")}
+              >
+                {isDone ? "✓" : i + 1}
+              </span>
+              <span className={isCurrent ? "font-medium text-[var(--color-text-primary)]" : "text-[var(--color-text-muted)]"}>
+                {labels[i]}
+              </span>
+              {i < 2 && <span className="mx-2 hidden h-px flex-1 bg-[var(--color-surface-border)] sm:block" />}
+            </li>
+          );
+        })}
+      </ol>
 
       {status === "unverified" && (
         <Card>
           <CardHeader>
             <CardTitle>Verifizierung starten</CardTitle>
             <CardDescription>
-              Halte einen gültigen Ausweis bereit. Die Prüfung dauert in der Regel
-              wenige Minuten.
+              Halte einen gültigen Ausweis (Personalausweis oder Pass) bereit.
+              Die Prüfung dauert in der Regel unter 3 Minuten.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <StartKycButton />
+          <CardContent className="flex flex-col gap-4">
+            <ul className="space-y-1.5 text-sm text-[var(--color-text-muted)]">
+              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Dokument fotografieren oder Datei hochladen</li>
+              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Liveness-Check (kurzes Selfie-Video)</li>
+              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Automatische Prüfung in Sekunden bis Minuten</li>
+            </ul>
+            <div>
+              <StartKycButton />
+            </div>
           </CardContent>
         </Card>
       )}
@@ -63,56 +98,72 @@ export default async function KycPage() {
           <CardHeader>
             <CardTitle>Antrag wird geprüft</CardTitle>
             <CardDescription>
-              Antrag-ID: <code className="text-xs">{applicant.applicant_id}</code>
+              Wir informieren dich per E-Mail, sobald das Ergebnis vorliegt.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             <p className="text-sm text-[var(--color-text-muted)]">
-              Wir benachrichtigen dich, sobald die Prüfung abgeschlossen ist.
+              Antrag-Referenz:{" "}
+              <code className="rounded bg-[var(--color-surface-2)] px-1.5 py-0.5 text-xs">
+                {applicant.applicant_id}
+              </code>
+            </p>
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Während du wartest, kannst du schon deinen Account vervollständigen.
             </p>
           </CardContent>
         </Card>
       )}
 
       {status === "approved" && (
-        <Card>
+        <Card className="border-[var(--color-success)]/30 bg-[color-mix(in_oklab,var(--color-success)_6%,var(--color-surface-1))]">
           <CardHeader>
-            <CardTitle>Identität verifiziert</CardTitle>
+            <CardTitle>Identität verifiziert ✓</CardTitle>
             <CardDescription>
-              Du kannst jetzt Inserate erstellen und Auszahlungen beantragen.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-[var(--color-text-muted)]">
               Geprüft am{" "}
               {applicant?.reviewed_at
                 ? new Date(applicant.reviewed_at).toLocaleDateString("de-DE")
                 : "–"}
-              .
-            </p>
+              . Du hast jetzt Zugriff auf alle Plattform-Funktionen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Link href="/bounties/new" className={buttonVariants({ variant: "primary", size: "sm" })}>
+              Bounty erstellen
+            </Link>
+            <Link href="/bounties" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+              Marktplatz entdecken
+            </Link>
           </CardContent>
         </Card>
       )}
 
-      {(status === "rejected" || status === "expired") && applicant && (
-        <Card>
+      {(status === "rejected" || status === "expired") && (
+        <Card className="border-[var(--color-error)]/30">
           <CardHeader>
             <CardTitle>
               {status === "rejected" ? "Antrag abgelehnt" : "Antrag abgelaufen"}
             </CardTitle>
             <CardDescription>
-              Bitte starte die Verifizierung erneut.
+              {status === "rejected"
+                ? "Dein Antrag konnte nicht genehmigt werden. Bitte starte die Prüfung erneut."
+                : "Die Gültigkeitsdauer des Antrags ist abgelaufen. Bitte verifiziere dich erneut."}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {applicant.reject_labels && applicant.reject_labels.length > 0 && (
-              <ul className="list-disc pl-5 text-sm text-[var(--color-text-muted)]">
-                {applicant.reject_labels.map((l) => (
-                  <li key={l}>{l}</li>
-                ))}
-              </ul>
+            {applicant?.reject_labels && applicant.reject_labels.length > 0 && (
+              <div className="rounded-[var(--radius-md)] bg-[var(--color-surface-2)] p-3">
+                <p className="mb-1.5 text-xs font-medium text-[var(--color-text-muted)]">Ablehnungsgründe:</p>
+                <ul className="space-y-1 text-sm text-[var(--color-error)]">
+                  {applicant.reject_labels.map((l) => (
+                    <li key={l} className="flex items-start gap-1.5"><span>•</span>{l}</li>
+                  ))}
+                </ul>
+              </div>
             )}
-            <StartKycButton label="Erneut starten" />
+            <div>
+              <StartKycButton label="Erneut starten" />
+            </div>
           </CardContent>
         </Card>
       )}

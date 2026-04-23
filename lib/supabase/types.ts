@@ -53,16 +53,30 @@ export type AuditAction =
   | "referral.submitted"
   | "referral.status_changed"
   | "referral.withdrawn"
+  | "bounty.expired"
   | "chat.reported"
   | "chat.message_blocked"
+  | "payout.created"
+  | "payout.processing"
+  | "payout.paid"
   | "payout.requested"
   | "payout.released"
   | "payout.failed"
-  | "admin.action";
+  | "stripe.connect_started"
+  | "stripe.connect_completed"
+  | "stripe.connect_revoked"
+  | "admin.action"
+  | "bounty.approved"
+  | "bounty.rejected"
+  | "referral.approved"
+  | "referral.deleted";
 
-export type BountyStatus = "draft" | "open" | "closed" | "expired" | "cancelled";
+export type BountyStatus = "draft" | "pending_review" | "open" | "closed" | "expired" | "cancelled";
+
+export type PayoutStatus = "pending" | "processing" | "paid" | "failed" | "cancelled";
 
 export type ReferralStatus =
+  | "pending_review"
   | "submitted"
   | "contacted"
   | "interviewing"
@@ -311,6 +325,88 @@ export type Database = {
           },
         ];
       };
+      stripe_connect_accounts: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_account_id: string | null;
+          onboarding_status: "pending" | "onboarding" | "active" | "restricted" | "disabled";
+          payouts_enabled: boolean;
+          charges_enabled: boolean;
+          last_synced_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_account_id?: string | null;
+          onboarding_status?: "pending" | "onboarding" | "active" | "restricted" | "disabled";
+          payouts_enabled?: boolean;
+          charges_enabled?: boolean;
+          last_synced_at?: string | null;
+        };
+        Update: {
+          stripe_account_id?: string | null;
+          onboarding_status?: "pending" | "onboarding" | "active" | "restricted" | "disabled";
+          payouts_enabled?: boolean;
+          charges_enabled?: boolean;
+          last_synced_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [{ foreignKeyName: "stripe_connect_accounts_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"]; }];
+      };
+      payouts: {
+        Row: {
+          id: string;
+          referral_id: string;
+          bounty_id: string;
+          referrer_id: string;
+          stripe_account_id: string | null;
+          amount: number;
+          currency: string;
+          status: PayoutStatus;
+          stripe_transfer_id: string | null;
+          stripe_error_code: string | null;
+          failure_reason: string | null;
+          requested_at: string;
+          processing_started_at: string | null;
+          paid_at: string | null;
+          failed_at: string | null;
+          cancelled_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          referral_id: string;
+          bounty_id: string;
+          referrer_id: string;
+          stripe_account_id?: string | null;
+          amount: number;
+          currency: string;
+          status?: PayoutStatus;
+          stripe_transfer_id?: string | null;
+          stripe_error_code?: string | null;
+          failure_reason?: string | null;
+        };
+        Update: {
+          status?: PayoutStatus;
+          stripe_transfer_id?: string | null;
+          stripe_error_code?: string | null;
+          failure_reason?: string | null;
+          processing_started_at?: string | null;
+          paid_at?: string | null;
+          failed_at?: string | null;
+          cancelled_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "payouts_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
+          { foreignKeyName: "payouts_bounty_id_fkey"; columns: ["bounty_id"]; referencedRelation: "bounties"; referencedColumns: ["id"]; },
+          { foreignKeyName: "payouts_referrer_id_fkey"; columns: ["referrer_id"]; referencedRelation: "profiles"; referencedColumns: ["id"]; },
+        ];
+      };
       audit_logs: {
         Row: {
           id: number;
@@ -380,6 +476,18 @@ export type Database = {
         Args: { p_bounty: string };
         Returns: boolean;
       };
+      expire_stale_bounties: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      is_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      admin_stats: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -387,6 +495,7 @@ export type Database = {
       audit_action: AuditAction;
       bounty_status: BountyStatus;
       referral_status: ReferralStatus;
+      payout_status: PayoutStatus;
     };
     CompositeTypes: Record<string, never>;
   };

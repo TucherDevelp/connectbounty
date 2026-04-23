@@ -33,7 +33,7 @@ export function FormAlert({
   variant = "error",
   children,
 }: {
-  variant?: "error" | "info" | "success";
+  variant?: "error" | "info" | "success" | "warning";
   children: React.ReactNode;
 }) {
   const colors = {
@@ -41,6 +41,8 @@ export function FormAlert({
     info: "border-[var(--color-info)]/40 bg-[var(--color-info)]/10 text-[var(--color-info)]",
     success:
       "border-[var(--color-success)]/40 bg-[var(--color-success)]/10 text-[var(--color-success)]",
+    warning:
+      "border-[var(--color-warning)]/40 bg-[var(--color-warning)]/10 text-[var(--color-warning)]",
   } as const;
 
   return (

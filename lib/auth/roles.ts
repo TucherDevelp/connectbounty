@@ -29,6 +29,13 @@ export class ForbiddenError extends Error {
   }
 }
 
+export class KycRequiredError extends Error {
+  constructor() {
+    super("Diese Aktion erfordert einen abgeschlossenen KYC.");
+    this.name = "KycRequiredError";
+  }
+}
+
 export async function getCurrentUser() {
   const supabase = await getSupabaseServerClient();
   const { data, error } = await supabase.auth.getUser();
@@ -67,6 +74,22 @@ export async function requireRole(role: UserRole) {
 export async function requireAnyRole(roles: readonly UserRole[]) {
   await requireUser();
   if (!(await hasAnyRole(roles))) throw new ForbiddenError(roles as UserRole[]);
+}
+
+/**
+ * Prüft via DB-Function is_kyc_approved(), ob der aktuelle User
+ * kyc_status='approved' hat. Single Source of Truth bleibt die DB.
+ */
+export async function isKycApproved(): Promise<boolean> {
+  const supabase = await getSupabaseServerClient();
+  const { data, error } = await supabase.rpc("is_kyc_approved", {});
+  if (error) throw error;
+  return Boolean(data);
+}
+
+export async function requireKycApproved() {
+  await requireUser();
+  if (!(await isKycApproved())) throw new KycRequiredError();
 }
 
 /**

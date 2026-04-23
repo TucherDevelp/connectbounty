@@ -70,13 +70,65 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Marktplatz (Phase 3)</CardTitle>
-            <CardDescription>Inserate für Job-Referrals.</CardDescription>
+            <CardTitle>Marktplatz</CardTitle>
+            <CardDescription>Deine Bounties & offene Stellen.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             <p className="text-sm text-[var(--color-text-muted)]">
-              Wird in Phase 3 freigeschaltet, gemeinsam mit Such- und Filter-UX.
+              {kycStatus === "approved"
+                ? "Leg deine erste Stellenausschreibung an oder verwalte bestehende Entwürfe."
+                : "Sobald dein KYC freigegeben ist, kannst du Bounties veröffentlichen."}
             </p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/bounties"
+                className={buttonVariants({ variant: "secondary", size: "sm" })}
+              >
+                Marktplatz
+              </Link>
+              <Link
+                href="/bounties/mine"
+                className={buttonVariants({ variant: "secondary", size: "sm" })}
+              >
+                Meine Bounties
+              </Link>
+              {kycStatus === "approved" && (
+                <Link
+                  href="/bounties/new"
+                  className={buttonVariants({ variant: "primary", size: "sm" })}
+                >
+                  Neue Bounty
+                </Link>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Empfehlungen</CardTitle>
+            <CardDescription>Kandidat:innen empfehlen & Prämien sichern.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <p className="text-sm text-[var(--color-text-muted)]">
+              {kycStatus === "approved"
+                ? "Finde passende Bounties im Marktplatz und empfiehl Kandidat:innen."
+                : "Nach erfolgreicher KYC-Prüfung kannst du Empfehlungen abgeben."}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/referrals/mine"
+                className={buttonVariants({ variant: "secondary", size: "sm" })}
+              >
+                Meine Empfehlungen
+              </Link>
+              <Link
+                href="/bounties"
+                className={buttonVariants({ variant: "primary", size: "sm" })}
+              >
+                Bounties entdecken
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
