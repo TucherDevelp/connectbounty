@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-// next/server-Stub mit echtem set/getAll-Verhalten für Cookies.
 vi.mock("next/server", () => {
   class CookieJar {
     private store = new Map<string, string>();
@@ -35,9 +34,9 @@ function makeRequest() {
 }
 
 describe("updateSupabaseSession", () => {
-  it("returns a response object even when no session cookie is present", async () => {
-    const res = await updateSupabaseSession(makeRequest());
-    expect(res).toBeDefined();
-    expect(res.headers).toBeInstanceOf(Map);
+  it("returns response + isAuthenticated=false when no session cookie", async () => {
+    const result = await updateSupabaseSession(makeRequest());
+    expect(result.response).toBeDefined();
+    expect(result.isAuthenticated).toBe(false);
   });
 });

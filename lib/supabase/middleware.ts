@@ -3,18 +3,25 @@ import { NextResponse, type NextRequest } from "next/server";
 import { clientEnv } from "@/lib/env";
 import type { Database } from "./types";
 
+export type SessionRefreshResult = {
+  response: NextResponse;
+  isAuthenticated: boolean;
+};
+
 /**
- * Refresht die Supabase-Session bei jedem Request, damit serverseitig
- * kein abgelaufenes Access-Token mehr verwendet wird.
+ * Refresht die Supabase-Session bei jedem Request und liefert das Ergebnis
+ * inklusive eines Booleans, ob aktuell eine gültige Session existiert.
  *
- * Wird aus proxy.ts aufgerufen. Returnt eine NextResponse mit aktualisierten
- * Set-Cookie-Headern; der Caller hängt darauf seine Security-Header.
+ * Wird aus proxy.ts aufgerufen. Der Caller entscheidet anhand des Pfads
+ * über Redirects (Route-Guards) und hängt anschließend die Security-Header
+ * auf die Response.
  *
- * Wichtig (laut @supabase/ssr Doku): Niemals zwischen createServerClient()
- * und dem return getUser() Aufruf irgendetwas Schreibendes tun – sonst
- * inkonsistente Session-States.
+ * Wichtig (laut @supabase/ssr Doku): zwischen createServerClient() und
+ * supabase.auth.getUser() darf NICHTS Schreibendes passieren.
  */
-export async function updateSupabaseSession(request: NextRequest): Promise<NextResponse> {
+export async function updateSupabaseSession(
+  request: NextRequest,
+): Promise<SessionRefreshResult> {
   let response = NextResponse.next({ request });
   const env = clientEnv();
 
@@ -37,9 +44,6 @@ export async function updateSupabaseSession(request: NextRequest): Promise<NextR
     },
   );
 
-  // Triggert den Refresh; Ergebnis bewusst ignoriert – Auth-Guards
-  // entscheiden später anhand getUser() in den jeweiligen Routen.
-  await supabase.auth.getUser();
-
-  return response;
+  const { data, error } = await supabase.auth.getUser();
+  return { response, isAuthenticated: Boolean(data.user) && !error };
 }
