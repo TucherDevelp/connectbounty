@@ -85,6 +85,68 @@ const checks = [
           join pg_namespace n on n.oid = c.relnamespace
           where t.tgname='on_auth_user_created' and n.nspname='auth' and c.relname='users'`,
   },
+  // ─────────────── Schema v2 (KYC) ────────────────────────────────────────
+  {
+    label: "Tabelle public.kyc_applicants",
+    sql: `select 1 from information_schema.tables where table_schema='public' and table_name='kyc_applicants'`,
+  },
+  {
+    label: "Function public.update_kyc_status(...)",
+    sql: `select 1 from pg_proc p
+          join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname='public' and p.proname='update_kyc_status'`,
+  },
+  {
+    label: "RLS aktiv auf kyc_applicants",
+    sql: `select 1 from pg_class where relname='kyc_applicants' and relrowsecurity = true`,
+  },
+  // ─────────────── Schema v3 (Marketplace) ────────────────────────────────
+  {
+    label: "Tabelle public.bounties",
+    sql: `select 1 from information_schema.tables where table_schema='public' and table_name='bounties'`,
+  },
+  {
+    label: "Tabelle public.bounty_referrals",
+    sql: `select 1 from information_schema.tables where table_schema='public' and table_name='bounty_referrals'`,
+  },
+  {
+    label: "Enum public.bounty_status mit 5 Werten",
+    sql: `select 1 from pg_type t
+          join pg_enum e on e.enumtypid = t.oid
+          where t.typname = 'bounty_status'
+          group by t.oid having count(*) = 5`,
+  },
+  {
+    label: "Enum public.referral_status mit 7 Werten",
+    sql: `select 1 from pg_type t
+          join pg_enum e on e.enumtypid = t.oid
+          where t.typname = 'referral_status'
+          group by t.oid having count(*) = 7`,
+  },
+  {
+    label: "Function public.is_kyc_approved(uuid)",
+    sql: `select 1 from pg_proc p
+          join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname='public' and p.proname='is_kyc_approved'`,
+  },
+  {
+    label: "Function public.owns_bounty(uuid)",
+    sql: `select 1 from pg_proc p
+          join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname='public' and p.proname='owns_bounty'`,
+  },
+  {
+    label: "RLS aktiv auf bounties",
+    sql: `select 1 from pg_class where relname='bounties' and relrowsecurity = true`,
+  },
+  {
+    label: "RLS aktiv auf bounty_referrals",
+    sql: `select 1 from pg_class where relname='bounty_referrals' and relrowsecurity = true`,
+  },
+  {
+    label: "Trigger bounty_referrals_transition_guard",
+    sql: `select 1 from pg_trigger where tgname='bounty_referrals_transition_guard'`,
+  },
 ];
 
 const client = new Client({
@@ -112,4 +174,4 @@ if (failed > 0) {
   console.error(`\n${failed} Check(s) fehlgeschlagen.`);
   process.exit(1);
 }
-console.log("\nSchema v1 vollständig.");
+console.log("\nSchema v1 + v2 + v3 vollständig.");
