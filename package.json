@@ -1,22 +1,62 @@
 {
   "name": "connectbounty",
-  "version": "1.0.0",
-  "description": "Connect Bounty – Digital Bonus Referral Platform",
-  "main": "server/app.js",
-  "type": "commonjs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ConnectBounty - Digital Bonus Referral Platform",
   "scripts": {
-    "start": "cd next-app && npm run start -- -p 8000",
-    "admin": "node server/admin-proxy.js",
-    "start:all": "cd next-app && npm run start -- -p 8000 & node server/admin-proxy.js",
-    "dev": "cd next-app && npm run dev -- -p 8000 & node server/admin-proxy.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check:supabase": "node --env-file=.env.local scripts/check-supabase.mjs",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,mjs,cjs,json,md,css}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
-    "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^9.6.0",
-    "dotenv": "^17.4.2",
-    "http-proxy": "^1.18.1",
-    "jsonwebtoken": "^9.0.2",
-    "uuid": "^9.0.1"
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.104.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.8.0",
+    "next": "16.2.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jsdom": "^28.0.1",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitest/coverage-v8": "^4.1.5",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
+    "husky": "^9.1.7",
+    "jsdom": "^29.0.2",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.4.0",
+    "tailwindcss": "^4",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.5"
   }
 }

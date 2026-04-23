@@ -1,0 +1,61 @@
+# Supabase CLI Konfiguration für lokale Entwicklung & CI.
+# Doku: https://supabase.com/docs/guides/local-development/cli/config
+#
+# Für Befehle wie `npx supabase db push`, `supabase gen types ...`,
+# `supabase functions deploy ...` muss zusätzlich ein Personal Access Token
+# in der Shell verfügbar sein:
+#   export SUPABASE_ACCESS_TOKEN=...   (https://supabase.com/dashboard/account/tokens)
+#
+# Mit der Cloud verlinken:
+#   npx supabase link --project-ref gggovrqckwhjqipfoetu
+
+project_id = "gggovrqckwhjqipfoetu"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+# OAuth-Provider werden in Phase 1 (Google) bzw. später aktiviert.
+[auth.external.google]
+enabled = false
+
+# Edge Functions (Sumsub-Webhook, moderate-message, sumsub-webhook etc.)
+# werden ab Phase 2/4 unter supabase/functions/<name>/index.ts angelegt.
+[functions]
+
+# Realtime (Chat in Phase 4) – Defaults sind ok.
+[realtime]
+enabled = true

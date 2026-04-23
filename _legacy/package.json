@@ -1,0 +1,22 @@
+{
+  "name": "connectbounty",
+  "version": "1.0.0",
+  "description": "Connect Bounty – Digital Bonus Referral Platform",
+  "main": "server/app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "cd next-app && npm run start -- -p 8000",
+    "admin": "node server/admin-proxy.js",
+    "start:all": "cd next-app && npm run start -- -p 8000 & node server/admin-proxy.js",
+    "dev": "cd next-app && npm run dev -- -p 8000 & node server/admin-proxy.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.6.0",
+    "dotenv": "^17.4.2",
+    "http-proxy": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1"
+  }
+}

@@ -1,0 +1,3 @@
+-- Seed-Daten für lokale Entwicklung.
+-- Wird ab Phase 1 mit Demo-Usern, -Rollen und -Listings befüllt.
+-- Aktuell absichtlich leer.
