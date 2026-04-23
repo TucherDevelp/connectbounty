@@ -15,6 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "check:supabase": "node --env-file=.env.local scripts/check-supabase.mjs",
     "db:migrate": "node --env-file=.env.local scripts/db-migrate.mjs",
+    "db:teardown-auth": "node --env-file=.env.local scripts/teardown-auth-schema.mjs",
     "db:verify": "node --env-file=.env.local scripts/verify-schema.mjs",
     "prepare": "husky"
   },
