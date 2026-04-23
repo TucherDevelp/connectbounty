@@ -52,7 +52,7 @@ enable_confirmations = true
 [auth.external.google]
 enabled = false
 
-# Edge Functions (Sumsub-Webhook, moderate-message, sumsub-webhook etc.)
+# Edge Functions (kyc-webhook, moderate-message, etc.)
 # werden ab Phase 2/4 unter supabase/functions/<name>/index.ts angelegt.
 [functions]
 

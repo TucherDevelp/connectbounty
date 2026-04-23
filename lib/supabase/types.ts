@@ -123,6 +123,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      kyc_applicants: {
+        Row: {
+          id: string;
+          user_id: string;
+          applicant_id: string;
+          level_name: string;
+          status: KycStatus;
+          review_result: Json | null;
+          reject_labels: string[] | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          applicant_id: string;
+          level_name: string;
+          status?: KycStatus;
+          review_result?: Json | null;
+          reject_labels?: string[] | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          applicant_id?: string;
+          level_name?: string;
+          status?: KycStatus;
+          review_result?: Json | null;
+          reject_labels?: string[] | null;
+          reviewed_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "kyc_applicants_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       audit_logs: {
         Row: {
           id: number;
@@ -174,6 +219,15 @@ export type Database = {
           p_metadata?: Json;
         };
         Returns: number;
+      };
+      update_kyc_status: {
+        Args: {
+          p_applicant_id: string;
+          p_status: KycStatus;
+          p_review_result?: Json | null;
+          p_reject_labels?: string[] | null;
+        };
+        Returns: void;
       };
     };
     Enums: {

@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { KycStatusBadge } from "@/components/kyc/status-badge";
 import { getCurrentUser } from "@/lib/auth/roles";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import type { KycStatus } from "@/lib/supabase/types";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -9,6 +14,15 @@ export const metadata: Metadata = {
 export default async function DashboardPage() {
   const user = await getCurrentUser();
 
+  const supabase = await getSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("kyc_status")
+    .eq("id", user?.id ?? "")
+    .maybeSingle();
+
+  const kycStatus: KycStatus = profile?.kyc_status ?? "unverified";
+
   return (
     <section className="mx-auto max-w-5xl px-6 py-12">
       <header className="mb-8 space-y-2">
@@ -16,22 +30,41 @@ export default async function DashboardPage() {
           Hallo {user?.user_metadata?.display_name ?? user?.email?.split("@")[0] ?? "Nutzer"}
         </h1>
         <p className="text-[var(--color-text-muted)]">
-          Phase 1 abgeschlossen: Auth steht. Marktplatz, KYC und Payments folgen in
-          den nächsten Phasen.
+          Willkommen zurück. Dein Verifizierungsstatus und die nächsten Schritte findest du unten.
         </p>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
-          <CardHeader>
-            <CardTitle>KYC (Phase 2)</CardTitle>
-            <CardDescription>Identitätsprüfung via Sumsub.</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-2">
+            <div>
+              <CardTitle>Identitätsprüfung</CardTitle>
+              <CardDescription>Pflicht vor Inseraten & Auszahlungen.</CardDescription>
+            </div>
+            <KycStatusBadge status={kycStatus} />
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             <p className="text-sm text-[var(--color-text-muted)]">
-              Wird in Phase 2 freigeschaltet. Bis dahin hast du den Status
-              „unverifiziert“.
+              {kycStatus === "approved" &&
+                "Deine Identität wurde verifiziert. Du kannst Inserate erstellen und Auszahlungen beantragen."}
+              {kycStatus === "pending" &&
+                "Dein Antrag wird geprüft. Das dauert in der Regel wenige Minuten."}
+              {kycStatus === "rejected" &&
+                "Dein Antrag wurde abgelehnt. Bitte starte die Prüfung erneut."}
+              {kycStatus === "expired" &&
+                "Dein Antrag ist abgelaufen. Bitte verifiziere dich erneut."}
+              {kycStatus === "unverified" &&
+                "Du bist noch nicht verifiziert. Starte die Prüfung in 2 Minuten."}
             </p>
+            <Link
+              href="/kyc"
+              className={buttonVariants({
+                variant: kycStatus === "approved" ? "secondary" : "primary",
+                size: "sm",
+              })}
+            >
+              {kycStatus === "approved" ? "Status ansehen" : "Jetzt verifizieren"}
+            </Link>
           </CardContent>
         </Card>
 
@@ -42,7 +75,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-[var(--color-text-muted)]">
-              Folgt in Phase 3, gemeinsam mit Such- und Filter-UX.
+              Wird in Phase 3 freigeschaltet, gemeinsam mit Such- und Filter-UX.
             </p>
           </CardContent>
         </Card>

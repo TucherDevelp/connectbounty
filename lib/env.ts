@@ -19,6 +19,14 @@ import { z } from "zod";
 const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(40, "SUPABASE_SERVICE_ROLE_KEY fehlt oder ungültig"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  // KYC
+  KYC_PROVIDER: z.enum(["mock", "ballerine"]).default("mock"),
+  KYC_WEBHOOK_SECRET: z.string().min(16, "KYC_WEBHOOK_SECRET mindestens 16 Zeichen"),
+  // Ballerine – optional, wird erst validiert wenn KYC_PROVIDER=ballerine
+  BALLERINE_API_URL: z.string().url().optional(),
+  BALLERINE_API_KEY: z.string().min(1).optional(),
+  BALLERINE_WORKFLOW_ID: z.string().min(1).optional(),
+  BALLERINE_WEBHOOK_SECRET: z.string().min(1).optional(),
 });
 
 const clientSchema = z.object({
@@ -69,6 +77,12 @@ export function serverEnv(): z.infer<typeof serverSchema> {
     {
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
       NODE_ENV: process.env.NODE_ENV,
+      KYC_PROVIDER: process.env.KYC_PROVIDER,
+      KYC_WEBHOOK_SECRET: process.env.KYC_WEBHOOK_SECRET,
+      BALLERINE_API_URL: process.env.BALLERINE_API_URL,
+      BALLERINE_API_KEY: process.env.BALLERINE_API_KEY,
+      BALLERINE_WORKFLOW_ID: process.env.BALLERINE_WORKFLOW_ID,
+      BALLERINE_WEBHOOK_SECRET: process.env.BALLERINE_WEBHOOK_SECRET,
     },
     "server",
   );

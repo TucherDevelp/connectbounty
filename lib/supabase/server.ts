@@ -43,7 +43,7 @@ export async function getSupabaseServerClient() {
  * Service-Role-Client – umgeht ALLE RLS-Regeln.
  *
  * Nur für klar abgegrenzte Server-Operationen verwenden:
- *   - Webhooks (Sumsub, Stripe), die noch keinen User-Context haben.
+ *   - Webhooks (Ballerine, Stripe), die noch keinen User-Context haben.
  *   - Admin-Backoffice-Aktionen mit explizitem log_admin_action-Audit.
  *   - System-Cron-Jobs (Edge Functions).
  *

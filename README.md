@@ -13,7 +13,7 @@ Alter Code liegt zur Referenz in [`_legacy/`](./_legacy).
 
 - **Frontend**: Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 + shadcn/ui
 - **Auth + DB + Storage + Realtime**: Supabase
-- **KYC**: Sumsub (Dokument, Liveness, Face-Match, Adress-/TIN-Prüfung)
+- **KYC**: Ballerine (Open-Source – Dokument, Liveness, Face-Match, Adress-/TIN-Prüfung)
 - **Payments**: Stripe Connect Express
 - **Edge-Logik**: Supabase Edge Functions (Webhooks, Moderation)
 - **Rate-Limits**: Upstash Redis
