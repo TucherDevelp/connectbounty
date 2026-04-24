@@ -177,13 +177,17 @@ export default async function BountyDetailPage({
   const err = typeof sp.error === "string" ? sp.error : null;
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-12">
-      <nav className="mb-4 text-xs text-[var(--color-text-muted)]">
-        <Link href="/bounties" className="hover:text-[var(--color-text-primary)]">
-          ← Zurück zum Marktplatz
+    <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
+      {/* Breadcrumb */}
+      <nav className="mb-5 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+        <Link href="/bounties" className="hover:text-[var(--color-text-primary)] transition-colors">
+          Marktplatz
         </Link>
+        <span>/</span>
+        <span className="truncate max-w-[200px] text-[var(--color-text-primary)]">{bounty.title}</span>
       </nav>
 
+      {/* Flash-Messages */}
       {statusUpdated && (
         <div className="mb-4">
           <FormAlert variant="success">Empfehlungsstatus aktualisiert.</FormAlert>
@@ -199,37 +203,78 @@ export default async function BountyDetailPage({
         </div>
       )}
 
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-2xl">{bounty.title}</CardTitle>
-            <CardDescription className="flex flex-wrap gap-x-3 gap-y-1 text-sm">
-              <span className="font-semibold text-[var(--color-text-primary)]">
-                {formatBonus(Number(bounty.bonus_amount), bounty.bonus_currency)}
-              </span>
-              {bounty.location && <span>· {bounty.location}</span>}
-              {bounty.industry && <span>· {bounty.industry}</span>}
-              <span>· von {bounty.owner_display_name ?? "Unbekannt"}</span>
-              {bounty.published_at && (
-                <span>· veröffentlicht {formatDate(bounty.published_at)}</span>
-              )}
-              {bounty.expires_at && (
-                <span>· läuft ab {formatDate(bounty.expires_at)}</span>
-              )}
-            </CardDescription>
+      {/* pending_review Banner für Owner */}
+      {isOwner && bounty.status === "pending_review" && (
+        <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/5 p-4">
+          <span className="mt-0.5 text-lg">⏳</span>
+          <div>
+            <p className="text-sm font-semibold text-[var(--color-warning)]">Warte auf Admin-Freigabe</p>
+            <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+              Diese Bounty wird nach der Prüfung durch einen Admin im Marktplatz sichtbar.
+            </p>
           </div>
-          <BountyStatusBadge status={expired ? "expired" : bounty.status} />
-        </CardHeader>
-        <CardContent className="gap-5">
+        </div>
+      )}
+
+      {/* Hero-Card */}
+      <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)]">
+        {/* Hero-Header */}
+        <div className="relative border-b border-[var(--color-surface-border)] bg-gradient-to-br from-[var(--color-surface-1)] to-[var(--color-surface-2)] px-6 py-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1 min-w-0">
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-3xl">
+                {bounty.title}
+              </h1>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--color-text-muted)]">
+                {bounty.location && (
+                  <span className="flex items-center gap-1">
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                      <path d="M8 1a5 5 0 0 0-5 5c0 3.5 5 9 5 9s5-5.5 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+                    </svg>
+                    {bounty.location}
+                  </span>
+                )}
+                {bounty.industry && (
+                  <span className="rounded-full border border-[var(--color-surface-border)] px-2 py-0.5 text-xs">
+                    {bounty.industry}
+                  </span>
+                )}
+                <span>von <strong className="text-[var(--color-text-primary)]">{bounty.owner_display_name ?? "Unbekannt"}</strong></span>
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-text-faint)]">
+                {bounty.published_at && <span>Veröffentlicht {formatDate(bounty.published_at)}</span>}
+                {bounty.expires_at && (
+                  <span className={expired ? "text-[var(--color-error)]" : ""}>
+                    · Läuft ab {formatDate(bounty.expires_at)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <BountyStatusBadge status={expired ? "expired" : bounty.status} />
+              <div className="text-right">
+                <p className="text-xs text-[var(--color-text-faint)]">Prämie</p>
+                <p className="font-display text-3xl font-bold text-[var(--color-brand-400)]">
+                  {formatBonus(Number(bounty.bonus_amount), bounty.bonus_currency)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Beschreibung + Tags */}
+        <div className="px-6 py-5">
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-text-primary)]">
             {bounty.description}
           </p>
+
           {bounty.tags.length > 0 && (
-            <ul className="flex flex-wrap gap-1.5">
+            <ul className="mt-4 flex flex-wrap gap-1.5">
               {bounty.tags.map((tag) => (
                 <li
                   key={tag}
-                  className="rounded-full bg-[var(--color-surface-2)] px-2 py-0.5 text-xs text-[var(--color-text-muted)]"
+                  className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs text-[var(--color-text-muted)]"
                 >
                   {tag}
                 </li>
@@ -237,8 +282,9 @@ export default async function BountyDetailPage({
             </ul>
           )}
 
+          {/* Owner-Aktionen */}
           {isOwner && (
-            <div className="flex flex-wrap gap-2 border-t border-[var(--color-surface-border)] pt-4">
+            <div className="mt-5 flex flex-wrap gap-2 border-t border-[var(--color-surface-border)] pt-5">
               {bounty.status === "draft" && (
                 <form action={publishBountyAction}>
                   <input type="hidden" name="id" value={bounty.id} />
@@ -265,17 +311,17 @@ export default async function BountyDetailPage({
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Owner-Sicht: eingehende Empfehlungen */}
       {isOwner && (
-        <section className="mt-10">
-          <div className="mb-3 flex items-baseline justify-between">
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold tracking-tight">
               Eingegangene Empfehlungen
             </h2>
-            <span className="text-xs text-[var(--color-text-muted)]">
+            <span className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-muted)]">
               {referrals.length}
             </span>
           </div>
@@ -286,20 +332,23 @@ export default async function BountyDetailPage({
               ))}
             </ul>
           ) : (
-            <Card>
-              <CardContent className="py-6 text-sm text-[var(--color-text-muted)]">
-                Noch keine Empfehlungen. Sobald Nutzer:innen eine Empfehlung
-                absenden, erscheint sie hier.
-              </CardContent>
-            </Card>
+            <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-surface-border)] py-10 text-center">
+              <span className="text-3xl">📭</span>
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                Noch keine Empfehlungen
+              </p>
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Sobald Nutzer:innen eine Empfehlung abgeben, erscheint sie hier.
+              </p>
+            </div>
           )}
         </section>
       )}
 
       {/* Nicht-Owner: Empfehlungsformular */}
       {!isOwner && (
-        <section className="mt-10">
-          <h2 className="mb-3 font-display text-xl font-semibold tracking-tight">
+        <section className="mt-8">
+          <h2 className="mb-4 font-display text-xl font-semibold tracking-tight">
             Kandidat:in empfehlen
           </h2>
           {!user ? (

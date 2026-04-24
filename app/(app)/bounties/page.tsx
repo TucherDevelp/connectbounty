@@ -114,12 +114,12 @@ export default async function PublicBountiesPage({
 
       {list.items.length > 0 ? (
         <>
-          <p className="mb-3 text-xs text-[var(--color-text-muted)]">
+          <p className="mb-4 text-xs text-[var(--color-text-muted)]">
             {list.total} {list.total === 1 ? "Bounty" : "Bounties"} gefunden
           </p>
-          <ul className="grid gap-4 md:grid-cols-2">
+          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {list.items.map((b) => (
-              <li key={b.id}>
+              <li key={b.id} className="flex">
                 <BountyCard bounty={b} />
               </li>
             ))}
