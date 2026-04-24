@@ -202,6 +202,48 @@ export type Database = {
           },
         ];
       };
+      kyc_documents: {
+        Row: {
+          id: string;
+          applicant_id: string;
+          user_id: string;
+          document_type: "id_card_front" | "id_card_back" | "passport" | "selfie";
+          storage_path: string;
+          file_size: number | null;
+          mime_type: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          applicant_id: string;
+          user_id: string;
+          document_type: "id_card_front" | "id_card_back" | "passport" | "selfie";
+          storage_path: string;
+          file_size?: number | null;
+          mime_type?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          document_type?: "id_card_front" | "id_card_back" | "passport" | "selfie";
+          storage_path?: string;
+          file_size?: number | null;
+          mime_type?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "kyc_documents_applicant_id_fkey";
+            columns: ["applicant_id"];
+            referencedRelation: "kyc_applicants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "kyc_documents_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       bounties: {
         Row: {
           id: string;

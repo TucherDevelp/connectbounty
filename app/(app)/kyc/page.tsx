@@ -5,10 +5,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { KycStatusBadge } from "@/components/kyc/status-badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireUser } from "@/lib/auth/roles";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServerClient, getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import type { KycStatus } from "@/lib/supabase/types";
 import { StartKycButton } from "./start-button";
 import { KycSimulator } from "./simulator";
+import { KycWizardPanel } from "./wizard-panel";
 
 export const metadata: Metadata = { title: "Identitätsprüfung" };
 
@@ -16,8 +17,9 @@ export default async function KycPage() {
   const user = await requireUser();
 
   const supabase = await getSupabaseServerClient();
+  const sbAdmin = getSupabaseServiceRoleClient();
 
-  const [{ data: profile }, { data: applicant }] = await Promise.all([
+  const [{ data: profile }, { data: applicant }, { data: applicantRow }] = await Promise.all([
     supabase.from("profiles").select("kyc_status").eq("id", user.id).maybeSingle(),
     supabase
       .from("kyc_applicants")
@@ -26,11 +28,21 @@ export default async function KycPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    // Für den Wizard: DB-UUID (id) des Antrags abrufen
+    sbAdmin
+      .from("kyc_applicants")
+      .select("id, applicant_id, status")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const status: KycStatus = profile?.kyc_status ?? "unverified";
   const isDev = process.env.NODE_ENV !== "production";
   const isMock = process.env.KYC_PROVIDER !== "ballerine";
+  const isBallerine = process.env.KYC_PROVIDER === "ballerine";
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-12">
@@ -82,9 +94,9 @@ export default async function KycPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <ul className="space-y-1.5 text-sm text-[var(--color-text-muted)]">
-              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Dokument fotografieren oder Datei hochladen</li>
-              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Liveness-Check (kurzes Selfie-Video)</li>
-              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Automatische Prüfung in Sekunden bis Minuten</li>
+              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Ausweis oder Reisepass fotografieren / hochladen</li>
+              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Selfie aufnehmen</li>
+              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Admin-Prüfung – Ergebnis per E-Mail</li>
             </ul>
             <div>
               <StartKycButton />
@@ -101,16 +113,24 @@ export default async function KycPage() {
               Wir informieren dich per E-Mail, sobald das Ergebnis vorliegt.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
+          <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-[var(--color-text-muted)]">
               Antrag-Referenz:{" "}
               <code className="rounded bg-[var(--color-surface-2)] px-1.5 py-0.5 text-xs">
                 {applicant.applicant_id}
               </code>
             </p>
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Während du wartest, kannst du schon deinen Account vervollständigen.
-            </p>
+
+            {/* Dokument-Upload, wenn noch keine Dokumente hochgeladen (nur non-Ballerine) */}
+            {!isBallerine && applicantRow && (
+              <KycWizardPanel applicantRowId={applicantRow.id} />
+            )}
+
+            {isBallerine && (
+              <p className="text-sm text-[var(--color-text-muted)]">
+                Deine Dokumente wurden an den Prüfdienst weitergeleitet.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
@@ -168,7 +188,7 @@ export default async function KycPage() {
         </Card>
       )}
 
-      {isDev && isMock && applicant && status === "pending" && (
+      {isDev && isMock && applicant && status === "pending" && !applicantRow && (
         <Card className="mt-6 border-dashed border-amber-500/40 bg-amber-500/5">
           <CardHeader>
             <CardTitle className="text-amber-200">Dev-Simulator</CardTitle>

@@ -7,8 +7,9 @@ import { logoutAction } from "@/lib/auth/actions";
 
 const NAV = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/kyc", label: "KYC Review" },
   { href: "/admin/bounties", label: "Bounties" },
-  { href: "/admin/users", label: "Nutzer & KYC" },
+  { href: "/admin/users", label: "Nutzer" },
   { href: "/admin/referrals", label: "Empfehlungen" },
 ];
 
