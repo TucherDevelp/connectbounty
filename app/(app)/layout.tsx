@@ -13,6 +13,7 @@ const NAV = [
   { href: "/bounties", label: "Marktplatz" },
   { href: "/bounties/mine", label: "Meine Bounties" },
   { href: "/referrals/mine", label: "Empfehlungen" },
+  { href: "/payouts", label: "Auszahlungen" },
   { href: "/kyc", label: "KYC" },
 ];
 

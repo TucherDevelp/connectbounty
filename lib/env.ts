@@ -27,6 +27,11 @@ const serverSchema = z.object({
   BALLERINE_API_KEY: z.string().min(1).optional(),
   BALLERINE_WORKFLOW_ID: z.string().min(1).optional(),
   BALLERINE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  // Stripe – optional bis Zahlungen live geschaltet werden
+  STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
+  // Platform-Fee in Prozent (0–100, Standard 10%)
+  STRIPE_PLATFORM_FEE_PERCENT: z.coerce.number().min(0).max(100).default(10),
 });
 
 const clientSchema = z.object({
@@ -35,6 +40,7 @@ const clientSchema = z.object({
     .string()
     .min(40, "NEXT_PUBLIC_SUPABASE_ANON_KEY fehlt oder ungültig"),
   NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith("pk_").optional(),
 });
 
 function parseOrThrow<T extends z.ZodTypeAny>(
@@ -63,6 +69,7 @@ export function clientEnv(): z.infer<typeof clientSchema> {
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     },
     "client",
   );
@@ -83,6 +90,9 @@ export function serverEnv(): z.infer<typeof serverSchema> {
       BALLERINE_API_KEY: process.env.BALLERINE_API_KEY,
       BALLERINE_WORKFLOW_ID: process.env.BALLERINE_WORKFLOW_ID,
       BALLERINE_WEBHOOK_SECRET: process.env.BALLERINE_WEBHOOK_SECRET,
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+      STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+      STRIPE_PLATFORM_FEE_PERCENT: process.env.STRIPE_PLATFORM_FEE_PERCENT,
     },
     "server",
   );
