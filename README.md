@@ -6,14 +6,14 @@ vermittelt; nach erfolgreicher Vermittlung fließt eine Provision.
 
 ## Status
 
-Im Rebuild nach dem Plan unter `.cursor/plans/`. Aktuell **Phase 0 – Fundament**.
+Im Rebuild nach dem Plan unter `.cursor/plans/`. Aktuell **Phase 0 - Fundament**.
 Alter Code liegt zur Referenz in [`_legacy/`](./_legacy).
 
 ## Tech-Stack (Ziel)
 
 - **Frontend**: Next.js 16 (App Router) + React 19 + TypeScript + Tailwind v4 + shadcn/ui
 - **Auth + DB + Storage + Realtime**: Supabase
-- **KYC**: Ballerine (Open-Source – Dokument, Liveness, Face-Match, Adress-/TIN-Prüfung)
+- **KYC**: Ballerine (Open-Source - Dokument, Liveness, Face-Match, Adress-/TIN-Prüfung)
 - **Payments**: Stripe Connect Express
 - **Edge-Logik**: Supabase Edge Functions (Webhooks, Moderation)
 - **Rate-Limits**: Upstash Redis
@@ -37,7 +37,7 @@ npm run build
 ### Benötigte Env-Variablen
 
 Siehe [`.env.example`](./.env.example). Werden via `lib/env.ts` (Zod) beim
-ersten Zugriff validiert – fehlende Werte führen zu einem klaren Fehler statt
+ersten Zugriff validiert - fehlende Werte führen zu einem klaren Fehler statt
 einem stillen Crash zur Laufzeit.
 
 | Variable                          | Scope     | Quelle                                 |
@@ -59,7 +59,7 @@ lib/
     server.ts         Server Components / Actions / Route Handler
     middleware.ts     Session-Refresh (wird aus proxy.ts aufgerufen)
     types.ts          Generierte DB-Typen (Stub bis Schema v1)
-  utils.ts            cn() – Tailwind-aware className-Combiner
+  utils.ts            cn() - Tailwind-aware className-Combiner
 proxy.ts              Globale Security-Header + Supabase-Session-Refresh
 supabase/
   config.toml         Supabase-CLI-Konfiguration

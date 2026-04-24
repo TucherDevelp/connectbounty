@@ -70,12 +70,12 @@ describe("loginAction", () => {
     expect(res.status === "error" ? res.fieldErrors : null).toBeUndefined();
   });
 
-  it("redirects to / on success", async () => {
+  it("redirects to /dashboard on success", async () => {
     supabaseAuth.signInWithPassword.mockResolvedValueOnce({ error: null });
     await expect(
       loginAction(idleAction, fd({ email: "a@b.de", password: "x" })),
     ).rejects.toThrow("__NEXT_REDIRECT__");
-    expect(redirectMock).toHaveBeenCalledWith("/");
+    expect(redirectMock).toHaveBeenCalledWith("/dashboard");
   });
 });
 

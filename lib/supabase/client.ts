@@ -7,10 +7,10 @@ import type { Database } from "./types";
 /**
  * Supabase-Client für Client Components.
  *
- * Singleton pro Tab – createBrowserClient verwaltet intern den localStorage-
+ * Singleton pro Tab - createBrowserClient verwaltet intern den localStorage-
  * basierten Auth-State, daher reicht es, einmal pro Modul zu instanziieren.
  *
- * Niemals in Server Components / Route Handlern / Server Actions verwenden –
+ * Niemals in Server Components / Route Handlern / Server Actions verwenden -
  * dort sind die Helper aus ./server.ts zu nutzen, weil sie Cookies via
  * next/headers korrekt schreiben können.
  */

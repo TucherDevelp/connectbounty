@@ -12,9 +12,9 @@ const BUCKET = "kyc-documents";
  * POST /api/kyc/documents
  *
  * Nimmt ein Multipart-Formular mit:
- *   applicantId  – UUID des kyc_applicants-Eintrags
- *   documentType – 'id_card_front' | 'id_card_back' | 'passport' | 'selfie'
- *   file         – Bilddatei (JPEG / PNG / WebP, max 10 MB)
+ *   applicantId  - UUID des kyc_applicants-Eintrags
+ *   documentType - 'id_card_front' | 'id_card_back' | 'passport' | 'selfie'
+ *   file         - Bilddatei (JPEG / PNG / WebP, max 10 MB)
  *
  * Ablauf:
  *   1. Session-User verifizieren (must own the applicant)
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const storagePath = `${user.id}/${applicantId}/${documentType}.${ext}`;
 
-  // Upload (upsert – bei Wiederholung wird überschrieben)
+  // Upload (upsert - bei Wiederholung wird überschrieben)
   const arrayBuffer = await file.arrayBuffer();
   const { error: uploadError } = await sb.storage
     .from(BUCKET)
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
-  // Metadaten in DB – upsert auf (applicant_id, document_type)
+  // Metadaten in DB - upsert auf (applicant_id, document_type)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: dbError } = await (sb as any).from("kyc_documents").upsert(
     {

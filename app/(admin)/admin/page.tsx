@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { localizedMetadata } from "@/lib/i18n-metadata";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
 
-export const metadata: Metadata = { title: "Admin – Dashboard" };
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_admin_dashboard_title" });
+}
 export const dynamic = "force-dynamic";
 
 type Stats = {
@@ -57,7 +61,7 @@ export default async function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <p className={`text-3xl font-bold ${t.color}`}>
-                {stats ? stats[t.key] : "–"}
+                {stats ? stats[t.key] : "-"}
               </p>
             </CardContent>
           </Card>
@@ -75,8 +79,9 @@ export default async function AdminDashboard() {
             href={link.href}
             className="group rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-5 transition-all hover:border-[var(--color-brand-600)/50] hover:bg-[var(--color-surface-hover)]"
           >
-            <p className="font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-brand)]">
-              {link.label} →
+            <p className="flex items-center gap-1.5 font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-brand)]">
+              {link.label}
+              <ArrowRight className="size-4 shrink-0 opacity-70" strokeWidth={2} aria-hidden />
             </p>
             <p className="mt-1 text-sm text-[var(--color-text-muted)]">{link.desc}</p>
           </a>

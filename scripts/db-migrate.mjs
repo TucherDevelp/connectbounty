@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Minimaler Migrations-Runner – fährt alle SQL-Files aus
+ * Minimaler Migrations-Runner - fährt alle SQL-Files aus
  * supabase/migrations/ in lexikografischer Reihenfolge gegen die DB,
  * deren Connection-String in DATABASE_URL steht (.env.local).
  *
@@ -105,7 +105,7 @@ async function main() {
       if (known && known !== m.checksum) {
         throw new Error(
           `Migration ${m.filename} wurde bereits angewandt, aber Checksum hat sich geändert ` +
-            `(${known} → ${m.checksum}). Migrationen sind unveränderlich – lege eine neue an.`,
+            `(${known} → ${m.checksum}). Migrationen sind unveränderlich - lege eine neue an.`,
         );
       }
       await applyOne(client, m);

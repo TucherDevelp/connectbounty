@@ -50,10 +50,10 @@ const idMatch =
 
 const actionId = idMatch ? idMatch[1] : null;
 if (!actionId) {
-  // Kein Action-ID gefunden – wir nehmen einen robusteren Ansatz:
+  // Kein Action-ID gefunden - wir nehmen einen robusteren Ansatz:
   // Next 16 embedded die ID in Script-Chunks. Sicherer ist ein direkter
   // Aufruf an die Supabase-API, nachdem wir /login im Browser-Stil geladen haben.
-  console.log("   · Kein Action-ID-Muster im HTML gefunden – prüfe Form-Attribute:");
+  console.log("   · Kein Action-ID-Muster im HTML gefunden - prüfe Form-Attribute:");
   const formMatch = html.match(/<form[^>]*action="([^"]+)"[^>]*>/);
   console.log("     form action:", formMatch?.[1] ?? "(keins)");
   console.log("   · Fallback: prüfe nur, ob /login rendert und Form vorhanden ist.");
@@ -62,7 +62,7 @@ if (!actionId) {
   console.log(`     email-input: ${hasEmail}  password-input: ${hasPassword}`);
 }
 
-console.log(`   · Action-ID: ${actionId ?? "(unbekannt – Server-Action-Call übersprungen)"}`);
+console.log(`   · Action-ID: ${actionId ?? "(unbekannt - Server-Action-Call übersprungen)"}`);
 
 // 2) Direkter Fetch gegen Supabase (das ist, was die Server-Action intern macht)
 //    um zu isolieren, ob das Problem im Next.js-Layer oder im Supabase-Layer liegt.
@@ -113,5 +113,5 @@ if (actionId) {
   const r3 = await fetch(`${BASE}/`, { headers: { cookie: cookies }, redirect: "manual" });
   console.log(`\n   4) GET /  mit Session-Cookie  → ${r3.status}  (location=${r3.headers.get("location") ?? "-"})`);
   if (r3.status === 200) console.log("      ✓ Dashboard erreichbar");
-  else console.log("      ✗ Kein Dashboard – Auth greift nicht durch");
+  else console.log("      ✗ Kein Dashboard - Auth greift nicht durch");
 }

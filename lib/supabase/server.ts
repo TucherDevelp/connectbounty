@@ -13,7 +13,7 @@ import type { Database } from "./types";
  *     dort scheitern (Next.js wirft Errors). Die Helper schlucken diesen
  *     Spezialfall absichtlich, weil der Refresh in proxy.ts (siehe
  *     ./middleware.ts) ohnehin die kanonische Stelle für Cookie-Updates
- *     ist – Server Components sollen nur lesen.
+ *     ist - Server Components sollen nur lesen.
  */
 export async function getSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -31,7 +31,7 @@ export async function getSupabaseServerClient() {
               cookieStore.set(name, value, options as CookieOptions);
             }
           } catch {
-            /* siehe Header-Kommentar – in RSC erwartet, irrelevant */
+            /* siehe Header-Kommentar - in RSC erwartet, irrelevant */
           }
         },
       },
@@ -40,14 +40,14 @@ export async function getSupabaseServerClient() {
 }
 
 /**
- * Service-Role-Client – umgeht ALLE RLS-Regeln.
+ * Service-Role-Client - umgeht ALLE RLS-Regeln.
  *
  * Nur für klar abgegrenzte Server-Operationen verwenden:
  *   - Webhooks (Ballerine, Stripe), die noch keinen User-Context haben.
  *   - Admin-Backoffice-Aktionen mit explizitem log_admin_action-Audit.
  *   - System-Cron-Jobs (Edge Functions).
  *
- * NIEMALS in normalen User-Flows (Login, Profile, Marketplace) verwenden –
+ * NIEMALS in normalen User-Flows (Login, Profile, Marketplace) verwenden -
  * dort immer getSupabaseServerClient() nutzen, damit RLS greift.
  */
 export function getSupabaseServiceRoleClient() {

@@ -9,7 +9,7 @@ let cached: KycProvider | null = null;
 
 /**
  * Liefert die aktive KYC-Provider-Instanz basierend auf KYC_PROVIDER.
- * Singleton pro Prozess – Provider sind zustandslos, das ist sicher.
+ * Singleton pro Prozess - Provider sind zustandslos, das ist sicher.
  */
 export function getKycProvider(): KycProvider {
   if (cached) return cached;

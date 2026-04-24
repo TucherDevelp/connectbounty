@@ -93,6 +93,10 @@ export async function createBountyAction(
       industry: parsed.data.industry,
       tags: parsed.data.tags,
       expires_at: parsed.data.expiresAt,
+      split_referrer_bps: parsed.data.splitReferrerBps,
+      split_candidate_bps: parsed.data.splitCandidateBps,
+      split_platform_bps: parsed.data.splitPlatformBps,
+      payment_mode: parsed.data.paymentMode,
       status: "draft",
     })
     .select("id")
@@ -227,7 +231,7 @@ export async function deleteBountyAction(formData: FormData): Promise<void> {
   }
 
   const supabase = await getSupabaseServerClient();
-  // RLS erlaubt DELETE ohnehin nur im Draft-Zustand – Client-seitiger
+  // RLS erlaubt DELETE ohnehin nur im Draft-Zustand - Client-seitiger
   // Filter + RLS liefern zusammen eine saubere Doppelabsicherung.
   const { error } = await supabase
     .from("bounties")

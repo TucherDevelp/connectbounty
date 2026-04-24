@@ -1,66 +1,27 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AuthAside } from "@/components/auth/auth-aside";
+import { AuthSettingsBar } from "@/components/auth/auth-settings-bar";
+import { Logo } from "@/components/logo";
 
-/**
- * Layout für alle öffentlichen Auth-Seiten (login, register, reset).
- *
- * Mobile: einspaltig, Logo oben.
- * Desktop (md+): zweispaltig – links Brand-Panel mit Slogan,
- *                rechts das eigentliche Formular.
- */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className="grid min-h-dvh grid-cols-1 md:grid-cols-2">
-      <aside className="hidden flex-col justify-between border-r border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-12 md:flex">
-        <Link href="/" className="flex items-center gap-3">
-          <Image
-            src="/assets/bonbon-logo.svg"
-            alt="ConnectBounty Logo"
-            width={48}
-            height={26}
-            priority
-          />
-          <span className="font-display text-lg font-semibold tracking-tight">
-            ConnectBounty
-          </span>
-        </Link>
+      <AuthAside />
 
-        <div className="space-y-6">
-          <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight text-[var(--color-text-primary)]">
-            Job-Referrals,
-            <br />
-            transparent vermittelt.
-          </h1>
-          <p className="max-w-md text-sm leading-relaxed text-[var(--color-text-muted)]">
-            Inseriere Sign-On-Boni und Vermittlungs-Provisionen, finde geprüfte
-            Kandidat:innen, kommuniziere sicher und werde nach erfolgreicher
-            Vermittlung ausgezahlt – alles auf einer Plattform.
-          </p>
-        </div>
-
-        <p className="text-xs text-[var(--color-text-faint)]">
-          © {new Date().getFullYear()} ConnectBounty
-        </p>
-      </aside>
-
-      <section className="flex items-center justify-center px-6 py-12 md:px-12">
+      <section className="relative flex items-center justify-center px-6 py-12 md:px-12">
+        <AuthSettingsBar />
         <div className="w-full max-w-md">
           <Link
             href="/"
-            className="mb-8 flex items-center gap-2 md:hidden"
-            aria-label="Zur Startseite"
+            className="mb-8 flex min-h-11 items-center gap-2 md:hidden"
+            aria-label="ConnectBounty"
           >
-            <Image
-              src="/assets/bonbon-logo.svg"
-              alt=""
-              width={36}
-              height={20}
-              aria-hidden
-            />
-            <span className="font-display text-base font-semibold">ConnectBounty</span>
+            <Logo size="md" />
           </Link>
-          {children}
+          <div className="rounded-xl border border-border/50 bg-surface/80 p-6 shadow-[var(--shadow-glow)] backdrop-blur-sm md:border-0 md:bg-transparent md:p-0 md:shadow-none">
+            {children}
+          </div>
         </div>
       </section>
     </main>

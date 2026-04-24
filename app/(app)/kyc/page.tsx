@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { localizedMetadata } from "@/lib/i18n-metadata";
+import { Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { KycStatusBadge } from "@/components/kyc/status-badge";
@@ -11,7 +13,9 @@ import { StartKycButton } from "./start-button";
 import { KycSimulator } from "./simulator";
 import { KycWizardPanel } from "./wizard-panel";
 
-export const metadata: Metadata = { title: "Identitätsprüfung" };
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_kyc_title" });
+}
 
 export default async function KycPage() {
   const user = await requireUser();
@@ -66,13 +70,13 @@ export default async function KycPage() {
                 className={[
                   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                   isDone
-                    ? "bg-[var(--color-success)] text-black"
+                    ? "bg-[var(--color-success)] text-white"
                     : isCurrent
-                    ? "bg-[var(--color-brand)] text-black"
-                    : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)]",
+                      ? "bg-[var(--color-brand)] text-primary-foreground"
+                      : "bg-[var(--color-surface-2)] text-[var(--color-text-muted)]",
                 ].join(" ")}
               >
-                {isDone ? "✓" : i + 1}
+                {isDone ? <Check className="size-3.5" strokeWidth={2.75} aria-hidden /> : i + 1}
               </span>
               <span className={isCurrent ? "font-medium text-[var(--color-text-primary)]" : "text-[var(--color-text-muted)]"}>
                 {labels[i]}
@@ -94,9 +98,18 @@ export default async function KycPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <ul className="space-y-1.5 text-sm text-[var(--color-text-muted)]">
-              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Ausweis oder Reisepass fotografieren / hochladen</li>
-              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Selfie aufnehmen</li>
-              <li className="flex items-start gap-2"><span className="text-[var(--color-success)]">✓</span> Admin-Prüfung – Ergebnis per E-Mail</li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 size-4 shrink-0 text-[var(--color-success)]" strokeWidth={2.25} aria-hidden />
+                Ausweis oder Reisepass fotografieren / hochladen
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 size-4 shrink-0 text-[var(--color-success)]" strokeWidth={2.25} aria-hidden />
+                Selfie aufnehmen
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="mt-0.5 size-4 shrink-0 text-[var(--color-success)]" strokeWidth={2.25} aria-hidden />
+                Admin-Prüfung - Ergebnis per E-Mail
+              </li>
             </ul>
             <div>
               <StartKycButton />
@@ -138,12 +151,15 @@ export default async function KycPage() {
       {status === "approved" && (
         <Card className="border-[var(--color-success)]/30 bg-[color-mix(in_oklab,var(--color-success)_6%,var(--color-surface-1))]">
           <CardHeader>
-            <CardTitle>Identität verifiziert ✓</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Identität verifiziert
+              <Check className="size-5 shrink-0 text-[var(--color-success)]" strokeWidth={2.5} aria-hidden />
+            </CardTitle>
             <CardDescription>
               Geprüft am{" "}
               {applicant?.reviewed_at
                 ? new Date(applicant.reviewed_at).toLocaleDateString("de-DE")
-                : "–"}
+                : "-"}
               . Du hast jetzt Zugriff auf alle Plattform-Funktionen.
             </CardDescription>
           </CardHeader>
@@ -189,9 +205,9 @@ export default async function KycPage() {
       )}
 
       {isDev && isMock && applicant && status === "pending" && !applicantRow && (
-        <Card className="mt-6 border-dashed border-amber-500/40 bg-amber-500/5">
+        <Card className="mt-6 border-dashed border-primary/40 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-amber-200">Dev-Simulator</CardTitle>
+            <CardTitle className="text-foreground">Dev-Simulator</CardTitle>
             <CardDescription>
               Nur sichtbar im Mock-Modus und außerhalb von Production.
               Simuliert das Webhook-Event, das Ballerine später senden würde.

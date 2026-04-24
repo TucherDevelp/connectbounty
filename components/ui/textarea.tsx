@@ -13,13 +13,12 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       data-invalid={invalid || undefined}
       aria-invalid={invalid || undefined}
       className={cn(
-        "flex w-full rounded-[var(--radius-md)] border bg-[var(--color-surface-1)] px-3 py-2",
-        "text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-faint)]",
-        "border-[var(--color-surface-border)]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-400)]",
-        "focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface-bg)]",
+        "flex w-full rounded-[var(--radius-md)] border border-border/60 bg-surface px-3 py-2",
+        "text-base text-foreground placeholder:text-muted-foreground",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        "focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "data-[invalid=true]:border-[var(--color-error)] data-[invalid=true]:focus-visible:ring-[var(--color-error)]",
+        "data-[invalid=true]:border-destructive data-[invalid=true]:focus-visible:ring-destructive",
         "resize-y leading-relaxed",
         className,
       )}

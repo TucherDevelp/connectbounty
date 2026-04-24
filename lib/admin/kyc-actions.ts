@@ -18,7 +18,7 @@ const reviewSchema = z.object({
 
 /**
  * Admin-seitige KYC-Entscheidung (Approve / Reject).
- * Ruft die bestehende update_kyc_status() DB-Funktion auf – gleicher Pfad
+ * Ruft die bestehende update_kyc_status() DB-Funktion auf - gleicher Pfad
  * wie der echte Webhook-Handler.
  */
 export async function adminReviewKycAction(formData: FormData): Promise<void> {

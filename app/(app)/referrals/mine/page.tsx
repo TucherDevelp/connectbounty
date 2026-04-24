@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localizedMetadata } from "@/lib/i18n-metadata";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -16,7 +17,9 @@ import { getCurrentUser } from "@/lib/auth/roles";
 import { listMyReferrals } from "@/lib/bounty/queries";
 import { withdrawReferralAction } from "@/lib/referral/actions";
 
-export const metadata: Metadata = { title: "Meine Empfehlungen" };
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_referrals_mine_title" });
+}
 export const dynamic = "force-dynamic";
 
 const OK_MESSAGES: Record<string, string> = {

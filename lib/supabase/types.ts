@@ -1,5 +1,5 @@
 /**
- * Database-Typen für ConnectBounty – Schema v1.
+ * Database-Typen für ConnectBounty - Schema v1.
  *
  * Diese Datei spiegelt 1:1 supabase/migrations/0001_init_auth.sql.
  * Nach jeder neuen Migration wird sie ab Phase 1.2 mit der Supabase CLI
@@ -69,13 +69,31 @@ export type AuditAction =
   | "bounty.approved"
   | "bounty.rejected"
   | "referral.approved"
-  | "referral.deleted";
+  | "referral.deleted"
+  // v7 - Three-stage confirmation + split payout
+  | "referral.hire_proof_uploaded"
+  | "referral.claim_confirmed"
+  | "referral.payout_account_confirmed"
+  | "referral.data_forwarded"
+  | "referral.confirmation_rejected"
+  | "referral.dispute_opened"
+  | "referral.dispute_resolved"
+  | "payout.invoice_created"
+  | "payout.invoice_paid"
+  | "payout.transfers_dispatched"
+  | "payout.completed"
+  | "reminder.sent";
 
 export type BountyStatus = "draft" | "pending_review" | "open" | "closed" | "expired" | "cancelled";
 
+export type BountyPaymentMode = "on_confirmation" | "escrow";
+
 export type PayoutStatus = "pending" | "processing" | "paid" | "failed" | "cancelled";
 
+export type PayoutCaptureMethod = "automatic" | "manual";
+
 export type ReferralStatus =
+  // Legacy-Flow
   | "pending_review"
   | "submitted"
   | "contacted"
@@ -83,7 +101,30 @@ export type ReferralStatus =
   | "hired"
   | "paid"
   | "rejected"
-  | "withdrawn";
+  | "withdrawn"
+  // v7 - Three-stage confirmation flow
+  | "awaiting_hire_proof"
+  | "awaiting_claim"
+  | "awaiting_payout_account"
+  | "awaiting_data_forwarding"
+  | "invoice_pending"
+  | "invoice_paid"
+  | "disputed";
+
+export type RejectionStage =
+  | "hire_proof"
+  | "claim"
+  | "payout_account"
+  | "data_forwarding";
+
+export type DisputeStatus = "open" | "resolved" | "dismissed";
+
+export type ReputationEventType =
+  | "paid_on_time"
+  | "paid_late"
+  | "failed"
+  | "disputed_against"
+  | "dispute_won";
 
 export type Database = {
   public: {
@@ -98,6 +139,8 @@ export type Database = {
           kyc_status: KycStatus;
           email_verified_at: string | null;
           last_seen_at: string | null;
+          referrer_id: string | null;
+          referral_code: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -110,6 +153,8 @@ export type Database = {
           kyc_status?: KycStatus;
           email_verified_at?: string | null;
           last_seen_at?: string | null;
+          referrer_id?: string | null;
+          referral_code?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -122,6 +167,8 @@ export type Database = {
           kyc_status?: KycStatus;
           email_verified_at?: string | null;
           last_seen_at?: string | null;
+          referrer_id?: string | null;
+          referral_code?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -259,6 +306,11 @@ export type Database = {
           expires_at: string | null;
           published_at: string | null;
           closed_at: string | null;
+          split_referrer_bps: number;
+          split_candidate_bps: number;
+          split_platform_bps: number;
+          payment_mode: BountyPaymentMode;
+          escrow_payment_intent_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -276,6 +328,11 @@ export type Database = {
           expires_at?: string | null;
           published_at?: string | null;
           closed_at?: string | null;
+          split_referrer_bps?: number;
+          split_candidate_bps?: number;
+          split_platform_bps?: number;
+          payment_mode?: BountyPaymentMode;
+          escrow_payment_intent_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -293,6 +350,11 @@ export type Database = {
           expires_at?: string | null;
           published_at?: string | null;
           closed_at?: string | null;
+          split_referrer_bps?: number;
+          split_candidate_bps?: number;
+          split_platform_bps?: number;
+          payment_mode?: BountyPaymentMode;
+          escrow_payment_intent_id?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -318,6 +380,26 @@ export type Database = {
           status_changed_by: string | null;
           hired_at: string | null;
           paid_at: string | null;
+          // v7 fields
+          candidate_user_id: string | null;
+          hire_proof_uploaded_at: string | null;
+          claim_confirmed_at: string | null;
+          claim_confirmed_by: string | null;
+          payout_account_confirmed_at: string | null;
+          payout_account_confirmed_by: string | null;
+          company_billing_id: string | null;
+          company_name: string | null;
+          company_billing_email: string | null;
+          company_billing_address: Json | null;
+          company_tax_id: string | null;
+          data_forwarded_at: string | null;
+          data_forwarded_by: string | null;
+          payment_window_until: string | null;
+          rejection_reason: string | null;
+          rejection_stage: RejectionStage | null;
+          rejection_at: string | null;
+          rejection_by: string | null;
+          all_confirmations_done: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -334,6 +416,24 @@ export type Database = {
           status_changed_by?: string | null;
           hired_at?: string | null;
           paid_at?: string | null;
+          candidate_user_id?: string | null;
+          hire_proof_uploaded_at?: string | null;
+          claim_confirmed_at?: string | null;
+          claim_confirmed_by?: string | null;
+          payout_account_confirmed_at?: string | null;
+          payout_account_confirmed_by?: string | null;
+          company_billing_id?: string | null;
+          company_name?: string | null;
+          company_billing_email?: string | null;
+          company_billing_address?: Json | null;
+          company_tax_id?: string | null;
+          data_forwarded_at?: string | null;
+          data_forwarded_by?: string | null;
+          payment_window_until?: string | null;
+          rejection_reason?: string | null;
+          rejection_stage?: RejectionStage | null;
+          rejection_at?: string | null;
+          rejection_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -350,6 +450,24 @@ export type Database = {
           status_changed_by?: string | null;
           hired_at?: string | null;
           paid_at?: string | null;
+          candidate_user_id?: string | null;
+          hire_proof_uploaded_at?: string | null;
+          claim_confirmed_at?: string | null;
+          claim_confirmed_by?: string | null;
+          payout_account_confirmed_at?: string | null;
+          payout_account_confirmed_by?: string | null;
+          company_billing_id?: string | null;
+          company_name?: string | null;
+          company_billing_email?: string | null;
+          company_billing_address?: Json | null;
+          company_tax_id?: string | null;
+          data_forwarded_at?: string | null;
+          data_forwarded_by?: string | null;
+          payment_window_until?: string | null;
+          rejection_reason?: string | null;
+          rejection_stage?: RejectionStage | null;
+          rejection_at?: string | null;
+          rejection_by?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -416,6 +534,22 @@ export type Database = {
           paid_at: string | null;
           failed_at: string | null;
           cancelled_at: string | null;
+          // v7 split payout fields
+          payment_intent_id: string | null;
+          invoice_id: string | null;
+          invoice_hosted_url: string | null;
+          transfer_group: string | null;
+          total_cents: number | null;
+          amount_referrer_cents: number | null;
+          amount_candidate_cents: number | null;
+          amount_ref_of_a_cents: number | null;
+          amount_ref_of_b_cents: number | null;
+          amount_platform_fee_cents: number | null;
+          referrer_transfer_id: string | null;
+          candidate_transfer_id: string | null;
+          ref_of_a_transfer_id: string | null;
+          ref_of_b_transfer_id: string | null;
+          capture_method: PayoutCaptureMethod | null;
           created_at: string;
           updated_at: string;
         };
@@ -431,6 +565,21 @@ export type Database = {
           stripe_transfer_id?: string | null;
           stripe_error_code?: string | null;
           failure_reason?: string | null;
+          payment_intent_id?: string | null;
+          invoice_id?: string | null;
+          invoice_hosted_url?: string | null;
+          transfer_group?: string | null;
+          total_cents?: number | null;
+          amount_referrer_cents?: number | null;
+          amount_candidate_cents?: number | null;
+          amount_ref_of_a_cents?: number | null;
+          amount_ref_of_b_cents?: number | null;
+          amount_platform_fee_cents?: number | null;
+          referrer_transfer_id?: string | null;
+          candidate_transfer_id?: string | null;
+          ref_of_a_transfer_id?: string | null;
+          ref_of_b_transfer_id?: string | null;
+          capture_method?: PayoutCaptureMethod | null;
         };
         Update: {
           status?: PayoutStatus;
@@ -441,6 +590,21 @@ export type Database = {
           paid_at?: string | null;
           failed_at?: string | null;
           cancelled_at?: string | null;
+          payment_intent_id?: string | null;
+          invoice_id?: string | null;
+          invoice_hosted_url?: string | null;
+          transfer_group?: string | null;
+          total_cents?: number | null;
+          amount_referrer_cents?: number | null;
+          amount_candidate_cents?: number | null;
+          amount_ref_of_a_cents?: number | null;
+          amount_ref_of_b_cents?: number | null;
+          amount_platform_fee_cents?: number | null;
+          referrer_transfer_id?: string | null;
+          candidate_transfer_id?: string | null;
+          ref_of_a_transfer_id?: string | null;
+          ref_of_b_transfer_id?: string | null;
+          capture_method?: PayoutCaptureMethod | null;
           updated_at?: string;
         };
         Relationships: [
@@ -481,6 +645,136 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [];
+      };
+      hire_proof_documents: {
+        Row: {
+          id: string;
+          referral_id: string;
+          user_id: string;
+          storage_path: string;
+          mime_type: string | null;
+          file_size: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          referral_id: string;
+          user_id: string;
+          storage_path: string;
+          mime_type?: string | null;
+          file_size?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          storage_path?: string;
+          mime_type?: string | null;
+          file_size?: number | null;
+        };
+        Relationships: [
+          { foreignKeyName: "hire_proof_documents_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
+          { foreignKeyName: "hire_proof_documents_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"]; },
+        ];
+      };
+      referral_rejections: {
+        Row: {
+          id: string;
+          referral_id: string;
+          stage: RejectionStage;
+          reason: string;
+          rejected_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          referral_id: string;
+          stage: RejectionStage;
+          reason: string;
+          rejected_by: string;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [
+          { foreignKeyName: "referral_rejections_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
+        ];
+      };
+      referral_disputes: {
+        Row: {
+          id: string;
+          referral_id: string;
+          opened_by: string;
+          reason: string;
+          status: DisputeStatus;
+          resolver_id: string | null;
+          resolution: string | null;
+          created_at: string;
+          resolved_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          referral_id: string;
+          opened_by: string;
+          reason: string;
+          status?: DisputeStatus;
+          resolver_id?: string | null;
+          resolution?: string | null;
+          created_at?: string;
+          resolved_at?: string | null;
+        };
+        Update: {
+          status?: DisputeStatus;
+          resolver_id?: string | null;
+          resolution?: string | null;
+          resolved_at?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: "referral_disputes_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
+        ];
+      };
+      payment_reminders: {
+        Row: {
+          id: string;
+          referral_id: string;
+          due_day: 7 | 10 | 13;
+          channel: "email" | "in_app";
+          sent_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          referral_id: string;
+          due_day: 7 | 10 | 13;
+          channel: "email" | "in_app";
+          sent_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          sent_at?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: "payment_reminders_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
+        ];
+      };
+      reputation_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          event_type: ReputationEventType;
+          amount_cents: number | null;
+          reference_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          event_type: ReputationEventType;
+          amount_cents?: number | null;
+          reference_id?: string | null;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [
+          { foreignKeyName: "reputation_events_user_id_fkey"; columns: ["user_id"]; referencedRelation: "profiles"; referencedColumns: ["id"]; },
+        ];
       };
     };
     Views: Record<string, never>;
@@ -530,14 +824,23 @@ export type Database = {
         Args: Record<string, never>;
         Returns: Json;
       };
+      get_referrer_pair: {
+        Args: { p_referral: string };
+        Returns: { referrer_of_a: string | null; referrer_of_b: string | null }[];
+      };
     };
     Enums: {
       user_role: UserRole;
       kyc_status: KycStatus;
       audit_action: AuditAction;
       bounty_status: BountyStatus;
+      bounty_payment_mode: BountyPaymentMode;
       referral_status: ReferralStatus;
+      rejection_stage: RejectionStage;
+      dispute_status: DisputeStatus;
+      reputation_event_type: ReputationEventType;
       payout_status: PayoutStatus;
+      payout_capture_method: PayoutCaptureMethod;
     };
     CompositeTypes: Record<string, never>;
   };

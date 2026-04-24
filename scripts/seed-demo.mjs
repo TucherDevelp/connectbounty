@@ -6,13 +6,13 @@
  * damit echte User nicht kollidieren):
  *   • alice@demo.connectbounty.local  (KYC approved, Owner von 3 Bounties)
  *   • bob@demo.connectbounty.local    (KYC approved, Empfehler)
- *   • carol@demo.connectbounty.local  (KYC unverified – für Gate-Tests)
+ *   • carol@demo.connectbounty.local  (KYC unverified - für Gate-Tests)
  *
  * Passwort für alle: DemoPass-1234!
  *
  * Das Skript ist idempotent: beim erneuten Aufruf werden bestehende
  * Demo-User (inkl. deren Bounties/Referrals via ON DELETE CASCADE) erst
- * komplett gelöscht und neu erzeugt. Keine Produktionsnutzung – wir
+ * komplett gelöscht und neu erzeugt. Keine Produktionsnutzung - wir
  * schreiben direkt mit SERVICE_ROLE.
  */
 import { createClient } from "@supabase/supabase-js";
@@ -152,7 +152,7 @@ async function main() {
   const b4Draft = await createBounty(users.alice.id, {
     title: "Entwurf: Principal Security Engineer",
     description:
-      "Entwurf-Bounty – wird im Browser-Test veröffentlicht/gelöscht, um den " +
+      "Entwurf-Bounty - wird im Browser-Test veröffentlicht/gelöscht, um den " +
       "Draft-Flow end-to-end anzusehen.",
     bonus_amount: 5000,
     location: "Wien",
@@ -169,7 +169,7 @@ async function main() {
     candidate_email: "ada@example.com",
     candidate_contact: "linkedin.com/in/ada",
     message:
-      "Ich kenne Ada aus einem früheren Projekt – starke React-Ingenieurin, " +
+      "Ich kenne Ada aus einem früheren Projekt - starke React-Ingenieurin, " +
       "pragmatisch, sehr gute Kommunikation.",
     status: "submitted",
   });

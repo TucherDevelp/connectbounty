@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { BountyStatusBadge } from "@/components/bounty/status-badge";
+import { localizedMetadata } from "@/lib/i18n-metadata";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { formatBonus, formatDate } from "@/lib/format";
 import type { BountyStatus } from "@/lib/supabase/types";
@@ -12,7 +14,9 @@ import {
 } from "@/lib/admin/bounty-actions";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = { title: "Admin – Bounties" };
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_admin_bounties_title" });
+}
 export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | string[] | undefined>;
@@ -138,10 +142,10 @@ export default async function AdminBountiesPage({
                     <BountyStatusBadge status={status} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-[var(--color-text-muted)]">
-                    {formatDate(b.created_at) ?? "–"}
+                    {formatDate(b.created_at) ?? "-"}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-[var(--color-text-muted)]">
-                    {formatDate(b.expires_at) ?? "–"}
+                    {formatDate(b.expires_at) ?? "-"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1.5">
@@ -196,16 +200,22 @@ export default async function AdminBountiesPage({
       {totalPages > 1 && (
         <nav className="mt-4 flex items-center justify-center gap-2 text-sm">
           {page > 1 && (
-            <a href={`/admin/bounties?status=${filterStatus}&page=${page - 1}`}
-              className="rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
-              ← Zurück
+            <a
+              href={`/admin/bounties?status=${filterStatus}&page=${page - 1}`}
+              className="inline-flex items-center gap-1 rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            >
+              <ArrowLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+              Zurück
             </a>
           )}
           <span className="text-[var(--color-text-muted)]">Seite {page} / {totalPages}</span>
           {page < totalPages && (
-            <a href={`/admin/bounties?status=${filterStatus}&page=${page + 1}`}
-              className="rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">
-              Weiter →
+            <a
+              href={`/admin/bounties?status=${filterStatus}&page=${page + 1}`}
+              className="inline-flex items-center gap-1 rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            >
+              Weiter
+              <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
             </a>
           )}
         </nav>

@@ -57,7 +57,7 @@ await check("kyc-documents Storage Bucket existiert", async () => {
 });
 
 await check("update_kyc_status() Funktion vorhanden", async () => {
-  // Aufruf mit nicht-existenter applicantId – erwartet DB-Exception, kein 500
+  // Aufruf mit nicht-existenter applicantId - erwartet DB-Exception, kein 500
   const { error } = await sb.rpc("update_kyc_status", {
     p_applicant_id: "nonexistent-test-id",
     p_status: "approved",

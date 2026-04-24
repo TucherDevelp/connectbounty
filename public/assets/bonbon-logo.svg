@@ -1,47 +1,38 @@
 <svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="candyBodyGrad" cx="30%" cy="30%">
-      <stop offset="0%" stop-color="#FFD76E"/>
-      <stop offset="50%" stop-color="#F5A623"/>
-      <stop offset="90%" stop-color="#E08D15"/>
-      <stop offset="100%" stop-color="#C47A10"/>
+      <stop offset="0%" stop-color="#BAE6FD"/>
+      <stop offset="50%" stop-color="#38BDF8"/>
+      <stop offset="90%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#0284C7"/>
     </radialGradient>
     <linearGradient id="candyEndGradL" x1="1" y1="0.5" x2="0" y2="0.5">
-      <stop offset="0%" stop-color="#E08D15"/>
-      <stop offset="100%" stop-color="#F5A623"/>
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
     </linearGradient>
     <linearGradient id="candyEndGradR" x1="0" y1="0.5" x2="1" y2="0.5">
-      <stop offset="0%" stop-color="#E08D15"/>
-      <stop offset="100%" stop-color="#F5A623"/>
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#7DD3FC"/>
     </linearGradient>
     <clipPath id="leftHalf"><rect x="0" y="0" width="150" height="160"/></clipPath>
     <clipPath id="rightHalf"><rect x="150" y="0" width="150" height="160"/></clipPath>
   </defs>
 
-  <!-- Left Side -->
   <g id="wrap-left">
-    <!-- Flared End (starts inside the circle to prevent gaps) -->
-    <path d="M 120 80 C 80 40, 30 40, 15 50 L 25 65 L 10 80 L 25 95 L 15 110 C 30 120, 80 120, 120 80 Z" fill="url(#candyEndGradL)" stroke="#A06610" stroke-width="2" stroke-linejoin="round"/>
-    <!-- Creases -->
-    <path d="M 115 80 Q 60 70 20 60 M 115 80 Q 50 80 15 80 M 115 80 Q 60 90 20 100" stroke="#C47A10" stroke-width="2" fill="none" opacity="0.6"/>
-    <!-- Left Half of Body -->
+    <path d="M 120 80 C 80 40, 30 40, 15 50 L 25 65 L 10 80 L 25 95 L 15 110 C 30 120, 80 120, 120 80 Z" fill="url(#candyEndGradL)" stroke="#0369A1" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 115 80 Q 60 70 20 60 M 115 80 Q 50 80 15 80 M 115 80 Q 60 90 20 100" stroke="#075985" stroke-width="2" fill="none" opacity="0.55"/>
     <g clip-path="url(#leftHalf)">
-      <circle cx="150" cy="80" r="46" fill="url(#candyBodyGrad)" stroke="#A06610" stroke-width="2"/>
-      <!-- Cartoon Highlight -->
-      <ellipse cx="130" cy="55" rx="16" ry="8" fill="white" opacity="0.6" transform="rotate(-30 130 55)"/>
-      <ellipse cx="120" cy="48" rx="6" ry="4" fill="white" opacity="0.7" transform="rotate(-30 120 48)"/>
+      <circle cx="150" cy="80" r="46" fill="url(#candyBodyGrad)" stroke="#0369A1" stroke-width="2"/>
+      <ellipse cx="130" cy="55" rx="16" ry="8" fill="white" opacity="0.65" transform="rotate(-30 130 55)"/>
+      <ellipse cx="120" cy="48" rx="6" ry="4" fill="white" opacity="0.75" transform="rotate(-30 120 48)"/>
     </g>
   </g>
 
-  <!-- Right Side -->
   <g id="wrap-right">
-    <!-- Flared End -->
-    <path d="M 180 80 C 220 40, 270 40, 285 50 L 275 65 L 290 80 L 275 95 L 285 110 C 270 120, 220 120, 180 80 Z" fill="url(#candyEndGradR)" stroke="#A06610" stroke-width="2" stroke-linejoin="round"/>
-    <!-- Creases -->
-    <path d="M 185 80 Q 240 70 280 60 M 185 80 Q 250 80 285 80 M 185 80 Q 240 90 280 100" stroke="#C47A10" stroke-width="2" fill="none" opacity="0.6"/>
-    <!-- Right Half of Body -->
+    <path d="M 180 80 C 220 40, 270 40, 285 50 L 275 65 L 290 80 L 275 95 L 285 110 C 270 120, 220 120, 180 80 Z" fill="url(#candyEndGradR)" stroke="#0369A1" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M 185 80 Q 240 70 280 60 M 185 80 Q 250 80 285 80 M 185 80 Q 240 90 280 100" stroke="#075985" stroke-width="2" fill="none" opacity="0.55"/>
     <g clip-path="url(#rightHalf)">
-      <circle cx="150" cy="80" r="46" fill="url(#candyBodyGrad)" stroke="#A06610" stroke-width="2"/>
+      <circle cx="150" cy="80" r="46" fill="url(#candyBodyGrad)" stroke="#0369A1" stroke-width="2"/>
     </g>
   </g>
 </svg>

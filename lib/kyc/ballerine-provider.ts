@@ -12,16 +12,16 @@ import type {
 import type { KycStatus } from "@/lib/supabase/types";
 
 /**
- * BallerineProvider – Integration gegen das Open-Source-KYC-Framework
+ * BallerineProvider - Integration gegen das Open-Source-KYC-Framework
  * Ballerine (https://github.com/ballerine-io/ballerine).
  *
  * Benötigte Env-Variablen:
- *   BALLERINE_API_URL        – Base-URL des Ballerine Workflow-Service
+ *   BALLERINE_API_URL        - Base-URL des Ballerine Workflow-Service
  *                              (z.B. https://api.ballerine.yourdomain.com)
- *   BALLERINE_API_KEY        – serverseitiger API-Key (Authorization: Bearer)
- *   BALLERINE_WORKFLOW_ID    – Workflow-Definition-ID für KYC
+ *   BALLERINE_API_KEY        - serverseitiger API-Key (Authorization: Bearer)
+ *   BALLERINE_WORKFLOW_ID    - Workflow-Definition-ID für KYC
  *                              (z.B. "kyc-email-session-example")
- *   BALLERINE_WEBHOOK_SECRET – HMAC-Secret für Webhook-Signatur-Verifikation
+ *   BALLERINE_WEBHOOK_SECRET - HMAC-Secret für Webhook-Signatur-Verifikation
  *
  * Ablauf:
  *   startSession(userId)
@@ -59,7 +59,7 @@ export class BallerineProvider implements KycProvider {
 
     const supabase = getSupabaseServiceRoleClient();
 
-    // Offenen Antrag recyceln – verhindert endlose Duplikate
+    // Offenen Antrag recyceln - verhindert endlose Duplikate
     const { data: existing } = await supabase
       .from("kyc_applicants")
       .select("applicant_id, level_name, status")

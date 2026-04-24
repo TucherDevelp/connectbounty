@@ -59,7 +59,7 @@ afterEach(() => {
   supabaseMock.isAuthenticated = false;
 });
 
-describe("proxy() – security headers (always applied)", () => {
+describe("proxy() - security headers (always applied)", () => {
   it("sets HSTS, content-type-options, frame-options, referrer-policy", async () => {
     supabaseMock.isAuthenticated = true;
     const res = (await proxy(makeRequest("/dashboard"))) as unknown as {
@@ -81,14 +81,10 @@ describe("proxy() – security headers (always applied)", () => {
   });
 });
 
-describe("proxy() – route guards", () => {
-  it("redirects unauthenticated user from / to /login", async () => {
-    const res = (await proxy(makeRequest("/"))) as unknown as {
-      status: number;
-      headers: Map<string, string>;
-    };
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toMatch(/\/login$/);
+describe("proxy() - route guards", () => {
+  it("allows unauthenticated access to / (marketing landing)", async () => {
+    const res = (await proxy(makeRequest("/"))) as unknown as { status: number };
+    expect(res.status).toBe(200);
   });
 
   it("redirects unauthenticated user from /dashboard with redirect param", async () => {
@@ -112,14 +108,14 @@ describe("proxy() – route guards", () => {
     expect(res.status).toBe(200);
   });
 
-  it("redirects authenticated user away from /login to /", async () => {
+  it("redirects authenticated user away from /login to /dashboard", async () => {
     supabaseMock.isAuthenticated = true;
     const res = (await proxy(makeRequest("/login"))) as unknown as {
       status: number;
       headers: Map<string, string>;
     };
     expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toMatch(/\/$/);
+    expect(res.headers.get("location")).toMatch(/\/dashboard$/);
   });
 
   it("authenticated user can access /dashboard", async () => {

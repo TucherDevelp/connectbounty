@@ -8,19 +8,23 @@ const LABELS: Record<KycStatus, { text: string; className: string }> = {
   },
   pending: {
     text: "In Prüfung",
-    className: "bg-amber-500/10 text-amber-200 border-amber-500/40",
+    className:
+      "border-[hsl(var(--primary)/0.35)] bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]",
   },
   approved: {
     text: "Verifiziert",
-    className: "bg-emerald-500/10 text-emerald-200 border-emerald-500/40",
+    className:
+      "border-[hsl(var(--success)/0.4)] bg-[hsl(var(--success)/0.14)] text-[hsl(var(--success))]",
   },
   rejected: {
     text: "Abgelehnt",
-    className: "bg-red-500/10 text-red-200 border-red-500/40",
+    className:
+      "border-[hsl(var(--destructive)/0.4)] bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]",
   },
   expired: {
     text: "Abgelaufen",
-    className: "bg-orange-500/10 text-orange-200 border-orange-500/40",
+    className:
+      "border-[hsl(var(--primary)/0.28)] bg-[var(--color-surface-2)] text-[hsl(var(--accent))]",
   },
 };
 

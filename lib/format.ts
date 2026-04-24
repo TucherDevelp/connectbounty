@@ -1,6 +1,6 @@
 /**
  * Reine Format-Helpers, die clientseitig wie serverseitig verwendet werden
- * können. Keine Abhängigkeiten zu Supabase/Next – bewusst klein gehalten.
+ * können. Keine Abhängigkeiten zu Supabase/Next - bewusst klein gehalten.
  */
 
 export function formatBonus(amount: number, currency: string): string {

@@ -101,7 +101,7 @@ export async function startConnectOnboarding(
     } catch { /* non-blocking */ }
   }
 
-  // Account-Link generieren (läuft nach 5 Min ab – immer neu generieren)
+  // Account-Link generieren (läuft nach 5 Min ab - immer neu generieren)
   const accountLink = await stripe.accountLinks.create({
     account: stripeAccountId,
     refresh_url: `${siteUrl}/payouts?stripe=refresh`,

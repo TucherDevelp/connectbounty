@@ -3,35 +3,37 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isNavItemActive } from "@/lib/nav-active";
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/lib/auth/actions";
-
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", exact: true },
-  { href: "/bounties", label: "Marktplatz" },
-  { href: "/bounties/mine", label: "Meine Bounties" },
-  { href: "/referrals/mine", label: "Empfehlungen" },
-  { href: "/kyc", label: "Identitätsprüfung" },
-];
+import { LangToggle } from "@/components/lang-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useLang } from "@/context/lang-context";
 
 export function MobileNav({ email }: { email: string }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { t } = useLang();
 
-  const isActive = (href: string, exact = false) => {
-    if (exact) return pathname === href;
-    return pathname === href || pathname.startsWith(href + "/");
-  };
+  const navItems = [
+    { href: "/dashboard", labelKey: "nav_dashboard" as const, exact: true },
+    { href: "/bounties", labelKey: "nav_marketplace" as const },
+    { href: "/bounties/mine", labelKey: "nav_my_bounties" as const },
+    { href: "/referrals/mine", labelKey: "nav_referrals" as const },
+    { href: "/payouts", labelKey: "nav_payouts" as const },
+    { href: "/kyc", labelKey: "nav_kyc" as const },
+  ];
+
+  const navActive = (href: string, exact = false) => isNavItemActive(pathname, href, exact);
 
   return (
     <div className="sm:hidden">
-      {/* Hamburger-Button */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-label={open ? "Menü schließen" : "Menü öffnen"}
         aria-expanded={open}
-        className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-surface-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+        className="flex min-h-11 min-w-11 items-center justify-center rounded-[var(--radius-md)] border border-border/60 text-muted-foreground transition-colors hover:text-foreground"
       >
         <span className="relative flex h-4 w-5 flex-col justify-between">
           <span
@@ -41,10 +43,7 @@ export function MobileNav({ email }: { email: string }) {
             )}
           />
           <span
-            className={cn(
-              "block h-0.5 w-full bg-current transition-all duration-200",
-              open && "opacity-0",
-            )}
+            className={cn("block h-0.5 w-full bg-current transition-all duration-200", open && "opacity-0")}
           />
           <span
             className={cn(
@@ -55,56 +54,59 @@ export function MobileNav({ email }: { email: string }) {
         </span>
       </button>
 
-      {/* Slide-over Menü */}
       {open && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
             onClick={() => setOpen(false)}
+            aria-hidden
           />
-          {/* Panel */}
-          <div className="fixed inset-y-0 right-0 z-50 flex w-72 flex-col bg-[var(--color-surface-1)] shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[var(--color-surface-border)] px-5 py-4">
-              <span className="text-sm font-medium text-[var(--color-text-muted)]">{email}</span>
+          <div className="fixed inset-y-0 right-0 z-50 flex w-72 flex-col bg-surface shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border/40 px-5 py-4">
+              <span className="text-sm font-medium text-muted-foreground">{email}</span>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                className="min-h-11 min-w-11 text-muted-foreground hover:text-foreground"
                 aria-label="Schließen"
               >
                 ✕
               </button>
             </div>
 
+            <div className="flex items-center justify-center gap-2 border-b border-border/40 px-4 py-3">
+              <LangToggle />
+              <ThemeToggle />
+            </div>
+
             <nav className="flex-1 overflow-y-auto px-4 py-4">
               <ul className="space-y-1">
-                {NAV_ITEMS.map((item) => (
+                {navItems.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={() => setOpen(false)}
                       className={cn(
-                        "flex items-center rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors",
-                        isActive(item.href, item.exact)
-                          ? "bg-[var(--color-brand-400)]/10 text-[var(--color-brand-400)]"
-                          : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text-primary)]",
+                        "flex min-h-11 items-center rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors",
+                        navActive(item.href, item.exact)
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
                       )}
                     >
-                      {item.label}
+                      {t(item.labelKey)}
                     </Link>
                   </li>
                 ))}
               </ul>
             </nav>
 
-            <div className="border-t border-[var(--color-surface-border)] p-4">
+            <div className="border-t border-border/40 p-4">
               <form action={logoutAction}>
                 <button
                   type="submit"
-                  className="w-full rounded-[var(--radius-md)] border border-[var(--color-surface-border)] py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                  className="min-h-11 w-full rounded-[var(--radius-md)] border border-border/60 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Abmelden
+                  {t("nav_logout")}
                 </button>
               </form>
             </div>

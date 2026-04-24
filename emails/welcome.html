@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ConnectBounty - Konto aktiviert</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #0a0e1a;
+      color: #e8eaf0;
+      font-family:
+        system-ui,
+        -apple-system,
+        Segoe UI,
+        sans-serif;
+      line-height: 1.6;
+    "
+  >
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #0a0e1a">
+      <tr>
+        <td align="center" style="padding: 32px 16px">
+          <table
+            role="presentation"
+            width="100%"
+            cellspacing="0"
+            cellpadding="0"
+            style="max-width: 600px; background: #111827; border-radius: 12px; border: 1px solid #1e2d44"
+          >
+            <tr>
+              <td style="padding: 32px 28px">
+                <p style="margin: 0 0 8px; font-size: 14px; color: #0ea5e9; font-weight: 600">
+                  ConnectBounty
+                </p>
+                <div style="margin: 0 0 20px; text-align: center">
+                  <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true" style="display: inline-block">
+                    <circle cx="28" cy="28" r="26" fill="none" stroke="#10b981" stroke-width="3" />
+                    <path
+                      d="M16 28l8 8 16-16"
+                      fill="none"
+                      stroke="#10b981"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+                <h1 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; text-align: center">
+                  Dein Konto ist bereit.
+                </h1>
+                <p style="margin: 0 0 24px; font-size: 15px; color: #8b92a8; text-align: center">
+                  Willkommen bei ConnectBounty. Du kannst jetzt loslegen.
+                </p>
+                <ol style="margin: 0 0 28px; padding-left: 20px; color: #e8eaf0; font-size: 15px">
+                  <li style="margin-bottom: 10px">Profil vervollständigen und KYC starten</li>
+                  <li style="margin-bottom: 10px">Referral-Boni im Marktplatz entdecken oder inserieren</li>
+                  <li>Kandidat:innen vermitteln und Provisionen sichern</li>
+                </ol>
+                <p style="margin: 0 0 28px; text-align: center">
+                  <a
+                    href="{{ .SiteURL }}/dashboard"
+                    style="
+                      display: inline-block;
+                      background: #0ea5e9;
+                      color: #ffffff;
+                      text-decoration: none;
+                      font-weight: 600;
+                      font-size: 15px;
+                      padding: 14px 32px;
+                      border-radius: 8px;
+                    "
+                    >Zum Dashboard</a
+                  >
+                </p>
+                <p style="margin: 0; font-size: 12px; color: #6b7280; text-align: center">
+                  ConnectBounty ·
+                  <a href="{{ .SiteURL }}/legal/impressum" style="color: #0ea5e9">Impressum</a>
+                  ·
+                  <a href="{{ .SiteURL }}/legal/privacy" style="color: #0ea5e9">Datenschutz</a>
+                  ·
+                  <a href="{{ .SiteURL }}/legal/terms" style="color: #0ea5e9">AGB</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

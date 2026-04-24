@@ -6,8 +6,8 @@ import { z } from "zod";
  * Designprinzipien:
  *   • Serverseitige Validierung spiegelt die DB-Constraints aus
  *     supabase/migrations/0003_marketplace.sql. Beide Schichten sind
- *     bewusst redundant – Browser-Manipulation darf nicht zum Ziel führen.
- *   • Zahlen kommen über FormData als string – wir coercen explizit.
+ *     bewusst redundant - Browser-Manipulation darf nicht zum Ziel führen.
+ *   • Zahlen kommen über FormData als string - wir coercen explizit.
  *   • Tags sind Comma-Separated in der UI; Parser + Deduplikation hier.
  *   • Fehlermeldungen auf Deutsch (Plattform-Sprache).
  */
@@ -24,7 +24,7 @@ const descriptionSchema = z
   .min(20, "Beschreibung muss mindestens 20 Zeichen haben")
   .max(5000, "Beschreibung darf höchstens 5000 Zeichen haben");
 
-// FormData liefert string – coerce.number() wäre zu lasch (akzeptiert "").
+// FormData liefert string - coerce.number() wäre zu lasch (akzeptiert "").
 // Wir parsen explizit und werfen präzise Fehler.
 const bonusAmountSchema = z
   .union([z.number(), z.string()])
@@ -122,7 +122,29 @@ const expiresAtSchema = z
     return date.toISOString();
   });
 
-export const bountyCreateSchema = z.object({
+// ── Split-Konfiguration (BPS = Basis-Punkte, 10 000 = 100 %) ─────────────
+
+const bpsSchema = z
+  .union([z.number(), z.string()])
+  .transform((val, ctx) => {
+    const n = typeof val === "number" ? val : Number(String(val).trim());
+    if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 10_000) {
+      ctx.addIssue({ code: "custom", message: "BPS-Wert muss eine ganze Zahl zwischen 0 und 10 000 sein" });
+      return z.NEVER;
+    }
+    return n;
+  });
+
+const splitReferrerBpsSchema = bpsSchema.default(4000);
+const splitCandidateBpsSchema = bpsSchema.default(4000);
+const splitPlatformBpsSchema = bpsSchema.default(2000);
+
+const paymentModeSchema = z
+  .enum(["on_confirmation", "escrow"])
+  .default("on_confirmation");
+
+// Basis-Objekt ohne Refinements (damit .partial() darauf anwendbar ist)
+const bountyBaseSchema = z.object({
   title: titleSchema,
   description: descriptionSchema,
   bonusAmount: bonusAmountSchema,
@@ -131,9 +153,25 @@ export const bountyCreateSchema = z.object({
   industry: industrySchema,
   tags: tagsSchema,
   expiresAt: expiresAtSchema,
+  splitReferrerBps: splitReferrerBpsSchema,
+  splitCandidateBps: splitCandidateBpsSchema,
+  splitPlatformBps: splitPlatformBpsSchema,
+  paymentMode: paymentModeSchema,
 });
 
-export const bountyUpdateSchema = bountyCreateSchema.partial();
+// Refinements nur für Create (Summe + Mindest-Plattform-Anteil)
+export const bountyCreateSchema = bountyBaseSchema
+  .refine(
+    (d) => d.splitReferrerBps + d.splitCandidateBps + d.splitPlatformBps === 10_000,
+    { message: "Die drei Split-Werte müssen zusammen 10 000 BPS (= 100 %) ergeben." },
+  )
+  .refine(
+    (d) => d.splitPlatformBps >= 500,
+    { message: "Der Plattform-Anteil muss mindestens 500 BPS (= 5 %) betragen." },
+  );
+
+// Update: partial auf dem Basis-Schema (ohne Refinements, die partial verbieten)
+export const bountyUpdateSchema = bountyBaseSchema.partial();
 
 export const bountyIdSchema = z.object({
   id: z.string().uuid("Ungültige Bounty-ID"),

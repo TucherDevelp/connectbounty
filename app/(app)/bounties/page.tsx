@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { localizedMetadata } from "@/lib/i18n-metadata";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormAlert } from "@/components/ui/form-error";
 import { BountyCard } from "@/components/bounty/bounty-card";
@@ -12,12 +14,14 @@ import {
   type BountyFilters,
 } from "@/lib/bounty/queries";
 
-export const metadata: Metadata = {
-  title: "Marktplatz",
-  description: "Offene Bounties mit Referral-Prämien.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({
+    title: "meta_marketplace_title",
+    description: "meta_marketplace_desc",
+  });
+}
 
-// Dynamic – die Liste hängt von Query-Parametern & Session ab.
+// Dynamic - die Liste hängt von Query-Parametern & Session ab.
 export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | string[] | undefined>;
@@ -55,13 +59,13 @@ export default async function PublicBountiesPage({
     page: pickFirst(sp.page),
   });
 
-  // Bei kaputten Filtern: ignorieren, defaults verwenden – Marktplatz darf
+  // Bei kaputten Filtern: ignorieren, defaults verwenden - Marktplatz darf
   // nicht wegen eines seltsamen Query-Params leer bleiben.
   const filters: BountyFilters = parsed.success
     ? parsed.data
     : bountyFiltersSchema.parse({});
 
-  // Lazy-expire vor dem Listing – markiert abgelaufene Bounties atomar.
+  // Lazy-expire vor dem Listing - markiert abgelaufene Bounties atomar.
   await expireStaleBounciesLazy();
 
   let list:
@@ -89,7 +93,7 @@ export default async function PublicBountiesPage({
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">Marktplatz</h1>
           <p className="text-sm text-[var(--color-text-muted)]">
-            Offene Bounties – empfehle passende Kandidat:innen und sichere dir die Prämie.
+            Offene Bounties - empfehle passende Kandidat:innen und sichere dir die Prämie.
           </p>
         </div>
       </header>
@@ -133,9 +137,10 @@ export default async function PublicBountiesPage({
               {currentPage > 1 && (
                 <Link
                   href={buildPageHref(filters, currentPage - 1)}
-                  className="rounded-[var(--radius-md)] border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                  className="inline-flex items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                 >
-                  ← Zurück
+                  <ArrowLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                  Zurück
                 </Link>
               )}
               <span className="px-3 py-1.5 text-[var(--color-text-muted)]">
@@ -146,7 +151,10 @@ export default async function PublicBountiesPage({
                   href={buildPageHref(filters, currentPage + 1)}
                   className="rounded-[var(--radius-md)] border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                 >
-                  Weiter →
+                  <span className="inline-flex items-center gap-1">
+                    Weiter
+                    <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                  </span>
                 </Link>
               )}
             </nav>
@@ -159,7 +167,7 @@ export default async function PublicBountiesPage({
               <CardTitle>Keine passenden Bounties</CardTitle>
               <CardDescription>
                 Aktuell gibt es keine Bounty, die deinen Filtern entspricht. Ändere oder setze die
-                Filter zurück – oder lege selbst eine an.
+                Filter zurück - oder lege selbst eine an.
               </CardDescription>
             </CardHeader>
             <CardContent>

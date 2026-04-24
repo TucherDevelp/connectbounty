@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { BountyStatusBadge } from "@/components/bounty/status-badge";
 import { formatBonus, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,7 @@ function ExpiryBadge({ expiresAt }: { expiresAt: string | null }) {
 }
 
 /**
- * BountyCard v2 – Prämie prominent, klare Info-Hierarchie, Hover-Glow.
+ * BountyCard v2 - Prämie prominent, klare Info-Hierarchie, Hover-Glow.
  */
 export function BountyCard({
   bounty,
@@ -128,8 +129,9 @@ export function BountyCard({
           <span className="text-xs text-[var(--color-text-faint)]">
             {bounty.published_at ? `Seit ${formatDate(bounty.published_at)}` : "Entwurf"}
           </span>
-          <span className="text-xs font-medium text-[var(--color-brand-400)] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-            Details →
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-brand-400)] opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            Details
+            <ArrowRight className="size-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
           </span>
         </div>
       </article>

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { AlertTriangle, Check } from "lucide-react";
+import { localizedMetadata } from "@/lib/i18n-metadata";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireUser } from "@/lib/auth/roles";
@@ -6,10 +8,13 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getConnectAccountStatus } from "@/lib/stripe/connect";
 import { formatBonus, formatDate } from "@/lib/format";
 import type { PayoutStatus } from "@/lib/supabase/types";
+import { FintechPayoutMark } from "@/components/icons/fintech-payout-mark";
 import { ConnectOnboardingCard } from "./onboarding-card";
 import { RefreshStatusButton } from "./refresh-button";
 
-export const metadata: Metadata = { title: "Auszahlungen" };
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_payouts_title" });
+}
 export const dynamic = "force-dynamic";
 
 const STATUS_LABEL: Record<PayoutStatus, string> = {
@@ -70,14 +75,18 @@ export default async function PayoutsPage({
 
       {/* Flash-Messages */}
       {stripeParam === "return" && isStripeReady && (
-        <div className="mb-6 rounded-[var(--radius-md)] bg-[var(--color-success)]/10 px-4 py-3 text-sm text-[var(--color-success)]">
-          ✓ Stripe-Konto erfolgreich verbunden! Du kannst jetzt Auszahlungen empfangen.
+        <div className="mb-6 flex items-start gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-success)]/10 px-4 py-3 text-sm text-[var(--color-success)]">
+          <Check className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden />
+          <span>Stripe-Konto erfolgreich verbunden! Du kannst jetzt Auszahlungen empfangen.</span>
         </div>
       )}
       {stripeParam === "return" && !isStripeReady && (
-        <div className="mb-6 rounded-[var(--radius-md)] bg-[var(--color-warning)]/10 px-4 py-3 text-sm text-[var(--color-warning)]">
-          ⚠ Das Onboarding wurde gestartet, aber noch nicht vollständig abgeschlossen. Bitte
-          vollende alle Schritte.
+        <div className="mb-6 flex items-start gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-warning)]/10 px-4 py-3 text-sm text-[var(--color-warning)]">
+          <AlertTriangle className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden />
+          <span>
+            Das Onboarding wurde gestartet, aber noch nicht vollständig abgeschlossen. Bitte vollende
+            alle Schritte.
+          </span>
         </div>
       )}
       {stripeParam === "refresh" && (
@@ -124,8 +133,13 @@ export default async function PayoutsPage({
         </div>
 
         {(payouts?.length ?? 0) === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-surface-border)] py-12 text-center">
-            <span className="text-3xl">💸</span>
+          <div className="flex flex-col items-center gap-3 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-surface-border)] py-12 text-center">
+            <div
+              className="flex size-[4.25rem] items-center justify-center rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-brand-400)] shadow-[inset_0_1px_0_0_color-mix(in_oklab,var(--color-text-primary)_6%,transparent)]"
+              aria-hidden
+            >
+              <FintechPayoutMark className="size-11" />
+            </div>
             <p className="text-sm font-medium text-[var(--color-text-primary)]">
               Noch keine Auszahlungen
             </p>
@@ -166,7 +180,7 @@ export default async function PayoutsPage({
                           {p.stripe_transfer_id.slice(0, 16)}…
                         </code>
                       ) : (
-                        <span className="text-xs text-[var(--color-text-faint)]">–</span>
+                        <span className="text-xs text-[var(--color-text-faint)]">-</span>
                       )}
                     </td>
                     <td className="hidden px-4 py-3 text-xs text-[var(--color-text-muted)] md:table-cell">

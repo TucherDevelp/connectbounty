@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { localizedMetadata } from "@/lib/i18n-metadata";
+import { Target } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -17,14 +19,14 @@ import {
   publishBountyAction,
 } from "@/lib/bounty/actions";
 
-export const metadata: Metadata = {
-  title: "Meine Bounties",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_bounties_mine_title" });
+}
 
 // Lesbare Flash-Messages für Redirect-Query-Parameter (?created=, ?error=…).
 const OK_MESSAGES: Record<string, string> = {
   created: "Bounty als Entwurf gespeichert.",
-  pending: "Bounty eingereicht – wird in Kürze vom Admin geprüft und freigegeben.",
+  pending: "Bounty eingereicht - wird in Kürze vom Admin geprüft und freigegeben.",
   closed: "Bounty geschlossen.",
   cancelled: "Bounty storniert.",
   deleted: "Bounty gelöscht.",
@@ -186,13 +188,13 @@ export default async function MyBountiesPage({
       ) : (
         <EmptyState
           title="Noch keine Bounties"
-          description="Leg deine erste Stellenausschreibung mit Referral-Prämie an – in wenigen Minuten veröffentlicht."
+          description="Leg deine erste Stellenausschreibung mit Referral-Prämie an - in wenigen Minuten veröffentlicht."
           action={
             <Link href="/bounties/new" className={buttonVariants({ variant: "primary", size: "md" })}>
               Jetzt Bounty erstellen
             </Link>
           }
-          icon={<span className="text-2xl">🎯</span>}
+          icon={<Target className="size-10 text-muted-foreground" strokeWidth={1.5} aria-hidden />}
         />
       )}
     </section>

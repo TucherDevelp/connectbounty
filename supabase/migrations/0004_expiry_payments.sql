@@ -1,10 +1,10 @@
 -- ============================================================================
--- ConnectBounty – Schema v4: Expiry + Payments Foundation
+-- ConnectBounty - Schema v4: Expiry + Payments Foundation
 -- ============================================================================
 -- Fachliche Essenz:
---   • expire_stale_bounties()  – markiert abgelaufene Bounties atomar
---   • payouts-Tabelle          – dokumentiert Referral-Prämien-Auszahlungen
---   • Stripe-Connect-Tabelle   – speichert Connect-Account-Status pro User
+--   • expire_stale_bounties()  - markiert abgelaufene Bounties atomar
+--   • payouts-Tabelle          - dokumentiert Referral-Prämien-Auszahlungen
+--   • Stripe-Connect-Tabelle   - speichert Connect-Account-Status pro User
 --
 -- Designprinzipien:
 --   1. Expiry läuft idempotent: wiederholter Aufruf ändert nichts, wenn
@@ -68,7 +68,7 @@ create type public.payout_status as enum (
   'pending',      -- erstellt, noch nicht ans Zahlungssystem übermittelt
   'processing',   -- bei Stripe in Bearbeitung
   'paid',         -- Auszahlung bestätigt
-  'failed',       -- Fehler – kann neu gestartet werden
+  'failed',       -- Fehler - kann neu gestartet werden
   'cancelled'     -- manuell storniert (z. B. disputed)
 );
 
@@ -110,7 +110,7 @@ create policy stripe_connect_select_own
   using (user_id = auth.uid());
 
 -- Nur service_role darf inserieren/updaten (wird nie direkt vom Client gemacht)
--- → Keine INSERT/UPDATE-Policy für authenticated – Stripe-Webhook + Edge Function
+-- → Keine INSERT/UPDATE-Policy für authenticated - Stripe-Webhook + Edge Function
 --   laufen als service_role und werden von RLS nicht eingeschränkt.
 
 -- ── 5. Payouts-Tabelle ──────────────────────────────────────────────────────

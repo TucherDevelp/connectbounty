@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isNavItemActive } from "@/lib/nav-active";
 import { cn } from "@/lib/utils";
 
 interface NavLinkProps {
@@ -13,7 +14,7 @@ interface NavLinkProps {
 
 export function NavLink({ href, children, exact = false, className }: NavLinkProps) {
   const pathname = usePathname();
-  const isActive = exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
+  const isActive = isNavItemActive(pathname, href, exact);
 
   return (
     <Link

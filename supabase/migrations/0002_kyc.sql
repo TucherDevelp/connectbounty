@@ -1,9 +1,9 @@
 -- ============================================================================
--- ConnectBounty – Schema v2: KYC (Sumsub)
+-- ConnectBounty - Schema v2: KYC (Sumsub)
 -- ============================================================================
 -- Neu in dieser Migration:
---   • kyc_applicants   – speichert Sumsub applicantId + Statusverlauf
---   • update_kyc_status() – SECURITY DEFINER: schreibt kyc_status in profiles
+--   • kyc_applicants   - speichert Sumsub applicantId + Statusverlauf
+--   • update_kyc_status() - SECURITY DEFINER: schreibt kyc_status in profiles
 --                           (wird vom Webhook via service_role gerufen)
 --
 -- Designprinzipien:
@@ -45,7 +45,7 @@ create policy kyc_applicants_select_own on public.kyc_applicants
   for select to authenticated
   using (user_id = auth.uid());
 
--- User darf eigenen Eintrag anlegen (einmalig – UNIQUE auf applicant_id verhindert Duplikate)
+-- User darf eigenen Eintrag anlegen (einmalig - UNIQUE auf applicant_id verhindert Duplikate)
 create policy kyc_applicants_insert_own on public.kyc_applicants
   for insert to authenticated
   with check (user_id = auth.uid());
@@ -98,4 +98,4 @@ revoke execute on function public.update_kyc_status from public, authenticated;
 grant execute on function public.update_kyc_status to service_role;
 
 -- Migrationsprotokoll wird vom Runner (scripts/db-migrate.mjs) automatisch
--- in public._migrations geschrieben – kein manueller Insert nötig.
+-- in public._migrations geschrieben - kein manueller Insert nötig.

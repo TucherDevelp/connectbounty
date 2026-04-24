@@ -2,9 +2,9 @@
  * Diskriminierte Union für Server-Action-Ergebnisse, die vom Client ohne
  * Throw konsumiert werden können (kompatibel zu useActionState).
  *
- * - status "idle"   – noch nichts gesendet (Initial-Wert)
- * - status "ok"     – Erfolg, optional Nachricht für Banner
- * - status "error"  – globale Fehler (z. B. Login fehlgeschlagen)
+ * - status "idle"   - noch nichts gesendet (Initial-Wert)
+ * - status "ok"     - Erfolg, optional Nachricht für Banner
+ * - status "error"  - globale Fehler (z. B. Login fehlgeschlagen)
  *                     plus optional Feld-Errors aus Zod
  */
 export type ActionState =
@@ -31,7 +31,7 @@ export function actionOk(message?: string): ActionState {
 
 /**
  * Wandelt Zod-Issues in ein flaches Feldname → Fehlertext-Mapping.
- * Letzter Issue pro Feld gewinnt – im UI zeigen wir nur einen Text pro Feld.
+ * Letzter Issue pro Feld gewinnt - im UI zeigen wir nur einen Text pro Feld.
  */
 export function fieldErrorsFromZod(
   issues: ReadonlyArray<{ path: ReadonlyArray<PropertyKey>; message: string }>,

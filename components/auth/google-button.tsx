@@ -3,16 +3,14 @@
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { signInWithGoogleAction } from "@/lib/auth/actions";
+import { useLang } from "@/context/lang-context";
 
 /**
  * Google-OAuth-Button ohne verschachteltes <form>-Element.
- *
- * Wir nutzen useTransition + direkten Server-Action-Aufruf statt einer
- * eigenen <form>, damit der Button auch innerhalb anderer <form>-Elemente
- * (Login, Register) korrekt funktioniert – HTML erlaubt keine nested forms.
  */
-export function GoogleButton({ label = "Mit Google fortfahren" }: { label?: string }) {
+export function GoogleButton({ label }: { label: string }) {
   const [isPending, startTransition] = useTransition();
+  const { t } = useLang();
 
   return (
     <Button
@@ -20,11 +18,11 @@ export function GoogleButton({ label = "Mit Google fortfahren" }: { label?: stri
       variant="secondary"
       size="lg"
       disabled={isPending}
-      className="w-full"
+      className="w-full min-h-11"
       onClick={() => startTransition(() => void signInWithGoogleAction())}
     >
       <GoogleIcon className="h-5 w-5 shrink-0" aria-hidden />
-      {isPending ? "Weiterleitung …" : label}
+      {isPending ? t("auth_oauth_pending") : label}
     </Button>
   );
 }

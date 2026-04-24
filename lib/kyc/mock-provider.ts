@@ -12,7 +12,7 @@ import type {
 import type { KycStatus } from "@/lib/supabase/types";
 
 /**
- * MockProvider – vollständiger KYC-Flow ohne externen Dienst.
+ * MockProvider - vollständiger KYC-Flow ohne externen Dienst.
  *
  * Verhalten:
  *   • startSession legt einen Eintrag in kyc_applicants an (status=pending),
@@ -30,7 +30,7 @@ export class MockProvider implements KycProvider {
   async startSession(userId: string): Promise<KycStartSession> {
     const supabase = getSupabaseServiceRoleClient();
 
-    // Offene Anträge (pending) recyceln – verhindert endlose "pending"-Leichen
+    // Offene Anträge (pending) recyceln - verhindert endlose "pending"-Leichen
     // wenn der User die Seite mehrmals öffnet.
     const { data: existing, error: existingErr } = await supabase
       .from("kyc_applicants")

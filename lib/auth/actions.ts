@@ -25,7 +25,7 @@ import {
  * Server Actions für Auth-Flows.
  *
  * Wichtig:
- *   • Kein try/catch um redirect() – Next nutzt einen speziellen Throw-Wert.
+ *   • Kein try/catch um redirect() - Next nutzt einen speziellen Throw-Wert.
  *   • Bei Fehlern NIE die Supabase-Originalmeldung 1:1 zurückgeben (kann
  *     E-Mail-Existenz preisgeben). Stattdessen generische Texte + Logging.
  *   • Erfolgreiche Mutationen revalidieren den App-Layer-Pfad, damit
@@ -40,7 +40,7 @@ function safeFormDataToObject(fd: FormData): Record<string, FormDataEntryValue> 
 
 /**
  * Audit-Logging darf den Auth-Flow niemals blockieren. Wir fangen Fehler
- * still ab, denn die Quelle der Wahrheit (auth) ist bereits geschrieben –
+ * still ab, denn die Quelle der Wahrheit (auth) ist bereits geschrieben -
  * ein verlorener Audit-Eintrag ist hässlich, aber nicht security-kritisch
  * (es gibt zusätzlich Postgres-seitige Trigger in späteren Phasen).
  */
@@ -70,13 +70,13 @@ export async function loginAction(
   });
 
   if (error) {
-    // Kein Leak von "user not found" vs "wrong password" – generischer Text.
+    // Kein Leak von "user not found" vs "wrong password" - generischer Text.
     return actionError("E-Mail oder Passwort ist nicht korrekt.");
   }
 
   await auditSafe("user.login", { provider: "password" });
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect("/dashboard");
 }
 
 // ── Register ───────────────────────────────────────────────────────────────
@@ -105,12 +105,12 @@ export async function registerAction(
     return actionError("Registrierung fehlgeschlagen. Bitte später erneut versuchen.");
   }
 
-  // Falls Confirm-Mail aktiviert ist, gibt es noch keine Session –
+  // Falls Confirm-Mail aktiviert ist, gibt es noch keine Session -
   // dann läuft der Audit-Insert ohne actor_id leer (RLS) und wird geschluckt.
   // Sobald der User später bestätigt + sich einloggt, greift loginAction.
   await auditSafe("user.signup", { provider: "password" });
 
-  // (auth) ist eine Route-Gruppe – URL ist /check-email, nicht /auth/check-email.
+  // (auth) ist eine Route-Gruppe - URL ist /check-email, nicht /auth/check-email.
   redirect("/check-email");
 }
 

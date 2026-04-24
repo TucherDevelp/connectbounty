@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { updateSupabaseSession } from "@/lib/supabase/middleware";
 
 /**
- * Globaler Proxy (früher "middleware" – seit Next.js 16 umbenannt zu "proxy",
+ * Globaler Proxy (früher "middleware" - seit Next.js 16 umbenannt zu "proxy",
  * siehe https://nextjs.org/docs/messages/middleware-to-proxy).
  *
  * Aufgaben:
@@ -21,6 +21,7 @@ import { updateSupabaseSession } from "@/lib/supabase/middleware";
 
 const AUTH_ROUTES = ["/login", "/register", "/reset"];
 const PUBLIC_ROUTES = [
+  "/",
   "/login",
   "/register",
   "/reset",
@@ -28,6 +29,7 @@ const PUBLIC_ROUTES = [
   "/check-email",
   "/legal/terms",
   "/legal/privacy",
+  "/legal/impressum",
 ];
 
 function isAuthRoute(pathname: string): boolean {
@@ -35,6 +37,7 @@ function isAuthRoute(pathname: string): boolean {
 }
 
 function isPublicRoute(pathname: string): boolean {
+  if (pathname.startsWith("/legal/")) return true;
   return PUBLIC_ROUTES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
@@ -44,7 +47,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   if (isAuthenticated && isAuthRoute(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/dashboard";
     url.search = "";
     const redirect = NextResponse.redirect(url);
     copyCookies(response, redirect);
@@ -84,7 +87,7 @@ function applySecurityHeaders(response: NextResponse): void {
     "camera=(self), microphone=(), geolocation=(), interest-cohort=()",
   );
 
-  // CSP – defensiv. 'unsafe-inline' für Styles/Scripts ist mit Tailwind v4
+  // CSP - defensiv. 'unsafe-inline' für Styles/Scripts ist mit Tailwind v4
   // und Next-RSC derzeit nötig und wird in Phase 7 durch Nonces ersetzt.
   // Im Dev-Modus benötigt React zusätzlich 'unsafe-eval' für Error-Overlays.
   const isDev = process.env.NODE_ENV === "development";

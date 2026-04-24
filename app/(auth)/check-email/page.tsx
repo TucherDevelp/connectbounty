@@ -1,36 +1,11 @@
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Metadata } from "next";
+import { CheckEmailView } from "@/components/auth/check-email-view";
+import { localizedMetadata } from "@/lib/i18n-metadata";
 
-export const metadata = { title: "E-Mail bestätigen – ConnectBounty" };
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_check_email_title" });
+}
 
 export default function CheckEmailPage() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Fast geschafft!</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <p className="text-sm text-[var(--color-text-muted)]">
-          Wir haben dir einen Bestätigungslink geschickt. Bitte öffne deine E-Mail
-          und klicke auf den Link, um dein Konto zu aktivieren.
-        </p>
-        <p className="text-xs text-[var(--color-text-faint)]">
-          Kein E-Mail erhalten?{" "}
-          <Link
-            href="/register"
-            className="text-[var(--color-brand-400)] hover:underline"
-          >
-            Erneut registrieren
-          </Link>
-          {" "}oder prüfe deinen Spam-Ordner.
-        </p>
-        <Link
-          href="/login"
-          className="text-sm font-medium text-[var(--color-brand-400)] hover:underline"
-        >
-          Zurück zum Login
-        </Link>
-      </CardContent>
-    </Card>
-  );
+  return <CheckEmailView />;
 }

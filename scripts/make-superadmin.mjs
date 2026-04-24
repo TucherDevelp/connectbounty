@@ -41,7 +41,7 @@ if (!user) {
 
 console.log(`   Gefunden: ${user.email}  (id=${user.id})`);
 
-// 2. Rolle vergeben (upsert – falls schon vorhanden, keine doppelten Einträge)
+// 2. Rolle vergeben (upsert - falls schon vorhanden, keine doppelten Einträge)
 const { error: roleErr } = await admin.from("user_roles").upsert(
   { user_id: user.id, role: "superadmin" },
   { onConflict: "user_id,role" },

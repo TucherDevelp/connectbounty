@@ -7,12 +7,12 @@ import type { AuditAction, Json, UserRole } from "@/lib/supabase/types";
  * Server-seitige Auth-Helfer, die alle gegen RLS arbeiten.
  *
  * Faustregel:
- *   • requireUser()      – schlägt fehl, wenn keine Session aktiv ist
- *   • requireRole(role)  – schlägt fehl, wenn die Rolle fehlt
- *   • hasRole(role)      – Boolean, kein Throw
+ *   • requireUser()      - schlägt fehl, wenn keine Session aktiv ist
+ *   • requireRole(role)  - schlägt fehl, wenn die Rolle fehlt
+ *   • hasRole(role)      - Boolean, kein Throw
  *
  * Aufrufe gehen über die DB-Function has_role(), damit die Quelle der
- * Wahrheit die SQL-Definition bleibt – nicht eine zweite Code-Implementierung.
+ * Wahrheit die SQL-Definition bleibt - nicht eine zweite Code-Implementierung.
  */
 
 export class UnauthenticatedError extends Error {

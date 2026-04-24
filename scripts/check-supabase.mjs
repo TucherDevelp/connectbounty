@@ -5,7 +5,7 @@
  *
  * Aufruf:  npm run check:supabase
  *
- * Erwartung: 2x "OK" – einmal Anon-Key, einmal Service-Role-Key.
+ * Erwartung: 2x "OK" - einmal Anon-Key, einmal Service-Role-Key.
  * Ein Fehler hier ist KEIN Test-Fehler, sondern bedeutet, dass die Werte
  * in .env.local falsch sind oder das Projekt nicht erreichbar ist.
  *
@@ -18,7 +18,7 @@ const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const service = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!url || !anon || !service) {
-  console.error("✗ .env.local unvollständig – siehe .env.example.");
+  console.error("✗ .env.local unvollständig - siehe .env.example.");
   process.exit(1);
 }
 

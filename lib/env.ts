@@ -4,12 +4,12 @@ import { z } from "zod";
  * Zentrale Env-Validation.
  *
  * Schlägt sofort mit einer lesbaren Fehlermeldung fehl, wenn eine Variable
- * fehlt oder das falsche Format hat – statt erst zur Laufzeit irgendwo tief
+ * fehlt oder das falsche Format hat - statt erst zur Laufzeit irgendwo tief
  * im Stack zu crashen.
  *
  * Server- vs. Client-Trennung:
  *  - serverEnv() darf NIE in Client Components / Browser-Code aufgerufen
- *    werden – Next.js würde sonst beim Build mit einem leeren Wert ersetzen.
+ *    werden - Next.js würde sonst beim Build mit einem leeren Wert ersetzen.
  *  - clientEnv() enthält ausschließlich Werte mit NEXT_PUBLIC_-Prefix.
  *
  * Beide sind lazy + memoized, damit Tests Werte vor dem ersten Aufruf
@@ -22,15 +22,15 @@ const serverSchema = z.object({
   // KYC
   KYC_PROVIDER: z.enum(["mock", "ballerine"]).default("mock"),
   KYC_WEBHOOK_SECRET: z.string().min(16, "KYC_WEBHOOK_SECRET mindestens 16 Zeichen"),
-  // Ballerine – optional, wird erst validiert wenn KYC_PROVIDER=ballerine
+  // Ballerine - optional, wird erst validiert wenn KYC_PROVIDER=ballerine
   BALLERINE_API_URL: z.string().url().optional(),
   BALLERINE_API_KEY: z.string().min(1).optional(),
   BALLERINE_WORKFLOW_ID: z.string().min(1).optional(),
   BALLERINE_WEBHOOK_SECRET: z.string().min(1).optional(),
-  // Stripe – optional bis Zahlungen live geschaltet werden
+  // Stripe - optional bis Zahlungen live geschaltet werden
   STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
-  // Platform-Fee in Prozent (0–100, Standard 10%)
+  // Platform-Fee in Prozent (0-100, Standard 10%)
   STRIPE_PLATFORM_FEE_PERCENT: z.coerce.number().min(0).max(100).default(10),
 });
 

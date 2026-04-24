@@ -1,19 +1,19 @@
 -- ============================================================================
--- ConnectBounty – Schema v1: Auth, Identity, Roles, Audit
+-- ConnectBounty - Schema v1: Auth, Identity, Roles, Audit
 -- ============================================================================
 -- Diese Migration legt das Identitäts-Fundament:
---   • profiles      – pro auth.users genau eine Profilzeile
---   • user_roles    – mehrwertige RBAC-Rollen pro User
---   • audit_logs    – append-only Aktions-Log
---   • Enums         – user_role, kyc_status, audit_action
---   • has_role()    – SECURITY DEFINER, RLS-sicher
---   • Trigger       – Auto-Profile + 'registered_user' bei Signup, updated_at
+--   • profiles      - pro auth.users genau eine Profilzeile
+--   • user_roles    - mehrwertige RBAC-Rollen pro User
+--   • audit_logs    - append-only Aktions-Log
+--   • Enums         - user_role, kyc_status, audit_action
+--   • has_role()    - SECURITY DEFINER, RLS-sicher
+--   • Trigger       - Auto-Profile + 'registered_user' bei Signup, updated_at
 --
 -- Designprinzipien:
 --   1. RLS ist auf ALLEN public-Tabellen aktiv. Niemals deaktivieren.
 --   2. Schreibzugriff auf audit_logs nur via SECURITY DEFINER-Funktionen.
 --   3. Rollenwechsel sind selbst auditierbar (eigene audit_action).
---   4. Service-Role-Client (Backend) umgeht RLS – bleibt aber an die
+--   4. Service-Role-Client (Backend) umgeht RLS - bleibt aber an die
 --      gleichen Tabellenstrukturen gebunden.
 -- ============================================================================
 
@@ -119,7 +119,7 @@ create index audit_logs_target_idx    on public.audit_logs (target_id, created_a
 comment on table public.audit_logs is
   'Append-only. Schreibzugriff nur über SECURITY DEFINER-Funktionen oder Service-Role-Client.';
 
--- ── 5. has_role() / has_any_role() – RLS-sicher ────────────────────────────
+-- ── 5. has_role() / has_any_role() - RLS-sicher ────────────────────────────
 -- SECURITY DEFINER, damit RLS-Policies sie aufrufen können, ohne dass der
 -- Aufruf selbst eine RLS-Prüfung auf user_roles auslöst (sonst Endlos-Rekursion).
 -- search_path = public ist Pflicht für SECURITY DEFINER-Funktionen.
@@ -219,7 +219,7 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
 
--- ── 8. RLS – profiles ──────────────────────────────────────────────────────
+-- ── 8. RLS - profiles ──────────────────────────────────────────────────────
 
 alter table public.profiles enable row level security;
 
@@ -244,10 +244,10 @@ create policy profiles_update_admin
   using      (public.has_any_role(array['admin','superadmin']::public.user_role[]))
   with check (public.has_any_role(array['admin','superadmin']::public.user_role[]));
 
--- INSERT bewusst nicht erlaubt – nur via Trigger handle_new_user().
--- DELETE bewusst nicht erlaubt – Account-Löschung kaskadiert über auth.users.
+-- INSERT bewusst nicht erlaubt - nur via Trigger handle_new_user().
+-- DELETE bewusst nicht erlaubt - Account-Löschung kaskadiert über auth.users.
 
--- ── 9. RLS – user_roles ────────────────────────────────────────────────────
+-- ── 9. RLS - user_roles ────────────────────────────────────────────────────
 
 alter table public.user_roles enable row level security;
 
@@ -272,7 +272,7 @@ create policy user_roles_delete_superadmin
   to authenticated
   using (public.has_role('superadmin'));
 
--- ── 10. RLS – audit_logs ───────────────────────────────────────────────────
+-- ── 10. RLS - audit_logs ───────────────────────────────────────────────────
 
 alter table public.audit_logs enable row level security;
 
@@ -286,10 +286,10 @@ create policy audit_logs_select_admin
   to authenticated
   using (public.has_any_role(array['admin','superadmin','support']::public.user_role[]));
 
--- Kein INSERT/UPDATE/DELETE für authenticated – Schreibzugriff nur über
+-- Kein INSERT/UPDATE/DELETE für authenticated - Schreibzugriff nur über
 -- log_audit_event() (siehe unten) bzw. Service-Role.
 
--- ── 11. log_audit_event() – sichere Audit-Schreib-API ──────────────────────
+-- ── 11. log_audit_event() - sichere Audit-Schreib-API ──────────────────────
 -- Erlaubt User Code, Audit-Events zu erzeugen, ohne der Tabelle direkten
 -- INSERT-Zugriff zu geben. SECURITY DEFINER + actor_id = auth.uid()
 -- verhindert Spoofing.

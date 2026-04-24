@@ -1,10 +1,10 @@
 -- ============================================================================
--- ConnectBounty – Schema v6: KYC Dokumente & Storage
+-- ConnectBounty - Schema v6: KYC Dokumente & Storage
 -- ============================================================================
 -- Neu:
---   • kyc_documents  – speichert Metadaten hochgeladener KYC-Dokumente
+--   • kyc_documents  - speichert Metadaten hochgeladener KYC-Dokumente
 --   • Storage-Bucket "kyc-documents" (private, service_role only)
---   • get_kyc_applicant_with_docs() – Hilfsfunktion für Admin-Review
+--   • get_kyc_applicant_with_docs() - Hilfsfunktion für Admin-Review
 -- ============================================================================
 
 -- ── 1. kyc_documents ────────────────────────────────────────────────────────
@@ -102,6 +102,6 @@ revoke execute on function public.admin_get_kyc_pending from public, authenticat
 grant  execute on function public.admin_get_kyc_pending to service_role;
 
 -- ── 5. update_kyc_status: Admin-seitige Erweiterung ─────────────────────────
--- Die bestehende Funktion (0002) wird hier nicht geändert – sie funktioniert
+-- Die bestehende Funktion (0002) wird hier nicht geändert - sie funktioniert
 -- bereits korrekt für approve/reject über Webhook-Route.
 -- Admin-Aktionen rufen dieselbe Funktion via service_role auf.

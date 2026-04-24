@@ -1,9 +1,9 @@
 /**
- * KYC Provider – Adapter-Pattern.
+ * KYC Provider - Adapter-Pattern.
  *
  * Jeder externe Verifikations-Dienst (Ballerine, Onfido, Veriff, …) wird
  * hinter diesem Interface gekapselt. UI, Actions und Webhook wissen nichts
- * von der konkreten Implementierung – sie sprechen ausschließlich gegen
+ * von der konkreten Implementierung - sie sprechen ausschließlich gegen
  * diesen Vertrag.
  *
  * Warum? Wir wollen:
@@ -24,11 +24,11 @@ export type KycWebhookEventType =
 export interface KycStartSession {
   /** Vom Provider vergebene eindeutige ID des Antrags. */
   applicantId: string;
-  /** Level (z.B. "basic-kyc-level") – wird in DB mitgespeichert. */
+  /** Level (z.B. "basic-kyc-level") - wird in DB mitgespeichert. */
   levelName: string;
   /**
    * Kurzlebiges Access-Token für das Web-SDK des jeweiligen Providers.
-   * Beim MockProvider leer – die UI zeigt dann stattdessen einen Dev-Panel.
+   * Beim MockProvider leer - die UI zeigt dann stattdessen einen Dev-Panel.
    */
   accessToken: string | null;
   /**

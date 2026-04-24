@@ -75,5 +75,5 @@ export async function simulateKycDecisionAction(
 
   revalidatePath("/", "layout");
   revalidatePath("/kyc");
-  return actionOk("Entscheidung simuliert – Status wurde aktualisiert.");
+  return actionOk("Entscheidung simuliert - Status wurde aktualisiert.");
 }

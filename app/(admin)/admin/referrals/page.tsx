@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { ReferralStatusBadge } from "@/components/referral/status-badge";
+import { localizedMetadata } from "@/lib/i18n-metadata";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { formatBonus, formatDate } from "@/lib/format";
 import type { ReferralStatus } from "@/lib/supabase/types";
@@ -11,7 +13,9 @@ import {
 } from "@/lib/admin/referral-actions";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = { title: "Admin – Empfehlungen" };
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_admin_referrals_title" });
+}
 export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | string[] | undefined>;
@@ -116,7 +120,7 @@ export default async function AdminReferralsPage({
                     <p className="text-xs text-[var(--color-text-faint)]">{r.candidate_email}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-[var(--color-text-primary)]">{bounty?.title ?? "–"}</p>
+                    <p className="text-[var(--color-text-primary)]">{bounty?.title ?? "-"}</p>
                     {bounty && (
                       <p className="text-xs text-[var(--color-text-muted)]">
                         {formatBonus(Number(bounty.bonus_amount), bounty.bonus_currency)}
@@ -124,13 +128,13 @@ export default async function AdminReferralsPage({
                     )}
                   </td>
                   <td className="px-4 py-3 text-[var(--color-text-muted)]">
-                    {referrer?.display_name ?? "–"}
+                    {referrer?.display_name ?? "-"}
                   </td>
                   <td className="px-4 py-3">
                     <ReferralStatusBadge status={status} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-[var(--color-text-muted)]">
-                    {formatDate(r.created_at) ?? "–"}
+                    {formatDate(r.created_at) ?? "-"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1.5">
@@ -175,9 +179,25 @@ export default async function AdminReferralsPage({
 
       {totalPages > 1 && (
         <nav className="mt-4 flex items-center justify-center gap-2 text-sm">
-          {page > 1 && <a href={`/admin/referrals?status=${filterStatus}&page=${page - 1}`} className="rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">← Zurück</a>}
+          {page > 1 && (
+            <a
+              href={`/admin/referrals?status=${filterStatus}&page=${page - 1}`}
+              className="inline-flex items-center gap-1 rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            >
+              <ArrowLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+              Zurück
+            </a>
+          )}
           <span className="text-[var(--color-text-muted)]">Seite {page} / {totalPages}</span>
-          {page < totalPages && <a href={`/admin/referrals?status=${filterStatus}&page=${page + 1}`} className="rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]">Weiter →</a>}
+          {page < totalPages && (
+            <a
+              href={`/admin/referrals?status=${filterStatus}&page=${page + 1}`}
+              className="inline-flex items-center gap-1 rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            >
+              Weiter
+              <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+            </a>
+          )}
         </nav>
       )}
     </section>

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import {
   Card,
@@ -28,6 +30,8 @@ import {
 } from "@/lib/bounty/actions";
 import { updateReferralStatusAction } from "@/lib/referral/actions";
 import type { ReferralStatus } from "@/lib/supabase/types";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -39,21 +43,23 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
   try {
     const bounty = await getBountyById(id);
-    if (!bounty) return { title: "Bounty nicht gefunden" };
+    if (!bounty) return { title: t(lang, "meta_bounty_not_found") };
     return {
       title: bounty.title,
       description: bounty.description.slice(0, 160),
     };
   } catch {
-    return { title: "Bounty" };
+    return { title: t(lang, "meta_bounty_fallback") };
   }
 }
 
 // ── Hilfs-UI ──────────────────────────────────────────────────────────────
 
 const ALLOWED_NEXT_STATUSES: Record<ReferralStatus, ReferralStatus[]> = {
+  // Legacy-Flow
   pending_review: [],
   submitted: ["contacted", "rejected"],
   contacted: ["interviewing", "rejected"],
@@ -62,9 +68,18 @@ const ALLOWED_NEXT_STATUSES: Record<ReferralStatus, ReferralStatus[]> = {
   paid: [],
   rejected: [],
   withdrawn: [],
+  // v7 - Three-stage confirmation flow (managed via dedicated confirmation actions)
+  awaiting_hire_proof: [],
+  awaiting_claim: [],
+  awaiting_payout_account: [],
+  awaiting_data_forwarding: [],
+  invoice_pending: [],
+  invoice_paid: [],
+  disputed: [],
 };
 
 const STATUS_ACTION_LABEL: Record<ReferralStatus, string> = {
+  // Legacy-Flow
   pending_review: "",
   contacted: "Kontaktiert markieren",
   interviewing: "In Interview setzen",
@@ -73,6 +88,14 @@ const STATUS_ACTION_LABEL: Record<ReferralStatus, string> = {
   rejected: "Ablehnen",
   submitted: "",
   withdrawn: "",
+  // v7 - managed via dedicated pages, no inline action
+  awaiting_hire_proof: "",
+  awaiting_claim: "",
+  awaiting_payout_account: "",
+  awaiting_data_forwarding: "",
+  invoice_pending: "",
+  invoice_paid: "",
+  disputed: "",
 };
 
 function ReferralRow({
@@ -197,7 +220,7 @@ export default async function BountyDetailPage({
         <div className="mb-4">
           <FormAlert>
             {err === "status_update_failed"
-              ? "Statusänderung nicht möglich – bitte Übergang prüfen."
+              ? "Statusänderung nicht möglich - bitte Übergang prüfen."
               : "Aktion fehlgeschlagen."}
           </FormAlert>
         </div>
@@ -206,7 +229,7 @@ export default async function BountyDetailPage({
       {/* pending_review Banner für Owner */}
       {isOwner && bounty.status === "pending_review" && (
         <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/5 p-4">
-          <span className="mt-0.5 text-lg">⏳</span>
+          <Loader2 className="mt-0.5 size-6 shrink-0 text-[var(--color-warning)]" strokeWidth={2} aria-hidden />
           <div>
             <p className="text-sm font-semibold text-[var(--color-warning)]">Warte auf Admin-Freigabe</p>
             <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">

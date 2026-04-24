@@ -9,10 +9,10 @@ import type { BountyStatus, ReferralStatus } from "@/lib/supabase/types";
  *
  * Regeln:
  *   • Alle Queries laufen gegen RLS. Diese Datei erzwingt KEINE zusätzlichen
- *     Guards – die Policies aus 0003_marketplace.sql sind die Single Source
+ *     Guards - die Policies aus 0003_marketplace.sql sind die Single Source
  *     of Truth.
  *   • Public-Lists schließen abgelaufene Bounties immer aus (expires_at).
- *   • Keine JOINs über FKs ohne explizite Spaltenwahl – vermeidet N+1 und
+ *   • Keine JOINs über FKs ohne explizite Spaltenwahl - vermeidet N+1 und
  *     lässt die Absicht sichtbar bleiben.
  */
 
@@ -90,7 +90,7 @@ export type BountyListResult = {
  * Markiert abgelaufene Bounties (expires_at < now()) auf status='expired'.
  * Lazy-Check: wird vor dem Public-Listing aufgerufen, damit die Liste immer
  * aktuell ist, ohne einen dedizierten Cron-Job vorauszusetzen.
- * Fehler werden still geschluckt – ein nicht aktualisierter Status ist
+ * Fehler werden still geschluckt - ein nicht aktualisierter Status ist
  * besser als ein Ausfall des Listings.
  */
 export async function expireStaleBounciesLazy(): Promise<void> {
@@ -98,13 +98,13 @@ export async function expireStaleBounciesLazy(): Promise<void> {
     const supabase = await getSupabaseServerClient();
     await supabase.rpc("expire_stale_bounties");
   } catch {
-    // intentionally silent – stale status is cosmetic, not security-critical
+    // intentionally silent - stale status is cosmetic, not security-critical
   }
 }
 
 /**
  * Liefert die öffentlich sichtbaren (status=open, nicht abgelaufen) Bounties
- * paginiert & gefiltert. Nutzt die Server-seitige Supabase-Instanz – RLS
+ * paginiert & gefiltert. Nutzt die Server-seitige Supabase-Instanz - RLS
  * blendet closed/draft/cancelled automatisch aus.
  */
 export async function listOpenBounties(
@@ -127,7 +127,7 @@ export async function listOpenBounties(
     .range(from, to);
 
   if (filters.q) {
-    // .or(ilike) für mehrere Spalten – keine FTS, aber ausreichend für MVP.
+    // .or(ilike) für mehrere Spalten - keine FTS, aber ausreichend für MVP.
     // Werte escapen: nur Kommas & Klammern sind PostgREST-Syntax; unser
     // Schema limitiert max 120 Zeichen → in der Praxis ungefährlich.
     const safe = filters.q.replaceAll(",", "").replaceAll("(", "").replaceAll(")", "");

@@ -11,11 +11,11 @@ import { logAuditEvent } from "@/lib/auth/roles";
  * weiter.
  *
  * Querystring:
- *   code      – Auth-Code von Supabase
- *   next      – optionaler Redirect-Pfad nach Erfolg (sicher gegen
+ *   code      - Auth-Code von Supabase
+ *   next      - optionaler Redirect-Pfad nach Erfolg (sicher gegen
  *               Open-Redirect: nur lokale, mit "/" beginnende Pfade werden
  *               akzeptiert).
- *   provider  – optionaler Hinweis, von welchem Provider der Callback kommt
+ *   provider  - optionaler Hinweis, von welchem Provider der Callback kommt
  *               ("google" | "email"). Wird nur fürs Audit-Log genutzt.
  */
 export async function GET(request: Request) {

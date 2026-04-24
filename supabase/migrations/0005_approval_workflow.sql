@@ -1,5 +1,5 @@
 -- ============================================================================
--- ConnectBounty – Schema v5: Approval-Workflow
+-- ConnectBounty - Schema v5: Approval-Workflow
 -- ============================================================================
 -- Neu in dieser Migration:
 --   • bounty_status bekommt 'pending_review'  (Warteliste nach Publish)

@@ -1,102 +1,314 @@
 @import "tailwindcss";
 
 /* ──────────────────────────────────────────────────────────
-   ConnectBounty – Design Tokens v2
-   Amber-Akzent + seriöse Slate-Surfaces. Bonbon-Logo + Name
-   bleiben unverändert.
+   ConnectBounty - Design Tokens (HSL) + Legacy-Aliase
+   Hellblau (Sky/Cyan) + Navy Surfaces, Bonbon und Akzente einheitlich
    ────────────────────────────────────────────────────────── */
-@theme {
-  /* ── Brand (Amber) ── */
-  --color-brand:      #f5a623;
-  --color-brand-50:   #fff7e6;
-  --color-brand-100:  #ffe8b8;
-  --color-brand-200:  #ffd680;
-  --color-brand-300:  #ffc04d;
-  --color-brand-400:  #f5a623;
-  --color-brand-500:  #d4891a;
-  --color-brand-600:  #a86b12;
-  --color-brand-700:  #7a4d0c;
-
-  /* ── Surfaces (Deep Slate) ── */
-  --color-surface-bg:     #080f1c;
-  --color-surface-1:      #0f1729;
-  --color-surface-2:      #1a2540;
-  --color-surface-3:      #253050;
-  --color-surface-border: rgba(148, 163, 184, 0.12);
-  --color-surface-hover:  rgba(245, 166, 35, 0.06);
-
-  /* ── Text ── */
-  --color-text-primary: #e2e8f0;
-  --color-text-muted:   #94a3b8;
-  --color-text-faint:   #4b5d76;
-
-  /* ── Status ── */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error:   #ef4444;
-  --color-info:    #3b82f6;
-
-  /* ── Typografie ── */
-  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", monospace;
-
-  /* ── Radien ── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-
-  /* ── Shadows ── */
-  --shadow-card: 0 1px 3px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.30);
-  --shadow-card-hover: 0 4px 16px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.35);
-}
 
 @layer base {
+  :root,
+  [data-theme="dark"] {
+    /* Etwas hellere Flächen + Ränder: bessere Lesbarkeit bei Mond/Dark */
+    --background: 222 44% 7%;
+    --surface: 222 32% 12%;
+    --surface-2: 222 28% 17%;
+    --surface-offset: 216 32% 22%;
+    --border: 220 13% 30%;
+    --foreground: 220 18% 94%;
+    --muted-foreground: 220 11% 68%;
+    --primary: 199 88% 55%;
+    --primary-foreground: 0 0% 100%;
+    /* Akzent = helleres Blau (ehem. Orange/Gold) */
+    --accent: 199 82% 64%;
+    /* Erfolg: kräftigeres Grün auf dunklem Grund (nicht zu gedämpft) */
+    --success: 158 68% 48%;
+    --destructive: 0 72% 58%;
+    --radius: 0.5rem;
+    --shadow-glow: 0 0 24px rgba(14, 165, 233, 0.15);
+    --shadow-glow-strong: 0 0 48px rgba(14, 165, 233, 0.28);
+    /* Flächen-Ränder etwas kräftiger als reines border-Lightness */
+    --surface-border-alpha: 0.55;
+  }
+
+  [data-theme="light"] {
+    --background: 210 36% 97%;
+    --surface: 0 0% 100%;
+    --surface-2: 210 35% 95%;
+    --surface-offset: 214 28% 90%;
+    /* Etwas dunklere Kanten: Karten/Inputs besser erkennbar */
+    --border: 214 22% 78%;
+    --foreground: 222 47% 8%;
+    /* Sekundärtext dunkler = WCAG auf hellem Grund */
+    --muted-foreground: 215 19% 36%;
+    /* Primary etwas tiefer: Links/Badges auf Weiß klarer */
+    --primary: 199 86% 36%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 199 78% 42%;
+    /* Erfolg/Verifiziert: satteres Grün, nicht zu hell (Lesbarkeit auf Weiß) */
+    --success: 158 72% 28%;
+    --destructive: 0 72% 45%;
+    --shadow-glow: 0 0 24px rgba(2, 132, 199, 0.12);
+    --shadow-glow-strong: 0 0 40px rgba(2, 132, 199, 0.2);
+    --surface-border-alpha: 0.72;
+  }
+
   *,
   *::before,
-  *::after { box-sizing: border-box; }
+  *::after {
+    box-sizing: border-box;
+  }
 
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 
   body {
     margin: 0;
     min-height: 100dvh;
-    background-color: var(--color-surface-bg);
-    color: var(--color-text-primary);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
     line-height: 1.2;
     margin: 0;
     letter-spacing: -0.01em;
   }
 
-  a { color: inherit; text-decoration: none; }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-  /* Focus-Ring (global, zugänglich) */
   :focus-visible {
-    outline: 2px solid var(--color-brand-400);
+    outline: 2px solid hsl(var(--primary));
     outline-offset: 2px;
     border-radius: 4px;
   }
 }
 
-/* ── Skeleton-Animation ─────────────────────────────────── */
+@theme {
+  /* Semantic (shadcn-style) */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-destructive: hsl(var(--destructive));
+  --color-success: hsl(var(--success));
+  --color-border: hsl(var(--border));
+  --color-surface: hsl(var(--surface));
+  --color-surface-2: hsl(var(--surface-2));
+  --color-surface-offset: hsl(var(--surface-offset));
+
+  /* Legacy aliases (bestehende Komponenten) */
+  --color-brand: hsl(var(--primary));
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-200: #bae6fd;
+  --color-brand-300: #7dd3fc;
+  --color-brand-400: hsl(var(--primary));
+  --color-brand-500: #0284c7;
+  --color-brand-600: #0369a1;
+  --color-brand-700: #075985;
+
+  --color-surface-bg: hsl(var(--background));
+  --color-surface-1: hsl(var(--surface));
+  --color-surface-3: hsl(var(--surface-offset));
+  --color-surface-border: hsl(var(--border) / var(--surface-border-alpha, 0.55));
+  --color-surface-hover: hsl(var(--primary) / 0.06);
+
+  --color-text-primary: hsl(var(--foreground));
+  --color-text-muted: hsl(var(--muted-foreground));
+  --color-text-faint: hsl(var(--muted-foreground) / 0.75);
+
+  --color-warning: hsl(var(--accent));
+  --color-error: hsl(var(--destructive));
+  --color-info: hsl(var(--primary));
+
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Marketing / Motion ─────────────────────────────────── */
 @layer components {
+  .hero-bg {
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(hsl(var(--primary) / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .hero-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      hsl(var(--primary) / 0.1) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+  }
+
+  .shimmer-badge {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted-foreground) / 0.25) 0%,
+      hsl(var(--primary) / 0.35) 50%,
+      hsl(var(--muted-foreground) / 0.25) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shimmer-badge {
+      animation: none;
+      background: hsl(var(--primary) / 0.15);
+    }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 600ms ease,
+      transform 600ms ease;
+  }
+
+  .reveal-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* „So funktioniert’s“: gestaffelt einblenden, Pfeile nur im Verbinder (nicht durch Text) */
+  .how-animate-in {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Nur einblenden, kein translate: vermeidet unscharfe Kreise/Pfeile durch Compositing */
+  .how-animate-in.how-fade-only {
+    transform: none;
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal-how.reveal-visible .how-animate-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  @keyframes how-arrow-nudge-h {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(5px);
+    }
+  }
+
+  @keyframes how-arrow-nudge-v {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(5px);
+    }
+  }
+
+  .how-arrow-dynamic-h {
+    animation: how-arrow-nudge-h 2.2s ease-in-out infinite;
+  }
+
+  .how-arrow-dynamic-v {
+    animation: how-arrow-nudge-v 2.2s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .how-animate-in {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+
+    .how-arrow-dynamic-h,
+    .how-arrow-dynamic-v {
+      animation: none;
+    }
+  }
+
+  .card-fintech {
+    transition:
+      transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 180ms ease;
+  }
+
+  .card-fintech:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow);
+    border-color: hsl(var(--primary) / 0.3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-fintech:hover {
+      transform: none;
+    }
+  }
+
   .skeleton {
     background: linear-gradient(
       90deg,
-      var(--color-surface-2) 25%,
-      var(--color-surface-3) 50%,
-      var(--color-surface-2) 75%
+      hsl(var(--surface-2)) 25%,
+      hsl(var(--surface-offset)) 50%,
+      hsl(var(--surface-2)) 75%
     );
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.6s ease-in-out infinite;
@@ -104,12 +316,43 @@
   }
 
   @keyframes skeleton-shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 
-  /* Scrollbar (subtiler, dunkel) */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--color-surface-3); border-radius: 3px; }
+  @keyframes bounce-arrow {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(6px);
+    }
+  }
+
+  .scroll-indicator {
+    animation: bounce-arrow 1.5s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-indicator {
+      animation: none;
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--surface-offset));
+    border-radius: 3px;
+  }
 }

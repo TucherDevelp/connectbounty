@@ -14,7 +14,7 @@ import type { AuditAction } from "@/lib/supabase/types";
  *   4. Audit-Log erhält das entsprechende kyc.*-Event.
  *
  * Wichtig:
- *   • service_role-Client umgeht RLS (nur hier erlaubt – Handler ist nicht
+ *   • service_role-Client umgeht RLS (nur hier erlaubt - Handler ist nicht
  *     an eine User-Session gebunden).
  *   • Wir antworten mit klaren HTTP-Status, damit Ballerine/Mock retries sinnvoll
  *     einsortieren können.

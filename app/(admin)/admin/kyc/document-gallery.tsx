@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 
 const DOC_LABELS: Record<string, string> = {
@@ -56,12 +55,11 @@ export async function KycDocumentGallery({ docs }: KycDocumentGalleryProps) {
               className="group relative block h-28 overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface-2)]"
               title="In neuem Tab öffnen"
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element -- signierte Nutzerfotos */}
+              <img
                 src={doc.signedUrl}
                 alt={DOC_LABELS[doc.document_type] ?? doc.document_type}
-                fill
-                className="object-cover transition-transform duration-200 group-hover:scale-105"
-                sizes="(max-width: 640px) 50vw, 25vw"
+                className="absolute inset-0 size-full object-cover transition-transform duration-200 group-hover:scale-105"
               />
               <span className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 text-xs text-white font-medium">
                 Vollbild

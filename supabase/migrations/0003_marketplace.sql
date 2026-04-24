@@ -1,5 +1,5 @@
 -- ============================================================================
--- ConnectBounty – Schema v3: Marketplace (Bounties + Referrals)
+-- ConnectBounty - Schema v3: Marketplace (Bounties + Referrals)
 -- ============================================================================
 -- Fachliche Essenz:
 --   • Bounty   = offene Stellenausschreibung mit Referral-Prämie, die ein
@@ -19,7 +19,7 @@
 --   2. Öffentlich sichtbar (für authenticated) sind nur 'open' Bounties;
 --      eigene Entwürfe und geschlossene Bounties nur für den Owner/Admins.
 --   3. Referrals sind privat: nur Referrer + Bounty-Owner + Admin sehen sie.
---      Kandidaten-Kontaktdaten werden nur bei Übergang auf 'contacted' geteilt –
+--      Kandidaten-Kontaktdaten werden nur bei Übergang auf 'contacted' geteilt -
 --      Kontrolle darüber übernimmt die Application-Schicht (Phase 3.2+).
 --   4. Keine harten DELETEs auf referrals → Audit-Trail + Payout-Nachweis.
 -- ============================================================================
@@ -47,7 +47,7 @@ create type public.referral_status as enum (
 -- ── 2. Audit-Action-Enum erweitern ─────────────────────────────────────────
 -- ALTER TYPE ... ADD VALUE ist seit PG12 in Transaktionen erlaubt;
 -- die neu hinzugefügten Werte dürfen nur nicht in derselben Transaktion
--- benutzt werden. Das tun wir auch nicht – die Werte werden erst zur
+-- benutzt werden. Das tun wir auch nicht - die Werte werden erst zur
 -- Laufzeit via log_audit_event() aus der App geschrieben.
 
 alter type public.audit_action add value if not exists 'bounty.created';
@@ -97,7 +97,7 @@ create table public.bounties (
   bonus_amount    numeric(12, 2) not null,
   bonus_currency  char(3)        not null default 'EUR',
 
-  -- Einfache Kategorisierung – keine normalisierten FK-Tabellen im MVP.
+  -- Einfache Kategorisierung - keine normalisierten FK-Tabellen im MVP.
   -- Genauere Taxonomie kommt später (Industries, Skills, Remote-Flags).
   location        text,
   industry        text,
@@ -185,12 +185,12 @@ create table public.bounty_referrals (
   constraint referrals_email_fmt   check (candidate_email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
   constraint referrals_message_len check (message is null or char_length(message) <= 2000),
 
-  -- Pro (Bounty × Referrer × Kandidat) nur ein Eintrag – verhindert Spam.
+  -- Pro (Bounty × Referrer × Kandidat) nur ein Eintrag - verhindert Spam.
   unique (bounty_id, referrer_id, candidate_email)
 );
 
 comment on table public.bounty_referrals is
-  'Kandidatenempfehlungen. Kontaktdaten sensibel – RLS streng gesetzt.';
+  'Kandidatenempfehlungen. Kontaktdaten sensibel - RLS streng gesetzt.';
 
 create index bounty_referrals_bounty_idx   on public.bounty_referrals (bounty_id, created_at desc);
 create index bounty_referrals_referrer_idx on public.bounty_referrals (referrer_id, created_at desc);
@@ -259,7 +259,7 @@ create trigger bounty_referrals_transition_guard
 before insert or update on public.bounty_referrals
 for each row execute function public.enforce_referral_transition();
 
--- ── 8. RLS – bounties ──────────────────────────────────────────────────────
+-- ── 8. RLS - bounties ──────────────────────────────────────────────────────
 
 alter table public.bounties enable row level security;
 
@@ -314,7 +314,7 @@ create policy bounties_delete_staff
   to authenticated
   using (public.has_any_role(array['admin','superadmin']::public.user_role[]));
 
--- ── 9. RLS – bounty_referrals ──────────────────────────────────────────────
+-- ── 9. RLS - bounty_referrals ──────────────────────────────────────────────
 
 alter table public.bounty_referrals enable row level security;
 
@@ -376,7 +376,7 @@ create policy bounty_referrals_update_staff
   using      (public.has_any_role(array['admin','superadmin','moderator']::public.user_role[]))
   with check (public.has_any_role(array['admin','superadmin','moderator']::public.user_role[]));
 
--- Kein DELETE für authenticated – Audit-Trail bleibt erhalten.
+-- Kein DELETE für authenticated - Audit-Trail bleibt erhalten.
 -- Service-Role (Backend-Jobs) umgeht RLS.
 
 -- ── 10. Grants ──────────────────────────────────────────────────────────────

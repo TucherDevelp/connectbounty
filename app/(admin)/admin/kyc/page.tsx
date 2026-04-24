@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
+import { Check, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KycStatusBadge } from "@/components/kyc/status-badge";
 import { Button } from "@/components/ui/button";
+import { localizedMetadata } from "@/lib/i18n-metadata";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import { adminReviewKycAction } from "@/lib/admin/kyc-actions";
 import { KycDocumentGallery } from "./document-gallery";
 
-export const metadata: Metadata = { title: "Admin – KYC Review" };
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_admin_kyc_title" });
+}
 export const dynamic = "force-dynamic";
 
 export default async function AdminKycPage({
@@ -188,7 +192,10 @@ export default async function AdminKycPage({
                       variant="primary"
                       disabled={docs.length === 0}
                     >
-                      Freigeben ✓
+                      <span className="inline-flex items-center gap-1.5">
+                        Freigeben
+                        <Check className="size-4 shrink-0" strokeWidth={2.25} aria-hidden />
+                      </span>
                     </Button>
                     <Button
                       type="submit"
@@ -197,7 +204,10 @@ export default async function AdminKycPage({
                       size="sm"
                       variant="destructive"
                     >
-                      Ablehnen ✗
+                      <span className="inline-flex items-center gap-1.5">
+                        Ablehnen
+                        <X className="size-4 shrink-0" strokeWidth={2.25} aria-hidden />
+                      </span>
                     </Button>
                   </div>
 
@@ -237,13 +247,13 @@ export default async function AdminKycPage({
                   return (
                     <tr key={app.id} className="hover:bg-[var(--color-surface-2)]">
                       <td className="px-4 py-2 text-[var(--color-text-primary)]">
-                        {profile?.display_name ?? "–"}
+                        {profile?.display_name ?? "-"}
                       </td>
                       <td className="px-4 py-2">
                         <KycStatusBadge status={app.status as "approved"} />
                       </td>
                       <td className="px-4 py-2 text-[var(--color-text-muted)]">
-                        {app.reviewed_at ? formatDate(app.reviewed_at) : "–"}
+                        {app.reviewed_at ? formatDate(app.reviewed_at) : "-"}
                       </td>
                     </tr>
                   );

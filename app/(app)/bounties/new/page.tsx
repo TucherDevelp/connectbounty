@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { localizedMetadata } from "@/lib/i18n-metadata";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,9 +10,9 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { KycStatus } from "@/lib/supabase/types";
 import { BountyForm } from "./bounty-form";
 
-export const metadata: Metadata = {
-  title: "Neue Bounty erstellen",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return localizedMetadata({ title: "meta_bounty_new_title" });
+}
 
 export default async function NewBountyPage() {
   const user = await getCurrentUser();
@@ -60,7 +61,7 @@ export default async function NewBountyPage() {
             <p className="text-sm text-[var(--color-text-muted)]">
               {kycStatus === "pending"
                 ? "Dein Antrag wird gerade geprüft. Sobald er freigegeben ist, kannst du hier Bounties anlegen."
-                : "Starte die Verifizierung – das dauert in der Regel nur wenige Minuten."}
+                : "Starte die Verifizierung - das dauert in der Regel nur wenige Minuten."}
             </p>
             <Link href="/kyc" className={buttonVariants({ variant: "primary", size: "sm" })}>
               Zur KYC-Seite

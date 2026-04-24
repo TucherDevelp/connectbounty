@@ -188,7 +188,7 @@ async function main() {
       .eq("id", draftId)
       .maybeSingle();
     if (error) throw error;
-    expect(data === null, "Bob sieht Alice' Draft – RLS verletzt!");
+    expect(data === null, "Bob sieht Alice' Draft - RLS verletzt!");
   });
 
   // ── Status-Transition: Publish ──────────────────────────────────────
@@ -227,7 +227,7 @@ async function main() {
       .from("bounties")
       .update({ title: "Kapern durch Bob" })
       .eq("id", publishedId);
-    // Supabase/PostgREST meldet keinen Fehler, wenn RLS den Row ausfiltert –
+    // Supabase/PostgREST meldet keinen Fehler, wenn RLS den Row ausfiltert -
     // aber der Wert bleibt unverändert.
     if (error && !/row-level|policy/i.test(error.message)) throw error;
     const { data } = await admin
@@ -235,7 +235,7 @@ async function main() {
       .select("title")
       .eq("id", publishedId)
       .single();
-    expect(!data.title.includes("Kapern"), "Bob konnte Titel ändern – RLS kaputt!");
+    expect(!data.title.includes("Kapern"), "Bob konnte Titel ändern - RLS kaputt!");
   });
 
   // ── Constraint-Guards ───────────────────────────────────────────────
@@ -364,7 +364,7 @@ async function main() {
       .select("id")
       .eq("id", publishedId)
       .maybeSingle();
-    expect(stillThere?.id === publishedId, "closed Bounty wurde gelöscht – RLS kaputt");
+    expect(stillThere?.id === publishedId, "closed Bounty wurde gelöscht - RLS kaputt");
   });
 
   // ── Bob mit KYC=approved darf jetzt referren ────────────────────────
@@ -497,9 +497,9 @@ async function main() {
     const ids = data.map((b) => b.id);
     expect(ids.includes(filterBountyId), "Filter-Bounty fehlt im Tag-Filter");
     expect(!ids.some((id) => id !== filterBountyId && state.bounties.includes(id) && id !== filterBountyId),
-      // Selbstverständlich können parallele Test-Suiten andere Rows produzieren –
+      // Selbstverständlich können parallele Test-Suiten andere Rows produzieren -
       // wir prüfen nur die für uns relevante Bounty.
-      "unerwartet zusätzliche Rows – Tag-Filter scheint zu lax");
+      "unerwartet zusätzliche Rows - Tag-Filter scheint zu lax");
   });
 
   await step("Filter minBonus=2500 blendet 1500er-Bounty aus", async () => {
@@ -523,7 +523,7 @@ async function main() {
     if (error) throw error;
     expect(
       data.some((b) => b.id === filterBountyId),
-      "München-Bounty nicht gefunden – ILIKE Case-Insensitive defekt",
+      "München-Bounty nicht gefunden - ILIKE Case-Insensitive defekt",
     );
   });
 
@@ -546,7 +546,7 @@ async function main() {
       .select("id")
       .eq("id", filterBountyId);
     if (error) throw error;
-    expect(data.length === 0, `Anon sieht ${data.length} Bounty-Rows – RLS verletzt`);
+    expect(data.length === 0, `Anon sieht ${data.length} Bounty-Rows - RLS verletzt`);
   });
 
   // Duplicate-Prevention (unique constraint bounty+referrer+email)
@@ -604,7 +604,7 @@ async function main() {
       .eq("referrer_id", bob.id);
     if (myErr) throw myErr;
     expect(mine.length >= 1, "Bob sieht eigene Empfehlung nicht");
-    // fremdes Referral: alice hat (über kein Referral erstellt, aber) – Bob darf
+    // fremdes Referral: alice hat (über kein Referral erstellt, aber) - Bob darf
     // keinen nicht-eigenen zeigen
     const { data: stranger } = await bobClient
       .from("bounty_referrals")

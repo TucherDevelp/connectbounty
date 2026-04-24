@@ -1,7 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState, useRef, useCallback } from "react";
-import Image from "next/image";
+import { BookOpen, Camera, Check, CreditCard, FileImage } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -118,8 +119,8 @@ export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardPro
   if (step === "done") {
     return (
       <div className="flex flex-col items-center gap-4 py-8 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-success)]/10 text-3xl">
-          ✓
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-success)]/10 text-[var(--color-success)]">
+          <Check className="size-9" strokeWidth={2.5} aria-hidden />
         </div>
         <p className="text-lg font-semibold text-[var(--color-text-primary)]">
           Dokumente eingereicht
@@ -180,10 +181,10 @@ export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardPro
           field={step}
           label={
             step === "id_card_front"
-              ? "Personalausweis – Vorderseite"
+              ? "Personalausweis - Vorderseite"
               : step === "id_card_back"
-              ? "Personalausweis – Rückseite"
-              : "Reisepass – Datenseite"
+              ? "Personalausweis - Rückseite"
+              : "Reisepass - Datenseite"
           }
           hint={
             step === "id_card_front"
@@ -267,14 +268,14 @@ function DocTypeStep({
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <DocTypeCard
-          icon="🪪"
+          icon={<CreditCard className="size-8 text-[var(--color-brand-400)]" strokeWidth={1.75} aria-hidden />}
           title="Personalausweis"
           description="Vorder- und Rückseite"
           selected={selected === "id_card"}
           onClick={() => onSelect("id_card")}
         />
         <DocTypeCard
-          icon="📘"
+          icon={<BookOpen className="size-8 text-[var(--color-brand-400)]" strokeWidth={1.75} aria-hidden />}
           title="Reisepass"
           description="Nur Datenseite"
           selected={selected === "passport"}
@@ -295,7 +296,7 @@ function DocTypeCard({
   selected,
   onClick,
 }: {
-  icon: string;
+  icon: ReactNode;
   title: string;
   description: string;
   selected: boolean;
@@ -312,13 +313,13 @@ function DocTypeCard({
           : "border-[var(--color-surface-border)] hover:border-[var(--color-brand-400)]/50",
       )}
     >
-      <span className="text-2xl">{icon}</span>
+      <span className="flex shrink-0">{icon}</span>
       <div>
         <p className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</p>
         <p className="text-xs text-[var(--color-text-muted)]">{description}</p>
       </div>
       {selected && (
-        <span className="ml-auto text-[var(--color-brand-400)]">✓</span>
+        <Check className="ml-auto size-5 shrink-0 text-[var(--color-brand-400)]" strokeWidth={2.5} aria-hidden />
       )}
     </button>
   );
@@ -363,15 +364,20 @@ function CaptureStep({
         )}
       >
         {capture ? (
-          <Image
+          // Blob-URL-Vorschau, bewusst <img>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={capture.preview}
             alt="Vorschau"
-            fill
-            className={cn("object-cover", isSelfie && "object-top")}
+            className={cn("absolute inset-0 size-full object-cover", isSelfie && "object-top")}
           />
         ) : (
           <div className="flex flex-col items-center gap-2 p-6 text-center">
-            <span className="text-4xl">{isSelfie ? "🤳" : "📄"}</span>
+            {isSelfie ? (
+              <Camera className="size-12 text-[var(--color-text-muted)]" strokeWidth={1.5} aria-hidden />
+            ) : (
+              <FileImage className="size-12 text-[var(--color-text-muted)]" strokeWidth={1.5} aria-hidden />
+            )}
             <p className="text-sm font-medium text-[var(--color-text-primary)]">
               Klicken zum Hochladen
             </p>
@@ -448,7 +454,8 @@ function ReviewStep({
               <p className="text-xs font-medium text-[var(--color-text-muted)]">{label}</p>
               <div className="relative h-32 overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface-2)]">
                 {cap && (
-                  <Image src={cap.preview} alt={label} fill className="object-cover" />
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={cap.preview} alt={label} className="absolute inset-0 size-full object-cover" />
                 )}
               </div>
               <button

@@ -56,6 +56,6 @@ enabled = false
 # werden ab Phase 2/4 unter supabase/functions/<name>/index.ts angelegt.
 [functions]
 
-# Realtime (Chat in Phase 4) – Defaults sind ok.
+# Realtime (Chat in Phase 4) - Defaults sind ok.
 [realtime]
 enabled = true
