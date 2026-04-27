@@ -80,3 +80,31 @@ npx supabase link --project-ref gggovrqckwhjqipfoetu
 
 Danach: `npx supabase db push`, `npx supabase gen types typescript ...`,
 `npx supabase functions deploy <name>`.
+
+## Auth Branding (Google + E-Mail)
+
+### Google-Login: "ConnectBounty" statt Supabase-Ref
+
+Wenn bei Google aktuell die Supabase-Project-ID/Domain sichtbar ist, liegt das an der
+OAuth-Client-Konfiguration in Google Cloud bzw. Supabase-Dashboard (nicht am Next.js-Code).
+
+1. In Supabase unter Authentication -> Providers -> Google eigene Google Credentials eintragen.
+2. In Google Cloud den OAuth Consent Screen auf Produktname `ConnectBounty` setzen.
+3. Falls moeglich eine eigene Auth-Domain verwenden (Custom Domain), damit nicht die
+   `<project-ref>.supabase.co` Domain im OAuth-Flow angezeigt wird.
+
+### Gebrandete Auth-E-Mails (Light Mode)
+
+Fuer lokale/self-hosted Supabase-Umgebungen sind HTML-Templates hinterlegt:
+
+- `supabase/templates/confirmation.html`
+- `supabase/templates/recovery.html`
+- `supabase/templates/email-change.html`
+- `supabase/templates/magic-link.html`
+- `supabase/templates/invite.html`
+
+Sie werden ueber `supabase/config.toml` unter `[auth.email.template.*]` verdrahtet
+und verwenden das ConnectBounty-Branding (helles Layout + Logo).
+
+Fuer gehostete Supabase-Projekte muessen dieselben Inhalte im Dashboard unter
+Authentication -> Email Templates gepflegt werden.
