@@ -17,29 +17,30 @@ function getSteps(
     payoutAccountConfirmed: boolean;
     dataForwarded: boolean;
   },
+  labels: [string, string, string, string],
 ): Step[] {
   return [
     {
       key: "hire_proof",
-      label: "Nachweis hochgeladen",
+      label: labels[0]!,
       done: flags.hireProofUploaded,
       active: status === "awaiting_hire_proof",
     },
     {
       key: "claim",
-      label: "Claim bestätigt",
+      label: labels[1]!,
       done: flags.claimConfirmed,
       active: status === "awaiting_claim",
     },
     {
       key: "payout_account",
-      label: "Firmendaten angegeben",
+      label: labels[2]!,
       done: flags.payoutAccountConfirmed,
       active: status === "awaiting_payout_account",
     },
     {
       key: "data_forwarding",
-      label: "Daten weitergeleitet",
+      label: labels[3]!,
       done: flags.dataForwarded,
       active: status === "awaiting_data_forwarding",
     },
@@ -52,19 +53,25 @@ export function ThreeStageProgress({
   claimConfirmed,
   payoutAccountConfirmed,
   dataForwarded,
+  stepLabels,
 }: {
   status: ReferralStatus;
   hireProofUploaded: boolean;
   claimConfirmed: boolean;
   payoutAccountConfirmed: boolean;
   dataForwarded: boolean;
+  stepLabels: [string, string, string, string];
 }) {
-  const steps = getSteps(status, {
-    hireProofUploaded,
-    claimConfirmed,
-    payoutAccountConfirmed,
-    dataForwarded,
-  });
+  const steps = getSteps(
+    status,
+    {
+      hireProofUploaded,
+      claimConfirmed,
+      payoutAccountConfirmed,
+      dataForwarded,
+    },
+    stepLabels,
+  );
 
   return (
     <ol className="flex w-full items-center gap-0">

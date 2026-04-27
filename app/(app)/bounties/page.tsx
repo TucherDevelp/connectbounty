@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t, type TranslationKey } from "@/lib/i18n";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormAlert } from "@/components/ui/form-error";
@@ -87,40 +90,56 @@ export default async function PublicBountiesPage({
   const totalPages = Math.max(1, Math.ceil(list.total / list.pageSize));
   const currentPage = list.page;
 
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const tr = (key: TranslationKey) => t(lang, key);
+  const filterLabels = {
+    search: tr("bounty_filter_search"),
+    searchPlaceholder: tr("bounty_filter_search_ph"),
+    industry: tr("bounty_filter_industry"),
+    industryPlaceholder: tr("bounty_filter_industry_ph"),
+    location: tr("bounty_filter_location"),
+    locationPlaceholder: tr("bounty_filter_location_ph"),
+    tag: tr("bounty_filter_tag"),
+    tagPlaceholder: tr("bounty_filter_tag_ph"),
+    minBonus: tr("bounty_filter_min_bonus"),
+    minBonusPlaceholder: tr("bounty_filter_min_bonus_ph"),
+    reset: tr("bounty_filter_reset"),
+    apply: tr("bounty_filter_apply"),
+  };
+
+  const resultsLine =
+    list.total === 1
+      ? tr("marketplace_count_single")
+      : tr("marketplace_count_multi").replace("{n}", String(list.total));
+
   return (
     <section className="mx-auto max-w-6xl px-6 py-12">
       <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Marktplatz</h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
-            Offene Bounties - empfehle passende Kandidat:innen und sichere dir die Prämie.
-          </p>
+          <h1 className="font-display text-3xl font-semibold tracking-tight">{tr("marketplace_title")}</h1>
+          <p className="text-sm text-[var(--color-text-muted)]">{tr("marketplace_subtitle")}</p>
         </div>
       </header>
 
       <div className="mb-6">
-        <BountyFilterBar filters={filters} />
+        <BountyFilterBar filters={filters} labels={filterLabels} />
       </div>
 
       {"failed" in list && list.failed && (
         <div className="mb-6">
-          <FormAlert>Marktplatz konnte nicht geladen werden. Bitte später erneut versuchen.</FormAlert>
+          <FormAlert>{tr("marketplace_error_load")}</FormAlert>
         </div>
       )}
 
       {!parsed.success && (
         <div className="mb-6">
-          <FormAlert variant="warning">
-            Ein oder mehrere Filter waren ungültig und wurden ignoriert.
-          </FormAlert>
+          <FormAlert variant="warning">{tr("marketplace_filter_invalid")}</FormAlert>
         </div>
       )}
 
       {list.items.length > 0 ? (
         <>
-          <p className="mb-4 text-xs text-[var(--color-text-muted)]">
-            {list.total} {list.total === 1 ? "Bounty" : "Bounties"} gefunden
-          </p>
+          <p className="mb-4 text-xs text-[var(--color-text-muted)]">{resultsLine}</p>
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {list.items.map((b) => (
               <li key={b.id} className="flex">
@@ -131,7 +150,7 @@ export default async function PublicBountiesPage({
 
           {totalPages > 1 && (
             <nav
-              aria-label="Seitennavigation"
+              aria-label={tr("a11y_pagination")}
               className="mt-8 flex items-center justify-center gap-2 text-sm"
             >
               {currentPage > 1 && (
@@ -140,11 +159,13 @@ export default async function PublicBountiesPage({
                   className="inline-flex items-center gap-1 rounded-[var(--radius-md)] border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                 >
                   <ArrowLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                  Zurück
+                  {tr("pagination_prev")}
                 </Link>
               )}
               <span className="px-3 py-1.5 text-[var(--color-text-muted)]">
-                Seite {currentPage} von {totalPages}
+                {tr("pagination_page")
+                  .replace("{current}", String(currentPage))
+                  .replace("{total}", String(totalPages))}
               </span>
               {list.hasMore && (
                 <Link
@@ -152,7 +173,7 @@ export default async function PublicBountiesPage({
                   className="rounded-[var(--radius-md)] border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
                 >
                   <span className="inline-flex items-center gap-1">
-                    Weiter
+                    {tr("pagination_next")}
                     <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
                   </span>
                 </Link>
@@ -164,22 +185,19 @@ export default async function PublicBountiesPage({
         !("failed" in list && list.failed) && (
           <Card>
             <CardHeader>
-              <CardTitle>Keine passenden Bounties</CardTitle>
-              <CardDescription>
-                Aktuell gibt es keine Bounty, die deinen Filtern entspricht. Ändere oder setze die
-                Filter zurück - oder lege selbst eine an.
-              </CardDescription>
+              <CardTitle>{tr("marketplace_empty_title")}</CardTitle>
+              <CardDescription>{tr("marketplace_empty_desc")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-3 text-sm">
                 <Link href="/bounties" className="underline underline-offset-4">
-                  Filter zurücksetzen
+                  {tr("marketplace_reset_filters")}
                 </Link>
                 <Link
                   href="/bounties/new"
                   className="text-[var(--color-brand)] underline underline-offset-4"
                 >
-                  Eigene Bounty anlegen
+                  {tr("marketplace_create_own")}
                 </Link>
               </div>
             </CardContent>

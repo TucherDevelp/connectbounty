@@ -1,11 +1,17 @@
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { t, type Lang, type TranslationKey } from "@/lib/i18n";
 
-const DOC_LABELS: Record<string, string> = {
-  id_card_front: "Personalausweis Vorderseite",
-  id_card_back: "Personalausweis Rückseite",
-  passport: "Reisepass",
-  selfie: "Selfie",
+const DOC_LABEL_KEYS: Partial<Record<string, TranslationKey>> = {
+  id_card_front: "kyc_wizard_label_id_front",
+  id_card_back: "kyc_wizard_label_id_back",
+  passport: "kyc_wizard_label_passport",
+  selfie: "kyc_wizard_label_selfie",
 };
+
+function docTypeLabel(lang: Lang, documentType: string): string {
+  const key = DOC_LABEL_KEYS[documentType];
+  return key ? t(lang, key) : documentType;
+}
 
 const DOC_ORDER = ["id_card_front", "id_card_back", "passport", "selfie"];
 
@@ -18,13 +24,14 @@ interface DocRow {
 interface KycDocumentGalleryProps {
   applicantId: string;
   docs: DocRow[];
+  lang: Lang;
 }
 
 /**
  * Server-Komponente: generiert signierte Supabase-Storage-URLs (60 min)
  * und rendert die Dokument-Thumbnails für den Admin-Review.
  */
-export async function KycDocumentGallery({ docs }: KycDocumentGalleryProps) {
+export async function KycDocumentGallery({ docs, lang }: KycDocumentGalleryProps) {
   const sb = getSupabaseServiceRoleClient();
 
   const sorted = [...docs].sort(
@@ -45,7 +52,7 @@ export async function KycDocumentGallery({ docs }: KycDocumentGalleryProps) {
       {urls.map((doc) => (
         <div key={doc.id} className="flex flex-col gap-1.5">
           <p className="text-xs font-medium text-[var(--color-text-muted)]">
-            {DOC_LABELS[doc.document_type] ?? doc.document_type}
+            {docTypeLabel(lang, doc.document_type)}
           </p>
           {doc.signedUrl ? (
             <a
@@ -53,21 +60,21 @@ export async function KycDocumentGallery({ docs }: KycDocumentGalleryProps) {
               target="_blank"
               rel="noopener noreferrer"
               className="group relative block h-28 overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface-2)]"
-              title="In neuem Tab öffnen"
+              title={t(lang, "admin_kyc_gallery_open_tab")}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- signierte Nutzerfotos */}
               <img
                 src={doc.signedUrl}
-                alt={DOC_LABELS[doc.document_type] ?? doc.document_type}
+                alt={docTypeLabel(lang, doc.document_type)}
                 className="absolute inset-0 size-full object-cover transition-transform duration-200 group-hover:scale-105"
               />
               <span className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 text-xs text-white font-medium">
-                Vollbild
+                {t(lang, "admin_kyc_gallery_fullscreen")}
               </span>
             </a>
           ) : (
             <div className="flex h-28 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-xs text-[var(--color-text-muted)]">
-              URL fehlt
+              {t(lang, "admin_kyc_gallery_url_missing")}
             </div>
           )}
         </div>

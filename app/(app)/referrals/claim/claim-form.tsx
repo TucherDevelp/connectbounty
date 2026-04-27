@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { ArrowRight } from "lucide-react";
+import { useLang } from "@/context/lang-context";
+import type { FormatLocale } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,30 +13,35 @@ import { claimHireAction } from "@/lib/referral/confirmations";
 import { idleAction } from "@/lib/auth/action-result";
 import type { BountyListItem } from "@/lib/bounty/queries";
 
-function SubmitButton() {
+function SubmitButton({ pendingLabel, label }: { pendingLabel: string; label: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" size="lg" disabled={pending}>
-      {pending ? "Wird gespeichert …" : "Einstellung bestätigen"}
+      {pending ? pendingLabel : label}
     </Button>
   );
 }
 
-export function ClaimForm({ bounties }: { bounties: BountyListItem[] }) {
+export function ClaimForm({
+  bounties,
+  bonusLocale,
+}: {
+  bounties: BountyListItem[];
+  bonusLocale: FormatLocale;
+}) {
+  const { t } = useLang();
   const [state, formAction] = useActionState(claimHireAction, idleAction);
   const fe = state.status === "error" ? state.fieldErrors : undefined;
 
   if (state.status === "ok") {
     return (
       <div className="rounded-[var(--radius-md)] bg-[color-mix(in_oklab,var(--color-success)_12%,transparent)] border border-[var(--color-success)] p-6 text-center">
-        <p className="font-semibold text-[var(--color-success)]">Herzlichen Glückwunsch!</p>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          Dein Claim wurde registriert. Lade jetzt deinen Arbeitsvertrag oder deine Einstellungsbestätigung hoch.
-        </p>
+        <p className="font-semibold text-[var(--color-success)]">{t("claim_ok_title")}</p>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">{t("claim_ok_body")}</p>
         <div className="mt-4">
           <Button size="md" variant="outline" onClick={() => window.location.href = `/referrals/${state.message}/upload`}>
             <span className="inline-flex items-center gap-1.5">
-              Nachweis hochladen
+              {t("claim_ok_cta")}
               <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
             </span>
           </Button>
@@ -48,10 +55,10 @@ export function ClaimForm({ bounties }: { bounties: BountyListItem[] }) {
       {state.status === "error" && !fe && <FormAlert>{state.message}</FormAlert>}
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="bountyId">Für welches Inserat wurdest du eingestellt?</Label>
+        <Label htmlFor="bountyId">{t("claim_bounty_label")}</Label>
         {bounties.length === 0 ? (
           <p className="rounded-[var(--radius-md)] border border-[var(--color-surface-border)] p-4 text-sm text-[var(--color-text-muted)]">
-            Keine offenen Inserate gefunden. Bitte stelle sicher, dass du dich über die Plattform beworben hast.
+            {t("claim_no_bounties")}
           </p>
         ) : (
           <select
@@ -61,10 +68,10 @@ export function ClaimForm({ bounties }: { bounties: BountyListItem[] }) {
             className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-400)]"
             aria-describedby={fe?.bountyId ? "bounty-error" : undefined}
           >
-            <option value="">- Inserat auswählen -</option>
+            <option value="">{t("claim_bounty_placeholder")}</option>
             {bounties.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.title} ({b.bonus_amount.toLocaleString("de-DE")} {b.bonus_currency})
+                {b.title} ({b.bonus_amount.toLocaleString(bonusLocale)} {b.bonus_currency})
               </option>
             ))}
           </select>
@@ -73,12 +80,12 @@ export function ClaimForm({ bounties }: { bounties: BountyListItem[] }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="note">Kurze Notiz (optional)</Label>
+        <Label htmlFor="note">{t("claim_note_label")}</Label>
         <Textarea
           id="note"
           name="note"
           rows={3}
-          placeholder="z. B. Startdatum, Rolle, besondere Umstände …"
+          placeholder={t("claim_note_ph")}
           maxLength={500}
           invalid={Boolean(fe?.note)}
           aria-describedby={fe?.note ? "note-error" : "note-help"}
@@ -86,20 +93,19 @@ export function ClaimForm({ bounties }: { bounties: BountyListItem[] }) {
         <FieldError id="note-error" message={fe?.note} />
         {!fe?.note && (
           <p id="note-help" className="text-xs text-[var(--color-text-faint)]">
-            Diese Notiz ist nur für dich und den Inserenten sichtbar.
+            {t("claim_note_help")}
           </p>
         )}
       </div>
 
       {/* Disclaimer */}
       <div className="rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[color-mix(in_oklab,var(--color-warning)_8%,transparent)] p-4 text-xs text-[var(--color-text-muted)]">
-        <strong className="text-[var(--color-warning)]">Wichtig:</strong> Nach dem Absenden wirst du aufgefordert,
-        einen Arbeitsvertrag oder eine offizielle Einstellungsbestätigung hochzuladen.
-        Falsche Angaben können zur Sperrung deines Kontos führen.
+        <strong className="text-[var(--color-warning)]">{t("claim_disclaimer_strong")}</strong>{" "}
+        {t("claim_disclaimer")}
       </div>
 
       <div className="flex justify-end border-t border-[var(--color-surface-border)] pt-6">
-        <SubmitButton />
+        <SubmitButton pendingLabel={t("claim_submit_pending")} label={t("claim_submit")} />
       </div>
     </form>
   );

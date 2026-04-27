@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t, type TranslationKey } from "@/lib/i18n";
 import { Target } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +14,7 @@ import { PageHeader, EmptyState } from "@/components/ui/page-header";
 import { getCurrentUser } from "@/lib/auth/roles";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { BountyStatus } from "@/lib/supabase/types";
-import { formatBonus, formatDate } from "@/lib/format";
+import { formatBonus, formatDate, formatLocaleForLang } from "@/lib/format";
 import {
   cancelBountyAction,
   closeBountyAction,
@@ -23,21 +26,20 @@ export async function generateMetadata(): Promise<Metadata> {
   return localizedMetadata({ title: "meta_bounties_mine_title" });
 }
 
-// Lesbare Flash-Messages für Redirect-Query-Parameter (?created=, ?error=…).
-const OK_MESSAGES: Record<string, string> = {
-  created: "Bounty als Entwurf gespeichert.",
-  pending: "Bounty eingereicht - wird in Kürze vom Admin geprüft und freigegeben.",
-  closed: "Bounty geschlossen.",
-  cancelled: "Bounty storniert.",
-  deleted: "Bounty gelöscht.",
+const OK_MESSAGE_KEYS: Record<string, TranslationKey> = {
+  created: "bounty_mine_ok_created",
+  pending: "bounty_mine_ok_pending",
+  closed: "bounty_mine_ok_closed",
+  cancelled: "bounty_mine_ok_cancelled",
+  deleted: "bounty_mine_ok_deleted",
 };
-const ERROR_MESSAGES: Record<string, string> = {
-  invalid_id: "Ungültige Bounty-ID.",
-  kyc_required: "Du musst zuerst die KYC-Prüfung abschließen.",
-  publish_failed: "Veröffentlichen fehlgeschlagen.",
-  close_failed: "Schließen fehlgeschlagen.",
-  cancel_failed: "Stornieren fehlgeschlagen.",
-  delete_failed: "Löschen fehlgeschlagen.",
+const ERROR_MESSAGE_KEYS: Record<string, TranslationKey> = {
+  invalid_id: "bounty_mine_err_invalid_id",
+  kyc_required: "bounty_mine_err_kyc_required",
+  publish_failed: "bounty_mine_err_publish_failed",
+  close_failed: "bounty_mine_err_close_failed",
+  cancel_failed: "bounty_mine_err_cancel_failed",
+  delete_failed: "bounty_mine_err_delete_failed",
 };
 
 export default async function MyBountiesPage({
@@ -49,8 +51,11 @@ export default async function MyBountiesPage({
   if (!user) redirect("/login");
 
   const sp = await searchParams;
-  const okKey = Object.keys(OK_MESSAGES).find((k) => typeof sp[k] === "string");
+  const okKey = Object.keys(OK_MESSAGE_KEYS).find((k) => typeof sp[k] === "string");
   const errorKey = typeof sp.error === "string" ? sp.error : null;
+
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const locale = formatLocaleForLang(lang);
 
   const supabase = await getSupabaseServerClient();
   const { data: bounties, error } = await supabase
@@ -64,7 +69,7 @@ export default async function MyBountiesPage({
   if (error) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-12">
-        <FormAlert>Bounties konnten nicht geladen werden. Bitte später erneut versuchen.</FormAlert>
+        <FormAlert>{t(lang, "bounty_mine_load_error")}</FormAlert>
       </section>
     );
   }
@@ -72,23 +77,27 @@ export default async function MyBountiesPage({
   return (
     <section className="mx-auto max-w-5xl px-6 py-12">
       <PageHeader
-        title="Meine Bounties"
-        description="Entwürfe, aktive Stellen und geschlossene Ausschreibungen."
+        title={t(lang, "bounty_mine_title")}
+        description={t(lang, "bounty_mine_desc")}
         actions={
           <Link href="/bounties/new" className={buttonVariants({ variant: "primary", size: "md" })}>
-            Neue Bounty
+            {t(lang, "bounty_mine_new")}
           </Link>
         }
       />
 
-      {okKey && (
+      {okKey && OK_MESSAGE_KEYS[okKey] && (
         <div className="mb-6">
-          <FormAlert variant="success">{OK_MESSAGES[okKey]}</FormAlert>
+          <FormAlert variant="success">{t(lang, OK_MESSAGE_KEYS[okKey])}</FormAlert>
         </div>
       )}
       {errorKey && (
         <div className="mb-6">
-          <FormAlert>{ERROR_MESSAGES[errorKey] ?? "Unbekannter Fehler."}</FormAlert>
+          <FormAlert>
+            {ERROR_MESSAGE_KEYS[errorKey]
+              ? t(lang, ERROR_MESSAGE_KEYS[errorKey])
+              : t(lang, "error_unknown")}
+          </FormAlert>
         </div>
       )}
 
@@ -96,8 +105,8 @@ export default async function MyBountiesPage({
         <ul className="grid gap-4">
           {bounties.map((b) => {
             const status = b.status as BountyStatus;
-            const expires = formatDate(b.expires_at);
-            const published = formatDate(b.published_at);
+            const expires = formatDate(b.expires_at, locale);
+            const published = formatDate(b.published_at, locale);
             return (
               <li key={b.id}>
                 <Card>
@@ -106,12 +115,18 @@ export default async function MyBountiesPage({
                       <CardTitle className="text-lg">{b.title}</CardTitle>
                       <CardDescription className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
                         <span className="font-medium text-[var(--color-text-primary)]">
-                          {formatBonus(Number(b.bonus_amount), b.bonus_currency)}
+                          {formatBonus(Number(b.bonus_amount), b.bonus_currency, locale)}
                         </span>
                         {b.location && <span>· {b.location}</span>}
                         {b.industry && <span>· {b.industry}</span>}
-                        {published && <span>· Veröffentlicht {published}</span>}
-                        {expires && <span>· Läuft ab {expires}</span>}
+                        {published && (
+                          <span>
+                            · {t(lang, "bounty_mine_published").replace("{date}", published)}
+                          </span>
+                        )}
+                        {expires && (
+                          <span>· {t(lang, "bounty_mine_expires").replace("{date}", expires)}</span>
+                        )}
                       </CardDescription>
                     </div>
                     <BountyStatusBadge status={status} />
@@ -138,13 +153,13 @@ export default async function MyBountiesPage({
                           <form action={publishBountyAction}>
                             <input type="hidden" name="id" value={b.id} />
                             <Button type="submit" size="sm">
-                              Zur Prüfung einreichen
+                              {t(lang, "bounty_mine_submit_review")}
                             </Button>
                           </form>
                           <form action={deleteBountyAction}>
                             <input type="hidden" name="id" value={b.id} />
                             <Button type="submit" size="sm" variant="ghost">
-                              Entwurf löschen
+                              {t(lang, "bounty_mine_delete_draft")}
                             </Button>
                           </form>
                         </>
@@ -152,12 +167,12 @@ export default async function MyBountiesPage({
                       {status === "pending_review" && (
                         <div className="flex items-center gap-3">
                           <p className="text-xs text-[var(--color-warning)]">
-                            Warte auf Admin-Freigabe.
+                            {t(lang, "bounty_mine_wait_admin")}
                           </p>
                           <form action={cancelBountyAction}>
                             <input type="hidden" name="id" value={b.id} />
                             <Button type="submit" size="sm" variant="ghost">
-                              Zurückziehen
+                              {t(lang, "bounty_mine_withdraw")}
                             </Button>
                           </form>
                         </div>
@@ -167,13 +182,13 @@ export default async function MyBountiesPage({
                           <form action={closeBountyAction}>
                             <input type="hidden" name="id" value={b.id} />
                             <Button type="submit" size="sm" variant="secondary">
-                              Schließen
+                              {t(lang, "bounty_mine_close")}
                             </Button>
                           </form>
                           <form action={cancelBountyAction}>
                             <input type="hidden" name="id" value={b.id} />
                             <Button type="submit" size="sm" variant="ghost">
-                              Stornieren
+                              {t(lang, "bounty_mine_cancel")}
                             </Button>
                           </form>
                         </>
@@ -187,11 +202,11 @@ export default async function MyBountiesPage({
         </ul>
       ) : (
         <EmptyState
-          title="Noch keine Bounties"
-          description="Leg deine erste Stellenausschreibung mit Referral-Prämie an - in wenigen Minuten veröffentlicht."
+          title={t(lang, "bounty_mine_empty_title")}
+          description={t(lang, "bounty_mine_empty_desc")}
           action={
             <Link href="/bounties/new" className={buttonVariants({ variant: "primary", size: "md" })}>
-              Jetzt Bounty erstellen
+              {t(lang, "bounty_mine_empty_cta")}
             </Link>
           }
           icon={<Target className="size-10 text-muted-foreground" strokeWidth={1.5} aria-hidden />}

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/roles";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t, type TranslationKey } from "@/lib/i18n";
 import { PageHeader } from "@/components/ui/page-header";
 import { UploadWizard } from "./upload-wizard";
 
@@ -26,15 +29,23 @@ export default async function UploadPage({ params }: { params: Promise<{ id: str
 
   if (!referral) notFound();
 
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+
   if (referral.status !== "awaiting_hire_proof") {
     const bountyTitle = Array.isArray(referral.bounties)
       ? referral.bounties[0]?.title
       : (referral.bounties as { title: string } | null)?.title;
+    const statusLabel = t(
+      lang,
+      `referral_status_${referral.status}` as TranslationKey,
+    );
 
     return (
       <div className="mx-auto max-w-xl px-4 py-10 text-center">
         <p className="text-[var(--color-text-muted)]">
-          Für dieses Referral ({bountyTitle}) ist kein Upload erforderlich (Status: {referral.status}).
+          {t(lang, "hire_upload_wrong_status")
+            .replace("{title}", bountyTitle ?? "–")
+            .replace("{status}", statusLabel)}
         </p>
       </div>
     );
@@ -47,8 +58,8 @@ export default async function UploadPage({ params }: { params: Promise<{ id: str
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
       <PageHeader
-        title="Nachweis hochladen"
-        description={`Inserat: ${bountyTitle ?? "–"}`}
+        title={t(lang, "hire_upload_page_title")}
+        description={t(lang, "hire_upload_page_desc").replace("{title}", bountyTitle ?? "–")}
       />
       <div className="mt-8">
         <UploadWizard referralId={id} bucketName="hire-proofs" />

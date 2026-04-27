@@ -16,7 +16,8 @@ import type { ReferralStatus } from "@/lib/supabase/types";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
-import { t } from "@/lib/i18n";
+import { t, type TranslationKey } from "@/lib/i18n";
+import { formatLocaleForLang } from "@/lib/format";
 
 export async function generateMetadata({
   params,
@@ -64,8 +65,11 @@ export default async function ReferralDetailPage({
   if (!bounty) notFound();
 
   const isOwner = bounty.owner_id === user.id;
-  const isCandidate = referral.candidate_name === user.email || true; // kandidat_user_id-check via RLS
   const status = referral.status as ReferralStatus;
+
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const locale = formatLocaleForLang(lang);
+  const tr = (key: TranslationKey) => t(lang, key);
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -76,14 +80,17 @@ export default async function ReferralDetailPage({
       </div>
 
       <PageHeader
-        title="Referral-Detail"
-        description={`Kandidat: ${referral.candidate_name} · ${referral.candidate_email}`}
+        title={tr("referral_detail_title")}
+        description={tr("referral_detail_desc")
+          .replace("{name}", referral.candidate_name)
+          .replace("{email}", referral.candidate_email)}
       />
 
       <div className="mt-6 flex items-center gap-3">
         <ReferralStatusBadge status={status} />
         <span className="text-xs text-[var(--color-text-faint)]">
-          Prämie: {bounty.bonus_amount.toLocaleString("de-DE")} {bounty.bonus_currency}
+          {tr("referral_detail_bonus")}{" "}
+          {bounty.bonus_amount.toLocaleString(locale)} {bounty.bonus_currency}
         </span>
       </div>
 
@@ -99,6 +106,12 @@ export default async function ReferralDetailPage({
             claimConfirmed={Boolean(referral.claim_confirmed_at)}
             payoutAccountConfirmed={Boolean(referral.payout_account_confirmed_at)}
             dataForwarded={Boolean(referral.data_forwarded_at)}
+            stepLabels={[
+              tr("referral_step_hire_proof"),
+              tr("referral_step_claim"),
+              tr("referral_step_payout_account"),
+              tr("referral_step_data_forward"),
+            ]}
           />
         </div>
       )}
@@ -106,19 +119,20 @@ export default async function ReferralDetailPage({
       {/* Zahlungsfenster-Hinweis */}
       {referral.payment_window_until && status === "invoice_pending" && (
         <div className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[color-mix(in_oklab,var(--color-warning)_8%,transparent)] p-4 text-sm">
-          <strong className="text-[var(--color-warning)]">Zahlungsfenster:</strong>{" "}
-          Rechnung muss bis{" "}
-          <time dateTime={referral.payment_window_until}>
-            {new Date(referral.payment_window_until).toLocaleDateString("de-DE")}
-          </time>{" "}
-          bezahlt werden.
+          <strong className="text-[var(--color-warning)]">{tr("referral_detail_payment_window")}</strong>{" "}
+          {tr("referral_detail_payment_deadline").replace(
+            "{date}",
+            new Date(referral.payment_window_until).toLocaleDateString(locale),
+          )}
         </div>
       )}
 
       {/* Firmendaten (nach Schritt 8) */}
       {referral.company_name && (
         <div className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-4">
-          <p className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide">Rechnungsempfänger</p>
+          <p className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide">
+            {tr("referral_detail_invoice_recipient")}
+          </p>
           <p className="mt-1 font-medium text-[var(--color-text-primary)]">{referral.company_name}</p>
           {referral.company_billing_email && (
             <p className="text-sm text-[var(--color-text-muted)]">{referral.company_billing_email}</p>
@@ -130,12 +144,12 @@ export default async function ReferralDetailPage({
       {status === "rejected" && referral.rejection_reason && (
         <div className="mt-6 rounded-[var(--radius-md)] border border-[var(--color-error)] bg-[color-mix(in_oklab,var(--color-error)_6%,transparent)] p-4">
           <p className="text-xs font-medium text-[var(--color-error)] uppercase tracking-wide">
-            Abgelehnt – Stufe: {referral.rejection_stage}
+            {tr("referral_detail_rejected").replace("{stage}", String(referral.rejection_stage ?? "–"))}
           </p>
           <p className="mt-1 text-sm text-[var(--color-text-muted)]">{referral.rejection_reason}</p>
           {referral.rejection_at && (
             <p className="mt-1 text-xs text-[var(--color-text-faint)]">
-              {new Date(referral.rejection_at).toLocaleString("de-DE")}
+              {new Date(referral.rejection_at).toLocaleString(locale)}
             </p>
           )}
         </div>
@@ -144,7 +158,9 @@ export default async function ReferralDetailPage({
       {/* ── Aktions-Bereich: Owner A ────────────────────────────────────── */}
       {isOwner && (
         <div className="mt-8 flex flex-col gap-4">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">Deine Aktionen</h2>
+          <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {tr("referral_detail_actions_owner")}
+          </h2>
 
           {status === "awaiting_claim" && (
             <div className="flex flex-col gap-3">
@@ -159,7 +175,7 @@ export default async function ReferralDetailPage({
                 href={`/bounties/${bountyId}/referrals/${rid}/confirm-payout`}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-brand-400)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-brand-300)]"
               >
-                Firmendaten + Stripe-Konto angeben
+                {tr("referral_detail_cta_billing")}
                 <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
               </Link>
               <RejectButton referralId={rid} stage="payout_account" currentStatus={status} />
@@ -183,7 +199,7 @@ export default async function ReferralDetailPage({
               href={`/referrals/${rid}/upload`}
               className="inline-flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--color-brand-400)] px-4 py-2.5 text-sm font-medium text-white hover:bg-[var(--color-brand-300)]"
             >
-              Nachweis hochladen
+              {tr("referral_detail_cta_upload_proof")}
               <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
             </Link>
           )}

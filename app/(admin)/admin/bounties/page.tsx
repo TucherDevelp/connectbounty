@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { BountyStatusBadge } from "@/components/bounty/status-badge";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t, type TranslationKey } from "@/lib/i18n";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { formatBonus, formatDate } from "@/lib/format";
 import type { BountyStatus } from "@/lib/supabase/types";
@@ -21,14 +24,14 @@ export const dynamic = "force-dynamic";
 
 type SP = Record<string, string | string[] | undefined>;
 
-const STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "Alle" },
-  { value: "pending_review", label: "Zur Prüfung" },
-  { value: "open", label: "Aktiv" },
-  { value: "draft", label: "Entwürfe" },
-  { value: "expired", label: "Abgelaufen" },
-  { value: "closed", label: "Geschlossen" },
-  { value: "cancelled", label: "Storniert" },
+const STATUS_FILTER_OPTIONS: { value: string; labelKey: TranslationKey }[] = [
+  { value: "", labelKey: "admin_filter_all" },
+  { value: "pending_review", labelKey: "bounty_status_pending_review" },
+  { value: "open", labelKey: "bounty_status_open" },
+  { value: "draft", labelKey: "bounty_status_draft" },
+  { value: "expired", labelKey: "bounty_status_expired" },
+  { value: "closed", labelKey: "bounty_status_closed" },
+  { value: "cancelled", labelKey: "bounty_status_cancelled" },
 ];
 
 export default async function AdminBountiesPage({
@@ -36,6 +39,8 @@ export default async function AdminBountiesPage({
 }: {
   searchParams: Promise<SP>;
 }) {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+
   const sp = await searchParams;
   const filterStatus = typeof sp.status === "string" ? sp.status : "";
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
@@ -68,13 +73,13 @@ export default async function AdminBountiesPage({
   return (
     <section className="mx-auto max-w-7xl px-6 py-10">
       <PageHeader
-        title="Bounties"
-        description={`${total} Einträge gesamt`}
+        title={t(lang, "nav_admin_bounties")}
+        description={t(lang, "admin_list_entries_total").replace("{count}", String(total))}
       />
 
       {pendingCount > 0 && (
         <div className="mb-5 rounded-[var(--radius-md)] border border-[var(--color-warning)]/40 bg-[color-mix(in_oklab,var(--color-warning)_10%,transparent)] px-4 py-3 text-sm text-[var(--color-warning)]">
-          {pendingCount} Bounty{pendingCount > 1 ? "s" : ""} warten auf Freigabe.
+          {t(lang, "admin_items_pending_review").replace("{n}", String(pendingCount))}
         </div>
       )}
 
@@ -93,21 +98,35 @@ export default async function AdminBountiesPage({
                 : "border-[var(--color-surface-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]",
             ].join(" ")}
           >
-            {opt.label}
+            {t(lang, opt.labelKey)}
           </button>
         ))}
       </form>
 
       {error && (
-        <div className="mb-4 text-sm text-[var(--color-error)]">Fehler: {error.message}</div>
+        <div className="mb-4 text-sm text-[var(--color-error)]">
+          {t(lang, "admin_error_colon_message").replace("{message}", error.message)}
+        </div>
       )}
 
       <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--color-surface-border)]">
         <table className="w-full text-sm">
           <thead className="border-b border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-xs text-[var(--color-text-muted)]">
             <tr>
-              {["Titel", "Owner", "Prämie", "Status", "Erstellt", "Läuft ab", "Aktionen"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left font-medium">{h}</th>
+              {(
+                [
+                  "admin_bounty_col_title",
+                  "admin_bounty_col_owner",
+                  "admin_bounty_col_bonus",
+                  "admin_bounty_col_status",
+                  "admin_bounty_col_created",
+                  "admin_bounty_col_expires",
+                  "admin_bounty_col_actions",
+                ] as const
+              ).map((key) => (
+                <th key={key} className="px-4 py-3 text-left font-medium">
+                  {t(lang, key)}
+                </th>
               ))}
             </tr>
           </thead>
@@ -154,13 +173,13 @@ export default async function AdminBountiesPage({
                           <form action={adminApproveBountyAction}>
                             <input type="hidden" name="id" value={b.id} />
                             <Button size="sm" variant="primary" type="submit">
-                              Freigeben
+                              {t(lang, "admin_btn_publish")}
                             </Button>
                           </form>
                           <form action={adminRejectBountyAction}>
                             <input type="hidden" name="id" value={b.id} />
                             <Button size="sm" variant="secondary" type="submit">
-                              Ablehnen
+                              {t(lang, "admin_btn_reject")}
                             </Button>
                           </form>
                         </>
@@ -168,7 +187,9 @@ export default async function AdminBountiesPage({
                       {status === "open" && (
                         <form action={adminCloseBountyAction}>
                           <input type="hidden" name="id" value={b.id} />
-                          <Button size="sm" variant="secondary" type="submit">Schließen</Button>
+                          <Button size="sm" variant="secondary" type="submit">
+                            {t(lang, "admin_btn_close")}
+                          </Button>
                         </form>
                       )}
                       <form
@@ -178,7 +199,7 @@ export default async function AdminBountiesPage({
                         <input type="hidden" name="id" value={b.id} />
                         <Button size="sm" variant="ghost" type="submit"
                           className="text-[var(--color-error)] hover:bg-[color-mix(in_oklab,var(--color-error)_10%,transparent)]">
-                          Löschen
+                          {t(lang, "admin_btn_delete")}
                         </Button>
                       </form>
                     </div>
@@ -189,7 +210,7 @@ export default async function AdminBountiesPage({
             {(data ?? []).length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-[var(--color-text-muted)]">
-                  Keine Bounties gefunden.
+                  {t(lang, "admin_bounties_empty")}
                 </td>
               </tr>
             )}
@@ -205,16 +226,20 @@ export default async function AdminBountiesPage({
               className="inline-flex items-center gap-1 rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
             >
               <ArrowLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-              Zurück
+              {t(lang, "admin_pagination_back")}
             </a>
           )}
-          <span className="text-[var(--color-text-muted)]">Seite {page} / {totalPages}</span>
+          <span className="text-[var(--color-text-muted)]">
+            {t(lang, "admin_pagination_page")
+              .replace("{current}", String(page))
+              .replace("{total}", String(totalPages))}
+          </span>
           {page < totalPages && (
             <a
               href={`/admin/bounties?status=${filterStatus}&page=${page + 1}`}
               className="inline-flex items-center gap-1 rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
             >
-              Weiter
+              {t(lang, "admin_pagination_next")}
               <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
             </a>
           )}

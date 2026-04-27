@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Check, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KycStatusBadge } from "@/components/kyc/status-badge";
 import { Button } from "@/components/ui/button";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t } from "@/lib/i18n";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import { adminReviewKycAction } from "@/lib/admin/kyc-actions";
@@ -20,6 +23,8 @@ export default async function AdminKycPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+
   const sp = await searchParams;
   const sb = getSupabaseServiceRoleClient();
 
@@ -91,19 +96,25 @@ export default async function AdminKycPage({
   return (
     <section className="mx-auto max-w-5xl px-6 py-10">
       <PageHeader
-        title="KYC Review"
-        description={`${pending?.length ?? 0} Anträge ausstehend`}
+        title={t(lang, "admin_kyc_page_title")}
+        description={t(lang, "admin_kyc_page_desc_pending").replace(
+          "{count}",
+          String(pending?.length ?? 0),
+        )}
       />
 
       {reviewedApplicantId && (
         <div className="mb-6 rounded-[var(--radius-md)] bg-[var(--color-success)]/10 px-4 py-3 text-sm text-[var(--color-success)]">
-          Antrag {reviewedApplicantId.slice(0, 12)}… wurde erfolgreich bearbeitet.
+          {t(lang, "admin_kyc_reviewed_banner").replace(
+            "{id}",
+            reviewedApplicantId.slice(0, 12),
+          )}
         </div>
       )}
 
       {sp.error && (
         <div className="mb-6 rounded-[var(--radius-md)] bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]">
-          Fehler: {sp.error}
+          {t(lang, "admin_kyc_error_prefix")} {sp.error}
         </div>
       )}
 
@@ -111,7 +122,7 @@ export default async function AdminKycPage({
       {!pending?.length && (
         <Card>
           <CardContent className="py-10 text-center text-sm text-[var(--color-text-muted)]">
-            Keine ausstehenden KYC-Anträge.
+            {t(lang, "admin_kyc_empty_pending")}
           </CardContent>
         </Card>
       )}
@@ -134,16 +145,16 @@ export default async function AdminKycPage({
               <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div>
                   <CardTitle className="text-base">
-                    {profile?.display_name ?? "Unbekannt"}
+                    {profile?.display_name ?? t(lang, "admin_kyc_unknown_user")}
                   </CardTitle>
                   <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                    Antrag-ID:{" "}
+                    {t(lang, "admin_kyc_applicant_id_label")}{" "}
                     <code className="rounded bg-[var(--color-surface-2)] px-1 py-0.5">
                       {app.applicant_id}
                     </code>
                   </p>
                   <p className="text-xs text-[var(--color-text-muted)]">
-                    Eingereicht: {formatDate(app.created_at)}
+                    {t(lang, "admin_kyc_submitted_label")} {formatDate(app.created_at)}
                   </p>
                 </div>
                 <KycStatusBadge status={app.status as "pending"} />
@@ -152,10 +163,10 @@ export default async function AdminKycPage({
               <CardContent className="flex flex-col gap-5">
                 {/* Dokument-Vorschau */}
                 {docs.length > 0 ? (
-                  <KycDocumentGallery applicantId={app.id} docs={docs} />
+                  <KycDocumentGallery applicantId={app.id} docs={docs} lang={lang} />
                 ) : (
                   <p className="rounded-[var(--radius-md)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-text-muted)]">
-                    Noch keine Dokumente hochgeladen.
+                    {t(lang, "admin_kyc_no_docs")}
                   </p>
                 )}
 
@@ -172,13 +183,13 @@ export default async function AdminKycPage({
                       htmlFor={`reason-${app.id}`}
                       className="text-xs font-medium text-[var(--color-text-muted)]"
                     >
-                      Ablehnungsgrund (optional, nur bei Ablehnung)
+                      {t(lang, "admin_kyc_reject_reason_label")}
                     </label>
                     <input
                       id={`reason-${app.id}`}
                       name="rejectReason"
                       type="text"
-                      placeholder="z.B. Dokument unleserlich, Selfie stimmt nicht überein …"
+                      placeholder={t(lang, "admin_kyc_reject_reason_placeholder")}
                       className="rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-400)]"
                     />
                   </div>
@@ -193,7 +204,7 @@ export default async function AdminKycPage({
                       disabled={docs.length === 0}
                     >
                       <span className="inline-flex items-center gap-1.5">
-                        Freigeben
+                        {t(lang, "admin_btn_publish")}
                         <Check className="size-4 shrink-0" strokeWidth={2.25} aria-hidden />
                       </span>
                     </Button>
@@ -205,7 +216,7 @@ export default async function AdminKycPage({
                       variant="destructive"
                     >
                       <span className="inline-flex items-center gap-1.5">
-                        Ablehnen
+                        {t(lang, "admin_btn_reject")}
                         <X className="size-4 shrink-0" strokeWidth={2.25} aria-hidden />
                       </span>
                     </Button>
@@ -213,7 +224,7 @@ export default async function AdminKycPage({
 
                   {docs.length === 0 && (
                     <p className="text-xs text-[var(--color-warning)]">
-                      Freigabe erst möglich, wenn Dokumente hochgeladen wurden.
+                      {t(lang, "admin_kyc_approve_requires_docs")}
                     </p>
                   )}
                 </form>
@@ -227,15 +238,21 @@ export default async function AdminKycPage({
       {(recent?.length ?? 0) > 0 && (
         <div className="mt-10">
           <h2 className="mb-4 text-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
-            Kürzlich entschieden
+            {t(lang, "admin_kyc_recent_heading")}
           </h2>
           <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--color-surface-border)]">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
-                  <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">Nutzer</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">Status</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">Entschieden</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">
+                    {t(lang, "admin_kyc_recent_col_user")}
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">
+                    {t(lang, "admin_kyc_recent_col_status")}
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">
+                    {t(lang, "admin_kyc_recent_col_decided")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-surface-border)]">

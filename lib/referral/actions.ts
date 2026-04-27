@@ -2,6 +2,7 @@
 
 import "server-only";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -18,10 +19,12 @@ import {
   fieldErrorsFromZod,
   type ActionState,
 } from "@/lib/auth/action-result";
+import { t } from "@/lib/i18n";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
 import {
   referralIdSchema,
   referralStatusUpdateSchema,
-  referralSubmitSchema,
+  createReferralSubmitSchema,
 } from "./schemas";
 
 /**
@@ -58,24 +61,24 @@ export async function submitReferralAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+
   try {
     await requireKycApproved();
   } catch (err) {
     if (err instanceof UnauthenticatedError) {
-      return actionError("Bitte melde dich an.");
+      return actionError(t(lang, "bounty_action_login"));
     }
     if (err instanceof KycRequiredError) {
-      return actionError(
-        "Um Empfehlungen abzugeben ist ein erfolgreicher KYC erforderlich.",
-      );
+      return actionError(t(lang, "ref_submit_kyc"));
     }
     throw err;
   }
 
-  const parsed = referralSubmitSchema.safeParse(formToObject(formData));
+  const parsed = createReferralSubmitSchema(lang).safeParse(formToObject(formData));
   if (!parsed.success) {
     return actionError(
-      "Bitte prüfe deine Eingaben.",
+      t(lang, "bounty_action_check_input"),
       fieldErrorsFromZod(parsed.error.issues),
     );
   }
@@ -101,13 +104,9 @@ export async function submitReferralAction(
     // RLS blockiert u. a. Self-Referral / non-open Bounty / Duplikate.
     const code = (error as { code?: string } | null)?.code;
     if (code === "23505") {
-      return actionError(
-        "Du hast diese E-Mail bereits für diese Bounty empfohlen.",
-      );
+      return actionError(t(lang, "ref_submit_duplicate"));
     }
-    return actionError(
-      "Empfehlung konnte nicht gespeichert werden. Prüfe, ob die Bounty noch offen ist.",
-    );
+    return actionError(t(lang, "ref_submit_failed"));
   }
 
   await auditSafe("referral.submitted", data.id, {

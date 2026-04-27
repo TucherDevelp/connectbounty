@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLang } from "@/context/lang-context";
 import { DocumentWizard } from "@/components/kyc/document-wizard";
 
 interface KycWizardPanelProps {
@@ -13,6 +14,7 @@ interface KycWizardPanelProps {
  * Nach Abschluss wird die Seite neu geladen.
  */
 export function KycWizardPanel({ applicantRowId }: KycWizardPanelProps) {
+  const { t } = useLang();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -25,17 +27,15 @@ export function KycWizardPanel({ applicantRowId }: KycWizardPanelProps) {
     return (
       <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-brand-400)]/40 p-4">
         <p className="mb-3 text-sm font-medium text-[var(--color-text-primary)]">
-          Dokumente noch nicht hochgeladen
+          {t("kyc_wizard_panel_title")}
         </p>
-        <p className="mb-4 text-sm text-[var(--color-text-muted)]">
-          Lade jetzt Ausweis und Selfie hoch, damit dein Antrag geprüft werden kann.
-        </p>
+        <p className="mb-4 text-sm text-[var(--color-text-muted)]">{t("kyc_wizard_panel_body")}</p>
         <button
           type="button"
           onClick={() => setOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-[var(--radius-md)] bg-[var(--color-brand-400)] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[var(--color-brand-300)]"
         >
-          Dokumente hochladen
+          {t("kyc_wizard_panel_cta")}
         </button>
       </div>
     );

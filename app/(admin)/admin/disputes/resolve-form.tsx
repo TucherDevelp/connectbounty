@@ -53,7 +53,7 @@ export function ResolveForm({ disputeId }: { disputeId: string }) {
           className="flex-1 rounded-[var(--radius-md)] border border-[var(--color-success)] px-3 py-1.5 text-xs font-medium text-[var(--color-success)] hover:bg-[color-mix(in_oklab,var(--color-success)_10%,transparent)]"
           disabled={resolution.length < 20}
         >
-          Claim bestätigen (zahlen)
+          {t("admin_disputes_btn_confirm_pay")}
         </button>
         {/* Dispute abweisen */}
         <button

@@ -2,9 +2,12 @@
 
 import "server-only";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { requireUser, logAuditEvent } from "@/lib/auth/roles";
+import { t } from "@/lib/i18n";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
 import {
   actionError,
   actionOk,
@@ -12,13 +15,13 @@ import {
   type ActionState,
 } from "@/lib/auth/action-result";
 import {
-  claimHireSchema,
-  hireProofUploadSchema,
-  confirmClaimSchema,
-  confirmPayoutAccountSchema,
-  confirmDataForwardedSchema,
-  rejectionSchema,
-  disputeOpenSchema,
+  createClaimHireSchema,
+  createHireProofUploadSchema,
+  createConfirmClaimSchema,
+  createConfirmPayoutAccountSchema,
+  createConfirmDataForwardedSchema,
+  createRejectionSchema,
+  createDisputeOpenSchema,
 } from "./schemas";
 import { triggerSplitPayout } from "@/lib/stripe/payout-orchestrator";
 
@@ -26,6 +29,10 @@ function toObj(fd: FormData): Record<string, FormDataEntryValue> {
   const obj: Record<string, FormDataEntryValue> = {};
   for (const [k, v] of fd.entries()) obj[k] = v;
   return obj;
+}
+
+async function actionLang() {
+  return parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
 }
 
 // ── Schritt 4: B legt Referral mit Status "awaiting_hire_proof" an ─────────
@@ -39,12 +46,13 @@ export async function claimHireAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = await actionLang();
   const user = await requireUser().catch(() => null);
-  if (!user) return actionError("Bitte melde dich an.");
+  if (!user) return actionError(t(lang, "bounty_action_login"));
 
-  const parsed = claimHireSchema.safeParse(toObj(formData));
+  const parsed = createClaimHireSchema(lang).safeParse(toObj(formData));
   if (!parsed.success) {
-    return actionError("Ungültige Eingaben.", fieldErrorsFromZod(parsed.error.issues));
+    return actionError(t(lang, "ref_action_invalid_input"), fieldErrorsFromZod(parsed.error.issues));
   }
 
   const supabase = await getSupabaseServerClient();
@@ -58,10 +66,10 @@ export async function claimHireAction(
     .maybeSingle();
 
   if (!bounty) {
-    return actionError("Inserat nicht gefunden oder nicht mehr offen.");
+    return actionError(t(lang, "ref_action_bounty_gone"));
   }
   if (bounty.owner_id === user.id) {
-    return actionError("Du kannst nicht dein eigenes Inserat beanspruchen.");
+    return actionError(t(lang, "ref_action_own_bounty"));
   }
 
   // Bereits ein Referral für diesen User + Bounty?
@@ -73,7 +81,9 @@ export async function claimHireAction(
     .maybeSingle();
 
   if (existing) {
-    return actionOk(`Referral existiert bereits (Status: ${existing.status}).`);
+    return actionOk(
+      t(lang, "ref_action_existing_referral").replace("{status}", existing.status),
+    );
   }
 
   const { data, error } = await supabase
@@ -91,7 +101,7 @@ export async function claimHireAction(
     .single();
 
   if (error || !data) {
-    return actionError("Referral konnte nicht angelegt werden.");
+    return actionError(t(lang, "ref_action_referral_create_failed"));
   }
 
   try {
@@ -108,12 +118,13 @@ export async function uploadHireProofAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = await actionLang();
   const user = await requireUser().catch(() => null);
-  if (!user) return actionError("Bitte melde dich an.");
+  if (!user) return actionError(t(lang, "bounty_action_login"));
 
-  const parsed = hireProofUploadSchema.safeParse(toObj(formData));
+  const parsed = createHireProofUploadSchema(lang).safeParse(toObj(formData));
   if (!parsed.success) {
-    return actionError("Ungültige Eingaben.", fieldErrorsFromZod(parsed.error.issues));
+    return actionError(t(lang, "ref_action_invalid_input"), fieldErrorsFromZod(parsed.error.issues));
   }
 
   const supabase = await getSupabaseServerClient();
@@ -128,7 +139,7 @@ export async function uploadHireProofAction(
     .maybeSingle();
 
   if (!referral) {
-    return actionError("Referral nicht gefunden oder du bist nicht berechtigt.");
+    return actionError(t(lang, "ref_action_referral_forbidden"));
   }
 
   // Hire-Proof-Dokument speichern (Metadaten; Upload in Bucket läuft client-seitig)
@@ -143,7 +154,7 @@ export async function uploadHireProofAction(
     });
 
   if (docError) {
-    return actionError("Dokument konnte nicht gespeichert werden.");
+    return actionError(t(lang, "ref_action_doc_save_failed"));
   }
 
   // Referral-Status und Timestamp aktualisieren
@@ -156,7 +167,7 @@ export async function uploadHireProofAction(
     .eq("id", referral.id);
 
   if (updateError) {
-    return actionError("Status-Update fehlgeschlagen.");
+    return actionError(t(lang, "ref_action_status_update_failed"));
   }
 
   try {
@@ -169,7 +180,7 @@ export async function uploadHireProofAction(
 
   revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
   revalidatePath("/referrals/mine");
-  return actionOk("Nachweis hochgeladen. Der Inserent wird benachrichtigt.");
+  return actionOk("");
 }
 
 // ── Schritt 7: A bestätigt Claim ────────────────────────────────────────────
@@ -178,11 +189,12 @@ export async function confirmClaimAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = await actionLang();
   const user = await requireUser().catch(() => null);
-  if (!user) return actionError("Bitte melde dich an.");
+  if (!user) return actionError(t(lang, "bounty_action_login"));
 
-  const parsed = confirmClaimSchema.safeParse(toObj(formData));
-  if (!parsed.success) return actionError("Ungültige Eingaben.");
+  const parsed = createConfirmClaimSchema(lang).safeParse(toObj(formData));
+  if (!parsed.success) return actionError(t(lang, "ref_action_invalid_input"));
 
   const supabase = await getSupabaseServerClient();
 
@@ -196,7 +208,7 @@ export async function confirmClaimAction(
 
   const bounty = Array.isArray(referral?.bounties) ? referral.bounties[0] : referral?.bounties;
   if (!referral || bounty?.owner_id !== user.id) {
-    return actionError("Referral nicht gefunden oder nicht berechtigt.");
+    return actionError(t(lang, "ref_action_not_owner"));
   }
 
   const { error } = await supabase
@@ -208,7 +220,7 @@ export async function confirmClaimAction(
     })
     .eq("id", referral.id);
 
-  if (error) return actionError("Claim-Bestätigung fehlgeschlagen.");
+  if (error) return actionError(t(lang, "ref_action_claim_failed"));
 
   try {
     await logAuditEvent({
@@ -219,7 +231,7 @@ export async function confirmClaimAction(
   } catch { /* non-blocking */ }
 
   revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
-  return actionOk("Claim bestätigt.");
+  return actionOk("");
 }
 
 // ── Schritt 8: A bestätigt Payout-Account + Firmendaten ─────────────────────
@@ -228,12 +240,13 @@ export async function confirmPayoutAccountAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = await actionLang();
   const user = await requireUser().catch(() => null);
-  if (!user) return actionError("Bitte melde dich an.");
+  if (!user) return actionError(t(lang, "bounty_action_login"));
 
-  const parsed = confirmPayoutAccountSchema.safeParse(toObj(formData));
+  const parsed = createConfirmPayoutAccountSchema(lang).safeParse(toObj(formData));
   if (!parsed.success) {
-    return actionError("Bitte prüfe deine Eingaben.", fieldErrorsFromZod(parsed.error.issues));
+    return actionError(t(lang, "bounty_action_check_input"), fieldErrorsFromZod(parsed.error.issues));
   }
 
   const supabase = await getSupabaseServerClient();
@@ -247,7 +260,7 @@ export async function confirmPayoutAccountAction(
 
   const bounty = Array.isArray(referral?.bounties) ? referral.bounties[0] : referral?.bounties;
   if (!referral || bounty?.owner_id !== user.id) {
-    return actionError("Referral nicht gefunden oder nicht berechtigt.");
+    return actionError(t(lang, "ref_action_not_owner"));
   }
 
   const { error } = await supabase
@@ -269,7 +282,7 @@ export async function confirmPayoutAccountAction(
     })
     .eq("id", referral.id);
 
-  if (error) return actionError("Konto-Bestätigung fehlgeschlagen.");
+  if (error) return actionError(t(lang, "ref_action_payout_failed"));
 
   try {
     await logAuditEvent({
@@ -280,7 +293,7 @@ export async function confirmPayoutAccountAction(
   } catch { /* non-blocking */ }
 
   revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
-  return actionOk("Firmendaten gespeichert.");
+  return actionOk("");
 }
 
 // ── Schritt 9: A bestätigt Datenweitergabe → Payout-Trigger ─────────────────
@@ -289,11 +302,12 @@ export async function confirmDataForwardedAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = await actionLang();
   const user = await requireUser().catch(() => null);
-  if (!user) return actionError("Bitte melde dich an.");
+  if (!user) return actionError(t(lang, "bounty_action_login"));
 
-  const parsed = confirmDataForwardedSchema.safeParse(toObj(formData));
-  if (!parsed.success) return actionError("Ungültige Eingaben.");
+  const parsed = createConfirmDataForwardedSchema(lang).safeParse(toObj(formData));
+  if (!parsed.success) return actionError(t(lang, "ref_action_invalid_input"));
 
   const supabase = await getSupabaseServerClient();
 
@@ -306,7 +320,7 @@ export async function confirmDataForwardedAction(
 
   const bounty = Array.isArray(referral?.bounties) ? referral.bounties[0] : referral?.bounties;
   if (!referral || bounty?.owner_id !== user.id) {
-    return actionError("Referral nicht gefunden oder nicht berechtigt.");
+    return actionError(t(lang, "ref_action_not_owner"));
   }
 
   const now = new Date().toISOString();
@@ -318,7 +332,7 @@ export async function confirmDataForwardedAction(
     })
     .eq("id", referral.id);
 
-  if (error) return actionError("Datenweitergabe-Bestätigung fehlgeschlagen.");
+  if (error) return actionError(t(lang, "ref_action_forward_failed"));
 
   try {
     await logAuditEvent({
@@ -335,16 +349,18 @@ export async function confirmDataForwardedAction(
   revalidatePath("/payouts");
 
   if (payoutResult.kind === "blocked") {
-    return actionError(`Datenweitergabe gespeichert, aber Zahlung blockiert: ${payoutResult.reason}`);
+    return actionError(
+      t(lang, "ref_action_payment_blocked").replace("{reason}", payoutResult.reason),
+    );
   }
   if (payoutResult.kind === "already_processed") {
-    return actionOk("Zahlung wurde bereits verarbeitet.");
+    return actionOk(t(lang, "ref_action_payment_already"));
   }
 
   return actionOk(
     payoutResult.kind === "invoice_created"
-      ? `Rechnung erstellt und an die Firma gesendet. Zahlungslink: ${payoutResult.hostedUrl}`
-      : "Datenweitergabe bestätigt.",
+      ? t(lang, "ref_action_invoice_created").replace("{url}", payoutResult.hostedUrl)
+      : t(lang, "ref_action_data_forwarded_ok"),
   );
 }
 
@@ -354,12 +370,13 @@ export async function rejectConfirmationAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = await actionLang();
   const user = await requireUser().catch(() => null);
-  if (!user) return actionError("Bitte melde dich an.");
+  if (!user) return actionError(t(lang, "bounty_action_login"));
 
-  const parsed = rejectionSchema.safeParse(toObj(formData));
+  const parsed = createRejectionSchema(lang).safeParse(toObj(formData));
   if (!parsed.success) {
-    return actionError("Bitte prüfe deine Eingaben.", fieldErrorsFromZod(parsed.error.issues));
+    return actionError(t(lang, "bounty_action_check_input"), fieldErrorsFromZod(parsed.error.issues));
   }
 
   const supabase = await getSupabaseServerClient();
@@ -372,7 +389,7 @@ export async function rejectConfirmationAction(
 
   const bounty = Array.isArray(referral?.bounties) ? referral.bounties[0] : referral?.bounties;
   if (!referral || bounty?.owner_id !== user.id) {
-    return actionError("Referral nicht gefunden oder nicht berechtigt.");
+    return actionError(t(lang, "ref_action_not_owner"));
   }
 
   const now = new Date().toISOString();
@@ -383,7 +400,7 @@ export async function rejectConfirmationAction(
     rejected_by: user.id,
   });
 
-  if (rejError) return actionError("Ablehnung konnte nicht gespeichert werden.");
+  if (rejError) return actionError(t(lang, "ref_action_reject_failed"));
 
   await supabase
     .from("bounty_referrals")
@@ -406,7 +423,7 @@ export async function rejectConfirmationAction(
 
   revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
   revalidatePath("/referrals/mine");
-  return actionOk("Ablehnung gespeichert.");
+  return actionOk("");
 }
 
 // ── B öffnet Dispute nach Ablehnung ─────────────────────────────────────────
@@ -415,12 +432,13 @@ export async function openDisputeAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = await actionLang();
   const user = await requireUser().catch(() => null);
-  if (!user) return actionError("Bitte melde dich an.");
+  if (!user) return actionError(t(lang, "bounty_action_login"));
 
-  const parsed = disputeOpenSchema.safeParse(toObj(formData));
+  const parsed = createDisputeOpenSchema(lang).safeParse(toObj(formData));
   if (!parsed.success) {
-    return actionError("Bitte prüfe deine Eingaben.", fieldErrorsFromZod(parsed.error.issues));
+    return actionError(t(lang, "bounty_action_check_input"), fieldErrorsFromZod(parsed.error.issues));
   }
 
   const supabase = await getSupabaseServerClient();
@@ -435,13 +453,13 @@ export async function openDisputeAction(
     .maybeSingle();
 
   if (!referral) {
-    return actionError("Referral nicht gefunden oder Dispute nicht möglich.");
+    return actionError(t(lang, "ref_action_dispute_forbidden"));
   }
 
   // 7-Tage-Fenster für Dispute
   const rejectedAt = referral.rejection_at ? new Date(referral.rejection_at) : null;
   if (rejectedAt && Date.now() - rejectedAt.getTime() > 7 * 24 * 60 * 60 * 1000) {
-    return actionError("Das 7-Tage-Fenster für Dispute ist abgelaufen.");
+    return actionError(t(lang, "ref_action_dispute_expired"));
   }
 
   const { error } = await supabase.from("referral_disputes").insert({
@@ -453,9 +471,9 @@ export async function openDisputeAction(
 
   if (error) {
     if ((error as { code?: string }).code === "23505") {
-      return actionError("Für dieses Referral wurde bereits ein Dispute eröffnet.");
+      return actionError(t(lang, "ref_action_dispute_duplicate"));
     }
-    return actionError("Dispute konnte nicht eröffnet werden.");
+    return actionError(t(lang, "ref_action_dispute_failed"));
   }
 
   await supabase
@@ -473,5 +491,5 @@ export async function openDisputeAction(
 
   revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
   revalidatePath("/referrals/mine");
-  return actionOk("Dispute eröffnet. Das Team wird sich innerhalb von 14 Tagen melden.");
+  return actionOk(t(lang, "ref_action_dispute_ok"));
 }

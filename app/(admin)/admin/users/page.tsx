@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { KycStatusBadge } from "@/components/kyc/status-badge";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t, type TranslationKey } from "@/lib/i18n";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import type { KycStatus } from "@/lib/supabase/types";
@@ -17,11 +20,21 @@ export const dynamic = "force-dynamic";
 type SP = Record<string, string | string[] | undefined>;
 const KYC_STATUSES: KycStatus[] = ["unverified", "pending", "approved", "rejected", "expired"];
 
+const KYC_FILTER_LABEL: Record<KycStatus, TranslationKey> = {
+  unverified: "kyc_badge_unverified",
+  pending: "kyc_badge_pending",
+  approved: "kyc_badge_approved",
+  rejected: "kyc_badge_rejected",
+  expired: "kyc_badge_expired",
+};
+
 export default async function AdminUsersPage({
   searchParams,
 }: {
   searchParams: Promise<SP>;
 }) {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+
   const sp = await searchParams;
   const filterKyc = typeof sp.kyc === "string" ? sp.kyc : "";
   const page = Math.max(1, Number(sp.page ?? "1") || 1);
@@ -46,33 +59,50 @@ export default async function AdminUsersPage({
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-10">
-      <PageHeader title="Nutzer & KYC" description={`${total} Nutzer gesamt`} />
+      <PageHeader
+        title={t(lang, "admin_users_title")}
+        description={t(lang, "admin_users_desc_total").replace("{count}", String(total))}
+      />
 
       <form method="GET" action="/admin/users" className="mb-5 flex flex-wrap gap-2">
         <button name="kyc" value="" type="submit"
           className={["rounded-full border px-3 py-1 text-xs font-medium transition-colors",
             !filterKyc ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10 text-[var(--color-brand)]"
               : "border-[var(--color-surface-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"].join(" ")}>
-          Alle
+          {t(lang, "admin_filter_all")}
         </button>
         {KYC_STATUSES.map((s) => (
           <button key={s} name="kyc" value={s} type="submit"
             className={["rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               filterKyc === s ? "border-[var(--color-brand)] bg-[var(--color-brand)]/10 text-[var(--color-brand)]"
                 : "border-[var(--color-surface-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"].join(" ")}>
-            {s}
+            {t(lang, KYC_FILTER_LABEL[s])}
           </button>
         ))}
       </form>
 
-      {error && <div className="mb-4 text-sm text-[var(--color-error)]">Fehler: {error.message}</div>}
+      {error && (
+        <div className="mb-4 text-sm text-[var(--color-error)]">
+          {t(lang, "admin_error_colon_message").replace("{message}", error.message)}
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-[var(--radius-lg)] border border-[var(--color-surface-border)]">
         <table className="w-full text-sm">
           <thead className="border-b border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-xs text-[var(--color-text-muted)]">
             <tr>
-              {["Name / ID", "KYC-Status", "Registriert", "Zuletzt aktiv", "KYC setzen"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left font-medium">{h}</th>
+              {(
+                [
+                  "admin_users_col_name_id",
+                  "admin_users_col_kyc",
+                  "admin_users_col_registered",
+                  "admin_users_col_last_active",
+                  "admin_users_col_set_kyc",
+                ] as const
+              ).map((key) => (
+                <th key={key} className="px-4 py-3 text-left font-medium">
+                  {t(lang, key)}
+                </th>
               ))}
             </tr>
           </thead>
@@ -81,7 +111,7 @@ export default async function AdminUsersPage({
               <tr key={u.id} className="hover:bg-[var(--color-surface-2)]">
                 <td className="px-4 py-3">
                   <p className="font-medium text-[var(--color-text-primary)]">
-                    {u.display_name ?? "(kein Name)"}
+                    {u.display_name ?? t(lang, "admin_users_no_display_name")}
                   </p>
                   <p className="font-mono text-xs text-[var(--color-text-faint)]">{u.id.slice(0, 8)}</p>
                 </td>
@@ -100,14 +130,18 @@ export default async function AdminUsersPage({
                       <form action={adminSetKycAction}>
                         <input type="hidden" name="userId" value={u.id} />
                         <input type="hidden" name="status" value="approved" />
-                        <Button size="sm" variant="secondary" type="submit">Genehmigen</Button>
+                        <Button size="sm" variant="secondary" type="submit">
+                          {t(lang, "admin_users_btn_kyc_approve")}
+                        </Button>
                       </form>
                     )}
                     {u.kyc_status !== "rejected" && (
                       <form action={adminSetKycAction}>
                         <input type="hidden" name="userId" value={u.id} />
                         <input type="hidden" name="status" value="rejected" />
-                        <Button size="sm" variant="ghost" type="submit">Ablehnen</Button>
+                        <Button size="sm" variant="ghost" type="submit">
+                          {t(lang, "admin_btn_reject")}
+                        </Button>
                       </form>
                     )}
                   </div>
@@ -116,7 +150,9 @@ export default async function AdminUsersPage({
             ))}
             {(data ?? []).length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-[var(--color-text-muted)]">Keine Nutzer gefunden.</td>
+                <td colSpan={5} className="px-4 py-8 text-center text-[var(--color-text-muted)]">
+                  {t(lang, "admin_users_empty")}
+                </td>
               </tr>
             )}
           </tbody>
@@ -131,16 +167,20 @@ export default async function AdminUsersPage({
               className="inline-flex items-center gap-1 rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
             >
               <ArrowLeft className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-              Zurück
+              {t(lang, "admin_pagination_back")}
             </a>
           )}
-          <span className="text-[var(--color-text-muted)]">Seite {page} / {totalPages}</span>
+          <span className="text-[var(--color-text-muted)]">
+            {t(lang, "admin_pagination_page")
+              .replace("{current}", String(page))
+              .replace("{total}", String(totalPages))}
+          </span>
           {page < totalPages && (
             <a
               href={`/admin/users?kyc=${filterKyc}&page=${page + 1}`}
               className="inline-flex items-center gap-1 rounded border border-[var(--color-surface-border)] px-3 py-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
             >
-              Weiter
+              {t(lang, "admin_pagination_next")}
               <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
             </a>
           )}

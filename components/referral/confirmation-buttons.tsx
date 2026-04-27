@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { useLang } from "@/context/lang-context";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-error";
 import {
@@ -15,24 +16,25 @@ import type { ReferralStatus, RejectionStage } from "@/lib/supabase/types";
 import { useState } from "react";
 import { Check } from "lucide-react";
 
-function PendingButton({ label }: { label: string }) {
+function PendingButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
-      {pending ? "Wird gespeichert …" : label}
+      {pending ? pendingLabel : label}
     </Button>
   );
 }
 
 /* ── Claim bestätigen ──────────────────────────────────────────────────── */
 export function ConfirmClaimButton({ referralId }: { referralId: string }) {
+  const { t } = useLang();
   const [state, formAction] = useActionState(confirmClaimAction, idleAction);
 
   if (state.status === "ok") {
     return (
       <p className="flex items-center gap-2 text-sm text-[var(--color-success)]">
         <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
-        Claim bestätigt
+        {t("ref_confirm_claim_ok")}
       </p>
     );
   }
@@ -41,13 +43,17 @@ export function ConfirmClaimButton({ referralId }: { referralId: string }) {
     <form action={formAction} className="flex flex-col gap-2">
       {state.status === "error" && <FormAlert>{state.message}</FormAlert>}
       <input type="hidden" name="referralId" value={referralId} />
-      <PendingButton label="Claim bestätigen - Ja, das ist meine Vermittlung" />
+      <PendingButton
+        pendingLabel={t("ref_confirm_pending")}
+        label={t("ref_confirm_claim_btn")}
+      />
     </form>
   );
 }
 
 /* ── Datenweitergabe bestätigen ─────────────────────────────────────────── */
 export function ConfirmDataForwardedButton({ referralId }: { referralId: string }) {
+  const { t } = useLang();
   const [state, formAction] = useActionState(confirmDataForwardedAction, idleAction);
 
   if (state.status === "ok") {
@@ -64,11 +70,13 @@ export function ConfirmDataForwardedButton({ referralId }: { referralId: string 
       {state.status === "error" && <FormAlert>{state.message}</FormAlert>}
       <input type="hidden" name="referralId" value={referralId} />
       <div className="rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[color-mix(in_oklab,var(--color-warning)_8%,transparent)] p-3 text-xs text-[var(--color-text-muted)]">
-        <strong className="text-[var(--color-warning)]">Wichtig:</strong> Mit dieser Bestätigung versicherst du,
-        dass du der Firma das Plattform-Stripe-Konto als Zahlungsempfänger mitgeteilt hast.
-        Die Firma erhält anschließend eine Rechnung über die Plattform.
+        <strong className="text-[var(--color-warning)]">{t("ref_data_forward_warn_strong")}</strong>{" "}
+        {t("ref_data_forward_warn")}
       </div>
-      <PendingButton label="Ich habe die Daten weitergeleitet & Stripe-Konto angegeben" />
+      <PendingButton
+        pendingLabel={t("ref_confirm_pending")}
+        label={t("ref_data_forward_btn")}
+      />
     </form>
   );
 }
@@ -83,18 +91,19 @@ export function RejectButton({
   stage: RejectionStage;
   currentStatus: ReferralStatus;
 }) {
+  const { t } = useLang();
   const [state, formAction] = useActionState(rejectConfirmationAction, idleAction);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
 
   if (state.status === "ok") {
-    return <p className="text-sm text-[var(--color-error)]">Abgelehnt und protokolliert.</p>;
+    return <p className="text-sm text-[var(--color-error)]">{t("ref_reject_done")}</p>;
   }
 
   if (!open) {
     return (
       <Button variant="destructive" size="sm" onClick={() => setOpen(true)}>
-        Ablehnen
+        {t("ref_reject_open")}
       </Button>
     );
   }
@@ -105,24 +114,24 @@ export function RejectButton({
       <input type="hidden" name="referralId" value={referralId} />
       <input type="hidden" name="stage" value={stage} />
       <label className="text-sm font-medium text-[var(--color-text-primary)]">
-        Pflichtbegründung (min. 50 Zeichen)
+        {t("ref_reject_reason_label")}
       </label>
       <textarea
         name="reason"
         rows={4}
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="Begründe die Ablehnung ausführlich …"
+        placeholder={t("ref_reject_reason_ph")}
         className="w-full rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-bg)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-400)]"
         minLength={50}
         maxLength={2000}
       />
       <p className="text-xs text-[var(--color-text-faint)]">
-        {reason.length}/2000 Zeichen (min. 50 erforderlich)
+        {t("ref_reject_counter").replace("{n}", String(reason.length))}
       </p>
       <div className="flex gap-2">
         <button type="button" onClick={() => setOpen(false)} className="text-xs underline text-[var(--color-text-muted)]">
-          Abbrechen
+          {t("ref_cancel")}
         </button>
         <Button
           type="submit"
@@ -130,7 +139,7 @@ export function RejectButton({
           size="sm"
           disabled={reason.length < 50}
         >
-          Ablehnung bestätigen
+          {t("ref_reject_submit")}
         </Button>
       </div>
     </form>
@@ -139,6 +148,7 @@ export function RejectButton({
 
 /* ── Dispute öffnen (B, nach Ablehnung) ────────────────────────────────── */
 export function OpenDisputeButton({ referralId }: { referralId: string }) {
+  const { t } = useLang();
   const [state, formAction] = useActionState(openDisputeAction, idleAction);
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -150,7 +160,7 @@ export function OpenDisputeButton({ referralId }: { referralId: string }) {
   if (!open) {
     return (
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        Dispute eröffnen
+        {t("ref_dispute_open")}
       </Button>
     );
   }
@@ -160,24 +170,24 @@ export function OpenDisputeButton({ referralId }: { referralId: string }) {
       {state.status === "error" && <FormAlert>{state.message}</FormAlert>}
       <input type="hidden" name="referralId" value={referralId} />
       <label className="text-sm font-medium text-[var(--color-text-primary)]">
-        Begründung (min. 50 Zeichen)
+        {t("ref_dispute_reason_label")}
       </label>
       <textarea
         name="reason"
         rows={4}
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="Warum stimmst du der Ablehnung nicht zu?"
+        placeholder={t("ref_dispute_reason_ph")}
         className="w-full rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-bg)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-400)]"
         minLength={50}
         maxLength={2000}
       />
       <div className="flex gap-2">
         <button type="button" onClick={() => setOpen(false)} className="text-xs underline text-[var(--color-text-muted)]">
-          Abbrechen
+          {t("ref_cancel")}
         </button>
         <Button type="submit" size="sm" disabled={reason.length < 50}>
-          Dispute einreichen
+          {t("ref_dispute_submit")}
         </Button>
       </div>
     </form>

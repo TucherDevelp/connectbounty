@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { t } from "@/lib/i18n";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -17,6 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function NewBountyPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
 
   const supabase = await getSupabaseServerClient();
   const { data: profile } = await supabase
@@ -35,36 +40,31 @@ export default async function NewBountyPage() {
           href="/bounties/mine"
           className="text-sm text-[var(--color-text-muted)] hover:underline"
         >
-          ← Zurück zu meinen Bounties
+          {t(lang, "bounty_new_back")}
         </Link>
         <h1 className="font-display text-3xl font-semibold tracking-tight">
-          Neue Bounty erstellen
+          {t(lang, "bounty_new_title")}
         </h1>
-        <p className="text-[var(--color-text-muted)]">
-          Beschreibe die Rolle, die du besetzen willst, und die Prämie für erfolgreiche
-          Empfehlungen.
-        </p>
+        <p className="text-[var(--color-text-muted)]">{t(lang, "bounty_new_intro")}</p>
       </header>
 
       {!canCreate ? (
         <Card>
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
-              <CardTitle>KYC erforderlich</CardTitle>
-              <CardDescription>
-                Zum Erstellen einer Bounty muss deine Identität verifiziert sein.
-              </CardDescription>
+              <CardTitle>{t(lang, "bounty_new_kyc_title")}</CardTitle>
+              <CardDescription>{t(lang, "bounty_new_kyc_desc")}</CardDescription>
             </div>
             <KycStatusBadge status={kycStatus} />
           </CardHeader>
           <CardContent className="flex flex-col items-start gap-3">
             <p className="text-sm text-[var(--color-text-muted)]">
               {kycStatus === "pending"
-                ? "Dein Antrag wird gerade geprüft. Sobald er freigegeben ist, kannst du hier Bounties anlegen."
-                : "Starte die Verifizierung - das dauert in der Regel nur wenige Minuten."}
+                ? t(lang, "bounty_new_kyc_pending_body")
+                : t(lang, "bounty_new_kyc_start_body")}
             </p>
             <Link href="/kyc" className={buttonVariants({ variant: "primary", size: "sm" })}>
-              Zur KYC-Seite
+              {t(lang, "bounty_new_kyc_cta")}
             </Link>
           </CardContent>
         </Card>

@@ -14,7 +14,6 @@ import {
 import { Logo } from "@/components/logo";
 import { LangToggle } from "@/components/lang-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useTheme } from "@/components/theme-provider";
 import { useLang } from "@/context/lang-context";
 import { useReveal } from "@/hooks/use-reveal";
 import { cn } from "@/lib/utils";
@@ -56,14 +55,13 @@ function HowStepBadge({ n }: { n: string }) {
 
 function MarketingNav() {
   const { t } = useLang();
-  const { theme } = useTheme();
-  const logoTone = theme === "dark" ? "light" : "default";
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2" aria-label={t("nav_home")}>
-          <Logo size="md" tone={logoTone} />
+          {/* Immer farbiges SVG (hellblau) — wie App-Header; kein invert im Dark Mode */}
+          <Logo size="md" />
         </Link>
         <div className="hidden items-center gap-6 md:flex" aria-label={t("a11y_main_nav")}>
           <Link
@@ -205,14 +203,12 @@ function ValuesSection() {
 
 function MarketingFooter() {
   const { t } = useLang();
-  const { theme } = useTheme();
-  const logoTone = theme === "dark" ? "light" : "default";
 
   return (
     <footer className="border-t border-border/40 bg-surface py-12">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 md:grid-cols-3">
         <div>
-          <Logo size="md" tone={logoTone} />
+          <Logo size="md" />
           <p className="mt-4 text-sm text-muted-foreground">{t("footer_tagline")}</p>
         </div>
         <div className="flex flex-col gap-2 text-sm">

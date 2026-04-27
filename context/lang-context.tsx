@@ -10,6 +10,7 @@ import {
   startTransition,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import type { Lang, TranslationKey } from "@/lib/i18n";
 import { translations } from "@/lib/i18n";
 import { LANG_COOKIE, type CookieLang } from "@/lib/lang-cookie";
@@ -40,7 +41,13 @@ export function LangProvider({
   /** From server cookie so SSR + refresh match the user selection */
   initialLang?: Lang;
 }) {
+  const router = useRouter();
   const [lang, setLangState] = useState<Lang>(initialLang);
+
+  /** Server Components lesen die Sprache nur aus dem Cookie beim Request — nach Umschalten neu fetchen. */
+  useEffect(() => {
+    setLangState(initialLang);
+  }, [initialLang]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -54,17 +61,24 @@ export function LangProvider({
         startTransition(() => {
           setLangState(s);
           writeLangCookie(s);
+          router.refresh();
         });
       }
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [router]);
 
-  const setLang = useCallback((next: Lang) => {
-    setLangState(next);
-    writeLangCookie(next);
-  }, []);
+  const setLang = useCallback(
+    (next: Lang) => {
+      setLangState(next);
+      writeLangCookie(next);
+      startTransition(() => {
+        router.refresh();
+      });
+    },
+    [router],
+  );
 
   const t = useCallback(
     (key: TranslationKey) => {

@@ -15,7 +15,12 @@ import { FormAlert } from "@/components/ui/form-error";
 import { BountyStatusBadge } from "@/components/bounty/status-badge";
 import { ReferralStatusBadge } from "@/components/referral/status-badge";
 import { ReferralForm } from "@/components/referral/referral-form";
-import { formatBonus, formatDate } from "@/lib/format";
+import {
+  formatBonus,
+  formatDate,
+  formatLocaleForLang,
+  type FormatLocale,
+} from "@/lib/format";
 import {
   getBountyById,
   listReferralsForBounty,
@@ -31,7 +36,7 @@ import {
 import { updateReferralStatusAction } from "@/lib/referral/actions";
 import type { ReferralStatus } from "@/lib/supabase/types";
 import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
-import { t } from "@/lib/i18n";
+import { t, type TranslationKey } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -78,34 +83,27 @@ const ALLOWED_NEXT_STATUSES: Record<ReferralStatus, ReferralStatus[]> = {
   disputed: [],
 };
 
-const STATUS_ACTION_LABEL: Record<ReferralStatus, string> = {
-  // Legacy-Flow
-  pending_review: "",
-  contacted: "Kontaktiert markieren",
-  interviewing: "In Interview setzen",
-  hired: "Als eingestellt markieren",
-  paid: "Als ausgezahlt markieren",
-  rejected: "Ablehnen",
-  submitted: "",
-  withdrawn: "",
-  // v7 - managed via dedicated pages, no inline action
-  awaiting_hire_proof: "",
-  awaiting_claim: "",
-  awaiting_payout_account: "",
-  awaiting_data_forwarding: "",
-  invoice_pending: "",
-  invoice_paid: "",
-  disputed: "",
+const STATUS_ACTION_KEY: Partial<Record<ReferralStatus, TranslationKey>> = {
+  contacted: "referral_owner_action_contacted",
+  interviewing: "referral_owner_action_interviewing",
+  hired: "referral_owner_action_hired",
+  paid: "referral_owner_action_paid",
+  rejected: "referral_owner_action_reject",
 };
 
 function ReferralRow({
   referral,
   canManage,
+  tr,
+  locale,
 }: {
   referral: ReferralForBounty;
   canManage: boolean;
+  tr: (key: TranslationKey) => string;
+  locale: FormatLocale;
 }) {
   const next = ALLOWED_NEXT_STATUSES[referral.status];
+  const referredDate = formatDate(referral.created_at, locale);
   return (
     <li className="rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -122,11 +120,9 @@ function ReferralRow({
             </p>
           )}
           <p className="mt-1 text-xs text-[var(--color-text-faint)]">
-            Empfohlen von{" "}
-            <span className="font-medium text-[var(--color-text-muted)]">
-              {referral.referrer_display_name ?? "Unbekannt"}
-            </span>{" "}
-            · {formatDate(referral.created_at)}
+            {tr("bounty_detail_referred_meta")
+              .replace("{name}", referral.referrer_display_name ?? tr("bounty_detail_unknown"))
+              .replace("{date}", referredDate ?? "—")}
           </p>
         </div>
         <ReferralStatusBadge status={referral.status} />
@@ -149,7 +145,7 @@ function ReferralRow({
                 size="sm"
                 variant={target === "rejected" ? "ghost" : "secondary"}
               >
-                {STATUS_ACTION_LABEL[target]}
+                {tr(STATUS_ACTION_KEY[target]!)}
               </Button>
             </form>
           ))}
@@ -199,12 +195,16 @@ export default async function BountyDetailPage({
   const statusUpdated = typeof sp.status_updated === "string" ? sp.status_updated : null;
   const err = typeof sp.error === "string" ? sp.error : null;
 
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const locale = formatLocaleForLang(lang);
+  const tr = (key: TranslationKey) => t(lang, key);
+
   return (
     <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
       {/* Breadcrumb */}
       <nav className="mb-5 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
         <Link href="/bounties" className="hover:text-[var(--color-text-primary)] transition-colors">
-          Marktplatz
+          {tr("nav_marketplace")}
         </Link>
         <span>/</span>
         <span className="truncate max-w-[200px] text-[var(--color-text-primary)]">{bounty.title}</span>
@@ -213,15 +213,15 @@ export default async function BountyDetailPage({
       {/* Flash-Messages */}
       {statusUpdated && (
         <div className="mb-4">
-          <FormAlert variant="success">Empfehlungsstatus aktualisiert.</FormAlert>
+          <FormAlert variant="success">{tr("bounty_detail_ref_updated")}</FormAlert>
         </div>
       )}
       {err && (
         <div className="mb-4">
           <FormAlert>
             {err === "status_update_failed"
-              ? "Statusänderung nicht möglich - bitte Übergang prüfen."
-              : "Aktion fehlgeschlagen."}
+              ? tr("bounty_detail_error_status_transition")
+              : tr("bounty_detail_error_generic")}
           </FormAlert>
         </div>
       )}
@@ -231,9 +231,11 @@ export default async function BountyDetailPage({
         <div className="mb-5 flex items-start gap-3 rounded-[var(--radius-lg)] border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/5 p-4">
           <Loader2 className="mt-0.5 size-6 shrink-0 text-[var(--color-warning)]" strokeWidth={2} aria-hidden />
           <div>
-            <p className="text-sm font-semibold text-[var(--color-warning)]">Warte auf Admin-Freigabe</p>
+            <p className="text-sm font-semibold text-[var(--color-warning)]">
+              {tr("bounty_detail_pending_admin_title")}
+            </p>
             <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-              Diese Bounty wird nach der Prüfung durch einen Admin im Marktplatz sichtbar.
+              {tr("bounty_detail_pending_admin_body")}
             </p>
           </div>
         </div>
@@ -262,13 +264,29 @@ export default async function BountyDetailPage({
                     {bounty.industry}
                   </span>
                 )}
-                <span>von <strong className="text-[var(--color-text-primary)]">{bounty.owner_display_name ?? "Unbekannt"}</strong></span>
+                <span>
+                  {tr("bounty_detail_by")}{" "}
+                  <strong className="text-[var(--color-text-primary)]">
+                    {bounty.owner_display_name ?? tr("bounty_detail_unknown")}
+                  </strong>
+                </span>
               </div>
               <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-text-faint)]">
-                {bounty.published_at && <span>Veröffentlicht {formatDate(bounty.published_at)}</span>}
+                {bounty.published_at && (
+                  <span>
+                    {tr("bounty_mine_published").replace(
+                      "{date}",
+                      formatDate(bounty.published_at, locale) ?? "",
+                    )}
+                  </span>
+                )}
                 {bounty.expires_at && (
                   <span className={expired ? "text-[var(--color-error)]" : ""}>
-                    · Läuft ab {formatDate(bounty.expires_at)}
+                    ·{" "}
+                    {tr("bounty_mine_expires").replace(
+                      "{date}",
+                      formatDate(bounty.expires_at, locale) ?? "",
+                    )}
                   </span>
                 )}
               </div>
@@ -277,9 +295,9 @@ export default async function BountyDetailPage({
             <div className="flex flex-col items-end gap-2 shrink-0">
               <BountyStatusBadge status={expired ? "expired" : bounty.status} />
               <div className="text-right">
-                <p className="text-xs text-[var(--color-text-faint)]">Prämie</p>
+                <p className="text-xs text-[var(--color-text-faint)]">{tr("bounty_card_bonus")}</p>
                 <p className="font-display text-3xl font-bold text-[var(--color-brand-400)]">
-                  {formatBonus(Number(bounty.bonus_amount), bounty.bonus_currency)}
+                  {formatBonus(Number(bounty.bonus_amount), bounty.bonus_currency, locale)}
                 </p>
               </div>
             </div>
@@ -312,7 +330,7 @@ export default async function BountyDetailPage({
                 <form action={publishBountyAction}>
                   <input type="hidden" name="id" value={bounty.id} />
                   <Button type="submit" size="sm">
-                    Veröffentlichen
+                    {tr("bounty_detail_publish")}
                   </Button>
                 </form>
               )}
@@ -320,7 +338,7 @@ export default async function BountyDetailPage({
                 <form action={closeBountyAction}>
                   <input type="hidden" name="id" value={bounty.id} />
                   <Button type="submit" size="sm" variant="secondary">
-                    Schließen
+                    {tr("bounty_mine_close")}
                   </Button>
                 </form>
               )}
@@ -328,7 +346,7 @@ export default async function BountyDetailPage({
                 <form action={cancelBountyAction}>
                   <input type="hidden" name="id" value={bounty.id} />
                   <Button type="submit" size="sm" variant="ghost">
-                    Stornieren
+                    {tr("bounty_mine_cancel")}
                   </Button>
                 </form>
               )}
@@ -342,7 +360,7 @@ export default async function BountyDetailPage({
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold tracking-tight">
-              Eingegangene Empfehlungen
+              {tr("bounty_detail_referrals_heading")}
             </h2>
             <span className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-muted)]">
               {referrals.length}
@@ -351,17 +369,17 @@ export default async function BountyDetailPage({
           {referrals.length > 0 ? (
             <ul className="grid gap-3">
               {referrals.map((r) => (
-                <ReferralRow key={r.id} referral={r} canManage />
+                <ReferralRow key={r.id} referral={r} canManage tr={tr} locale={locale} />
               ))}
             </ul>
           ) : (
             <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-dashed border-[var(--color-surface-border)] py-10 text-center">
               <span className="text-3xl">📭</span>
               <p className="text-sm font-medium text-[var(--color-text-primary)]">
-                Noch keine Empfehlungen
+                {tr("bounty_detail_no_referrals_title")}
               </p>
               <p className="text-xs text-[var(--color-text-muted)]">
-                Sobald Nutzer:innen eine Empfehlung abgeben, erscheint sie hier.
+                {tr("bounty_detail_no_referrals_desc")}
               </p>
             </div>
           )}
@@ -372,7 +390,7 @@ export default async function BountyDetailPage({
       {!isOwner && (
         <section className="mt-8">
           <h2 className="mb-4 font-display text-xl font-semibold tracking-tight">
-            Kandidat:in empfehlen
+            {tr("bounty_detail_refer_heading")}
           </h2>
           {!user ? (
             <Card>
@@ -381,32 +399,29 @@ export default async function BountyDetailPage({
                   href={`/login?redirectTo=/bounties/${bounty.id}`}
                   className="text-[var(--color-brand)] underline underline-offset-4"
                 >
-                  Melde dich an
+                  {tr("bounty_detail_refer_login")}
                 </Link>
-                , um eine Empfehlung abzugeben.
+                {tr("bounty_detail_refer_suffix")}
               </CardContent>
             </Card>
           ) : !canReceiveReferrals ? (
             <Card>
               <CardContent className="py-6 text-sm text-[var(--color-text-muted)]">
-                Diese Bounty nimmt derzeit keine neuen Empfehlungen an.
+                {tr("bounty_detail_not_accepting")}
               </CardContent>
             </Card>
           ) : !kycOk ? (
             <Card>
               <CardHeader>
-                <CardTitle>KYC erforderlich</CardTitle>
-                <CardDescription>
-                  Um Empfehlungen abzugeben, musst du zuerst die
-                  Identitätsprüfung abschließen.
-                </CardDescription>
+                <CardTitle>{tr("bounty_new_kyc_title")}</CardTitle>
+                <CardDescription>{tr("bounty_detail_refer_kyc_desc")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Link
                   href="/kyc"
                   className={buttonVariants({ variant: "primary", size: "md" })}
                 >
-                  Zur KYC-Prüfung
+                  {tr("bounty_new_kyc_cta")}
                 </Link>
               </CardContent>
             </Card>

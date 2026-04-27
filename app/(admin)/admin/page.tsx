@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t, type TranslationKey } from "@/lib/i18n";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/types";
 
@@ -22,18 +25,26 @@ type Stats = {
   users_approved: number;
 };
 
-const TILES: { key: keyof Stats; label: string; color: string }[] = [
-  { key: "bounties_open", label: "Offene Bounties", color: "text-[var(--color-success)]" },
-  { key: "bounties_draft", label: "Entwürfe", color: "text-[var(--color-text-muted)]" },
-  { key: "bounties_expired", label: "Abgelaufen", color: "text-[var(--color-warning)]" },
-  { key: "referrals_submitted", label: "Neue Empfehlungen", color: "text-[var(--color-brand)]" },
-  { key: "referrals_hired", label: "Eingestellt (offen)", color: "text-[var(--color-success)]" },
-  { key: "payouts_pending", label: "Payouts ausstehend", color: "text-[var(--color-warning)]" },
-  { key: "users_unverified", label: "Nicht verifiziert", color: "text-[var(--color-error)]" },
-  { key: "users_approved", label: "KYC approved", color: "text-[var(--color-success)]" },
+const TILES: { key: keyof Stats; labelKey: TranslationKey; color: string }[] = [
+  { key: "bounties_open", labelKey: "admin_stat_bounties_open", color: "text-[var(--color-success)]" },
+  { key: "bounties_draft", labelKey: "admin_stat_bounties_draft", color: "text-[var(--color-text-muted)]" },
+  { key: "bounties_expired", labelKey: "admin_stat_bounties_expired", color: "text-[var(--color-warning)]" },
+  { key: "referrals_submitted", labelKey: "admin_stat_referrals_submitted", color: "text-[var(--color-brand)]" },
+  { key: "referrals_hired", labelKey: "admin_stat_referrals_hired", color: "text-[var(--color-success)]" },
+  { key: "payouts_pending", labelKey: "admin_stat_payouts_pending", color: "text-[var(--color-warning)]" },
+  { key: "users_unverified", labelKey: "admin_stat_users_unverified", color: "text-[var(--color-error)]" },
+  { key: "users_approved", labelKey: "admin_stat_users_approved", color: "text-[var(--color-success)]" },
+];
+
+const QUICK_LINKS: { href: string; titleKey: TranslationKey; descKey: TranslationKey }[] = [
+  { href: "/admin/bounties", titleKey: "admin_quick_bounties_title", descKey: "admin_quick_bounties_desc" },
+  { href: "/admin/users", titleKey: "admin_quick_users_title", descKey: "admin_quick_users_desc" },
+  { href: "/admin/referrals", titleKey: "admin_quick_referrals_title", descKey: "admin_quick_referrals_desc" },
 ];
 
 export default async function AdminDashboard() {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+
   // Normaler User-Client: admin_stats() prüft intern is_admin() via auth.uid().
   // Service-Role hat keine User-Session → Rollencheck schlägt fehl.
   const sb = await getSupabaseServerClient();
@@ -43,25 +54,25 @@ export default async function AdminDashboard() {
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-12">
-      <PageHeader title="Admin-Dashboard" description="Echtzeit-Überblick über Plattformaktivität." />
+      <PageHeader title={t(lang, "admin_dashboard_title")} description={t(lang, "admin_dashboard_desc")} />
 
       {error && (
         <div className="mb-6 rounded-[var(--radius-md)] border border-[var(--color-error)]/40 bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]">
-          Fehler beim Laden der Stats: {error.message}
+          {t(lang, "admin_dashboard_stats_error").replace("{message}", error.message)}
         </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {TILES.map((t) => (
-          <Card key={t.key}>
+        {TILES.map((tile) => (
+          <Card key={tile.key}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-[var(--color-text-muted)]">
-                {t.label}
+                {t(lang, tile.labelKey)}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className={`text-3xl font-bold ${t.color}`}>
-                {stats ? stats[t.key] : "-"}
+              <p className={`text-3xl font-bold ${tile.color}`}>
+                {stats ? stats[tile.key] : "-"}
               </p>
             </CardContent>
           </Card>
@@ -69,21 +80,17 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        {[
-          { href: "/admin/bounties", label: "Bounties verwalten", desc: "Moderieren, schließen, Entwürfe löschen" },
-          { href: "/admin/users", label: "Nutzer & KYC", desc: "KYC-Status setzen, Rollen vergeben" },
-          { href: "/admin/referrals", label: "Empfehlungen", desc: "Status überwachen, Auszahlungen anstoßen" },
-        ].map((link) => (
+        {QUICK_LINKS.map((link) => (
           <a
             key={link.href}
             href={link.href}
             className="group rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-5 transition-all hover:border-[var(--color-brand-600)/50] hover:bg-[var(--color-surface-hover)]"
           >
             <p className="flex items-center gap-1.5 font-semibold text-[var(--color-text-primary)] group-hover:text-[var(--color-brand)]">
-              {link.label}
+              {t(lang, link.titleKey)}
               <ArrowRight className="size-4 shrink-0 opacity-70" strokeWidth={2} aria-hidden />
             </p>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">{link.desc}</p>
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">{t(lang, link.descKey)}</p>
           </a>
         ))}
       </div>

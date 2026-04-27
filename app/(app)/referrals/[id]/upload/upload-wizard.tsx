@@ -3,6 +3,7 @@
 import { useState, useRef, useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { Check } from "lucide-react";
+import { useLang } from "@/context/lang-context";
 import { Button } from "@/components/ui/button";
 import { FormAlert } from "@/components/ui/form-error";
 import { uploadHireProofAction } from "@/lib/referral/confirmations";
@@ -11,16 +12,17 @@ import { idleAction } from "@/lib/auth/action-result";
 const ALLOWED_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
-function SubmitButton() {
+function SubmitButton({ pendingLabel, label }: { pendingLabel: string; label: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" size="lg" disabled={pending}>
-      {pending ? "Wird hochgeladen …" : "Nachweis einreichen"}
+      {pending ? pendingLabel : label}
     </Button>
   );
 }
 
 export function UploadWizard({ referralId, bucketName }: { referralId: string; bucketName: string }) {
+  const { t } = useLang();
   const [state, formAction] = useActionState(uploadHireProofAction, idleAction);
   const [file, setFile] = useState<File | null>(null);
   const [uploadedPath, setUploadedPath] = useState<string | null>(null);
@@ -33,11 +35,9 @@ export function UploadWizard({ referralId, bucketName }: { referralId: string; b
       <div className="rounded-[var(--radius-md)] border border-[var(--color-success)] bg-[color-mix(in_oklab,var(--color-success)_10%,transparent)] p-6 text-center">
         <p className="flex items-center justify-center gap-2 text-lg font-semibold text-[var(--color-success)]">
           <Check className="size-6 shrink-0" strokeWidth={2.5} aria-hidden />
-          Nachweis eingereicht
+          {t("hire_upload_ok_title")}
         </p>
-        <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-          Der Inserent wird benachrichtigt und kann deinen Claim jetzt bestätigen.
-        </p>
+        <p className="mt-2 text-sm text-[var(--color-text-muted)]">{t("hire_upload_ok_body")}</p>
       </div>
     );
   }
@@ -49,11 +49,11 @@ export function UploadWizard({ referralId, bucketName }: { referralId: string; b
     if (!f) return;
 
     if (!ALLOWED_MIME.includes(f.type as typeof ALLOWED_MIME[number])) {
-      setUploadError("Nur PDF, JPEG, PNG oder WEBP erlaubt.");
+      setUploadError(t("hire_upload_err_mime"));
       return;
     }
     if (f.size > MAX_BYTES) {
-      setUploadError("Datei zu groß (max. 10 MB).");
+      setUploadError(t("hire_upload_err_size"));
       return;
     }
     setFile(f);
@@ -68,7 +68,7 @@ export function UploadWizard({ referralId, bucketName }: { referralId: string; b
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bucket: bucketName, path }),
       });
-      if (!signedRes.ok) throw new Error("Signatur konnte nicht erstellt werden.");
+      if (!signedRes.ok) throw new Error(t("hire_upload_err_sign"));
       const { signedUrl } = (await signedRes.json()) as { signedUrl: string };
 
       const uploadRes = await fetch(signedUrl, {
@@ -76,10 +76,10 @@ export function UploadWizard({ referralId, bucketName }: { referralId: string; b
         headers: { "Content-Type": f.type },
         body: f,
       });
-      if (!uploadRes.ok) throw new Error("Upload fehlgeschlagen.");
+      if (!uploadRes.ok) throw new Error(t("hire_upload_err_upload"));
       setUploadedPath(path);
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload fehlgeschlagen.");
+      setUploadError(err instanceof Error ? err.message : t("hire_upload_err_upload"));
       setFile(null);
     } finally {
       setUploading(false);
@@ -110,25 +110,23 @@ export function UploadWizard({ referralId, bucketName }: { referralId: string; b
         role="button"
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
-        aria-label="Datei auswählen"
+        aria-label={t("hire_upload_drop_aria")}
       >
         {uploading ? (
-          <p className="text-sm text-[var(--color-text-muted)]">Wird hochgeladen …</p>
+          <p className="text-sm text-[var(--color-text-muted)]">{t("hire_upload_uploading")}</p>
         ) : uploadedPath && file ? (
           <>
             <p className="text-sm font-medium text-[var(--color-success)]">{file.name}</p>
             <p className="text-xs text-[var(--color-text-faint)]">
-              {(file.size / 1024).toFixed(0)} KB · Klicke zum Ersetzen
+              {t("hire_upload_replace_hint").replace("{size}", (file.size / 1024).toFixed(0))}
             </p>
           </>
         ) : (
           <>
             <p className="text-sm font-medium text-[var(--color-text-primary)]">
-              Arbeitsvertrag oder Einstellungsbestätigung hochladen
+              {t("hire_upload_cta")}
             </p>
-            <p className="text-xs text-[var(--color-text-faint)]">
-              PDF, JPEG, PNG, WEBP · max. 10 MB
-            </p>
+            <p className="text-xs text-[var(--color-text-faint)]">{t("hire_upload_formats")}</p>
           </>
         )}
       </div>
@@ -142,12 +140,11 @@ export function UploadWizard({ referralId, bucketName }: { referralId: string; b
       />
 
       <div className="rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-4 text-xs text-[var(--color-text-faint)]">
-        Dein Dokument wird verschlüsselt gespeichert und ist nur für dich, den Inserenten und das Support-Team sichtbar.
-        Es wird 30 Tage nach Abschluss der Auszahlung automatisch gelöscht.
+        {t("hire_upload_privacy")}
       </div>
 
       <div className="flex justify-end border-t border-[var(--color-surface-border)] pt-6">
-        <SubmitButton />
+        <SubmitButton pendingLabel={t("hire_upload_submit_pending")} label={t("hire_upload_submit")} />
       </div>
     </form>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { logoutAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { NavLink } from "@/components/ui/nav-link";
@@ -23,12 +24,14 @@ export function AdminHeader({ email }: { email: string }) {
   return (
     <header className="flex items-center justify-between border-b border-[var(--color-surface-border)] bg-[var(--color-surface-1)] px-6 py-3">
       <div className="flex min-w-0 flex-1 items-center gap-6">
-        <Link href="/admin" className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
+          <Link href="/admin" className="flex items-center" aria-label="ConnectBounty">
+            <Logo size="sm" showWordmark compact />
+          </Link>
           <span className="rounded bg-[var(--color-brand)] px-1.5 py-0.5 text-xs font-bold text-black">
             {t("nav_admin_badge")}
           </span>
-          <span className="font-display text-sm font-semibold tracking-tight">ConnectBounty</span>
-        </Link>
+        </div>
         <nav
           aria-label={t("a11y_admin_nav")}
           className="hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto text-sm sm:flex"

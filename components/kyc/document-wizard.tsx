@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useState, useRef, useCallback } from "react";
 import { BookOpen, Camera, Check, CreditCard, FileImage } from "lucide-react";
+import { useLang } from "@/context/lang-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ interface DocumentWizardProps {
 }
 
 export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardProps) {
+  const { t } = useLang();
   const [step, setStep] = useState<Step>("doc-type");
   const [docType, setDocType] = useState<DocCategory>("id_card");
   const [captures, setCaptures] = useState<Partial<Record<string, Capture>>>({});
@@ -63,11 +65,11 @@ export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardPro
     const file = e.target.files?.[0];
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setError("Nur JPEG, PNG oder WebP erlaubt.");
+      setError(t("kyc_wizard_err_mime"));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setError("Datei zu groß (max 10 MB).");
+      setError(t("kyc_wizard_err_size"));
       return;
     }
     captureStep(currentDocField, file);
@@ -86,7 +88,7 @@ export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardPro
     const res = await fetch("/api/kyc/documents", { method: "POST", body: form });
     if (!res.ok) {
       const data = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(data.error ?? "Upload fehlgeschlagen.");
+      setError(data.error ?? t("kyc_wizard_err_upload"));
       return false;
     }
     return true;
@@ -123,12 +125,9 @@ export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardPro
           <Check className="size-9" strokeWidth={2.5} aria-hidden />
         </div>
         <p className="text-lg font-semibold text-[var(--color-text-primary)]">
-          Dokumente eingereicht
+          {t("kyc_wizard_done_title")}
         </p>
-        <p className="text-sm text-[var(--color-text-muted)]">
-          Dein Antrag wird jetzt geprüft. Du erhältst eine Benachrichtigung sobald das Ergebnis
-          vorliegt.
-        </p>
+        <p className="text-sm text-[var(--color-text-muted)]">{t("kyc_wizard_done_body")}</p>
       </div>
     );
   }
@@ -148,7 +147,11 @@ export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardPro
       {step !== "doc-type" && (
         <div className="flex flex-col gap-1">
           <div className="flex justify-between text-xs text-[var(--color-text-muted)]">
-            <span>Schritt {stepIndex} von {steps.length - 1}</span>
+            <span>
+              {t("kyc_wizard_step_progress")
+                .replace("{current}", String(stepIndex))
+                .replace("{total}", String(steps.length - 1))}
+            </span>
             <span>{progress}%</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-2)]">
@@ -181,17 +184,17 @@ export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardPro
           field={step}
           label={
             step === "id_card_front"
-              ? "Personalausweis - Vorderseite"
+              ? t("kyc_wizard_capture_id_front_l")
               : step === "id_card_back"
-              ? "Personalausweis - Rückseite"
-              : "Reisepass - Datenseite"
+                ? t("kyc_wizard_capture_id_back_l")
+                : t("kyc_wizard_capture_passport_l")
           }
           hint={
             step === "id_card_front"
-              ? "Fotografiere oder lade die Vorderseite deines Personalausweises hoch."
+              ? t("kyc_wizard_capture_id_front_h")
               : step === "id_card_back"
-              ? "Fotografiere oder lade die Rückseite deines Personalausweises hoch."
-              : "Fotografiere oder lade die Seite mit deinen persönlichen Daten hoch."
+                ? t("kyc_wizard_capture_id_back_h")
+                : t("kyc_wizard_capture_passport_h")
           }
           capture={captures[step]}
           onCapture={() => openFilePicker(step)}
@@ -219,8 +222,8 @@ export function DocumentWizard({ applicantRowId, onComplete }: DocumentWizardPro
       {step === "selfie" && (
         <CaptureStep
           field="selfie"
-          label="Selfie"
-          hint="Halte dein Gesicht gut erkennbar in die Kamera. Stelle sicher, dass du gut beleuchtet bist."
+          label={t("kyc_wizard_selfie_l")}
+          hint={t("kyc_wizard_selfie_h")}
           capture={captures["selfie"]}
           onCapture={() => openFilePicker("selfie")}
           onBack={() => setStep(docType === "id_card" ? "id_card_back" : "passport")}
@@ -253,37 +256,36 @@ function DocTypeStep({
   onNext,
 }: {
   selected: DocCategory;
-  onSelect: (t: DocCategory) => void;
+  onSelect: (cat: DocCategory) => void;
   onNext: () => void;
 }) {
+  const { t } = useLang();
   return (
     <div className="flex flex-col gap-6">
       <div>
         <p className="mb-1 text-sm font-medium text-[var(--color-text-primary)]">
-          Welches Dokument möchtest du verwenden?
+          {t("kyc_wizard_doc_type_title")}
         </p>
-        <p className="text-sm text-[var(--color-text-muted)]">
-          Wähle ein gültiges amtliches Ausweisdokument.
-        </p>
+        <p className="text-sm text-[var(--color-text-muted)]">{t("kyc_wizard_doc_type_sub")}</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <DocTypeCard
           icon={<CreditCard className="size-8 text-[var(--color-brand-400)]" strokeWidth={1.75} aria-hidden />}
-          title="Personalausweis"
-          description="Vorder- und Rückseite"
+          title={t("kyc_wizard_id_card_title")}
+          description={t("kyc_wizard_id_card_desc")}
           selected={selected === "id_card"}
           onClick={() => onSelect("id_card")}
         />
         <DocTypeCard
           icon={<BookOpen className="size-8 text-[var(--color-brand-400)]" strokeWidth={1.75} aria-hidden />}
-          title="Reisepass"
-          description="Nur Datenseite"
+          title={t("kyc_wizard_passport_title")}
+          description={t("kyc_wizard_passport_desc")}
           selected={selected === "passport"}
           onClick={() => onSelect("passport")}
         />
       </div>
       <Button onClick={onNext} size="lg" className="self-start">
-        Weiter
+        {t("kyc_wizard_next")}
       </Button>
     </div>
   );
@@ -345,6 +347,7 @@ function CaptureStep({
   isSelfie?: boolean;
 }) {
   void field;
+  const { t } = useLang();
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -368,7 +371,7 @@ function CaptureStep({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={capture.preview}
-            alt="Vorschau"
+            alt={t("kyc_wizard_preview_alt")}
             className={cn("absolute inset-0 size-full object-cover", isSelfie && "object-top")}
           />
         ) : (
@@ -379,9 +382,9 @@ function CaptureStep({
               <FileImage className="size-12 text-[var(--color-text-muted)]" strokeWidth={1.5} aria-hidden />
             )}
             <p className="text-sm font-medium text-[var(--color-text-primary)]">
-              Klicken zum Hochladen
+              {t("kyc_wizard_upload_cta")}
             </p>
-            <p className="text-xs text-[var(--color-text-muted)]">JPEG · PNG · WebP · max 10 MB</p>
+            <p className="text-xs text-[var(--color-text-muted)]">{t("kyc_wizard_upload_formats")}</p>
           </div>
         )}
       </button>
@@ -392,16 +395,16 @@ function CaptureStep({
           onClick={onCapture}
           className="self-start text-xs text-[var(--color-brand-400)] underline hover:text-[var(--color-brand-300)]"
         >
-          Erneut hochladen
+          {t("kyc_wizard_reupload")}
         </button>
       )}
 
       <div className="flex justify-between gap-3">
         <Button variant="secondary" onClick={onBack} size="sm">
-          Zurück
+          {t("kyc_wizard_back")}
         </Button>
         <Button onClick={onNext} size="sm" disabled={!capture}>
-          Weiter
+          {t("kyc_wizard_next")}
         </Button>
       </div>
     </div>
@@ -423,27 +426,26 @@ function ReviewStep({
   onSubmit: () => void;
   uploading: boolean;
 }) {
+  const { t } = useLang();
   const fields: { field: string; label: string }[] =
     docType === "id_card"
       ? [
-          { field: "id_card_front", label: "Personalausweis Vorderseite" },
-          { field: "id_card_back", label: "Personalausweis Rückseite" },
-          { field: "selfie", label: "Selfie" },
+          { field: "id_card_front", label: t("kyc_wizard_label_id_front") },
+          { field: "id_card_back", label: t("kyc_wizard_label_id_back") },
+          { field: "selfie", label: t("kyc_wizard_label_selfie") },
         ]
       : [
-          { field: "passport", label: "Reisepass" },
-          { field: "selfie", label: "Selfie" },
+          { field: "passport", label: t("kyc_wizard_label_passport") },
+          { field: "selfie", label: t("kyc_wizard_label_selfie") },
         ];
 
   return (
     <div className="flex flex-col gap-5">
       <div>
         <p className="mb-1 text-sm font-semibold text-[var(--color-text-primary)]">
-          Überprüfen & Einreichen
+          {t("kyc_wizard_review_title")}
         </p>
-        <p className="text-sm text-[var(--color-text-muted)]">
-          Überprüfe deine Dokumente. Alle Angaben müssen gut lesbar sein.
-        </p>
+        <p className="text-sm text-[var(--color-text-muted)]">{t("kyc_wizard_review_sub")}</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -463,7 +465,7 @@ function ReviewStep({
                 onClick={() => onRetake(field)}
                 className="self-start text-xs text-[var(--color-brand-400)] underline hover:text-[var(--color-brand-300)]"
               >
-                Neu aufnehmen
+                {t("kyc_wizard_retake")}
               </button>
             </div>
           );
@@ -472,10 +474,10 @@ function ReviewStep({
 
       <div className="flex justify-between gap-3">
         <Button variant="secondary" onClick={onBack} size="sm" disabled={uploading}>
-          Zurück
+          {t("kyc_wizard_back")}
         </Button>
         <Button onClick={onSubmit} size="sm" disabled={uploading}>
-          {uploading ? "Wird hochgeladen …" : "Antrag einreichen"}
+          {uploading ? t("kyc_wizard_submitting") : t("kyc_wizard_submit")}
         </Button>
       </div>
     </div>

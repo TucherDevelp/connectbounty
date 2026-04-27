@@ -1,76 +1,71 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import type { ReferralStatus } from "@/lib/supabase/types";
+import { useLang } from "@/context/lang-context";
+import type { TranslationKey } from "@/lib/i18n";
 
-const STATUS_META: Record<ReferralStatus, { label: string; className: string }> = {
-  // Legacy-Flow
+const STATUS_META: Record<ReferralStatus, { labelKey: TranslationKey; className: string }> = {
   pending_review: {
-    label: "Zur Prüfung",
+    labelKey: "referral_status_pending_review",
     className: "bg-[color-mix(in_oklab,var(--color-warning)_18%,transparent)] text-[var(--color-warning)]",
   },
   submitted: {
-    label: "Eingereicht",
+    labelKey: "referral_status_submitted",
     className: "bg-[var(--color-surface-2)] text-[var(--color-text-muted)]",
   },
   contacted: {
-    label: "Kontaktiert",
+    labelKey: "referral_status_contacted",
     className:
       "bg-[color-mix(in_oklab,var(--color-info,var(--color-brand))_18%,transparent)] text-[var(--color-brand)]",
   },
   interviewing: {
-    label: "Im Interview",
-    className:
-      "bg-[color-mix(in_oklab,var(--color-brand)_18%,transparent)] text-[var(--color-brand)]",
+    labelKey: "referral_status_interviewing",
+    className: "bg-[color-mix(in_oklab,var(--color-brand)_18%,transparent)] text-[var(--color-brand)]",
   },
   hired: {
-    label: "Eingestellt",
-    className:
-      "bg-[color-mix(in_oklab,var(--color-success)_22%,transparent)] text-[var(--color-success)]",
+    labelKey: "referral_status_hired",
+    className: "bg-[color-mix(in_oklab,var(--color-success)_22%,transparent)] text-[var(--color-success)]",
   },
   paid: {
-    label: "Ausgezahlt",
-    className:
-      "bg-[color-mix(in_oklab,var(--color-success)_28%,transparent)] text-[var(--color-success)]",
+    labelKey: "referral_status_paid",
+    className: "bg-[color-mix(in_oklab,var(--color-success)_28%,transparent)] text-[var(--color-success)]",
   },
   rejected: {
-    label: "Abgelehnt",
-    className:
-      "bg-[color-mix(in_oklab,var(--color-error)_18%,transparent)] text-[var(--color-error)]",
+    labelKey: "referral_status_rejected",
+    className: "bg-[color-mix(in_oklab,var(--color-error)_18%,transparent)] text-[var(--color-error)]",
   },
   withdrawn: {
-    label: "Zurückgezogen",
+    labelKey: "referral_status_withdrawn",
     className: "bg-[var(--color-surface-2)] text-[var(--color-text-muted)]",
   },
-  // v7 - Three-stage confirmation flow
   awaiting_hire_proof: {
-    label: "Nachweis ausstehend",
+    labelKey: "referral_status_awaiting_hire_proof",
     className: "bg-[color-mix(in_oklab,var(--color-warning)_18%,transparent)] text-[var(--color-warning)]",
   },
   awaiting_claim: {
-    label: "Claim-Bestätigung ausstehend",
+    labelKey: "referral_status_awaiting_claim",
     className: "bg-[color-mix(in_oklab,var(--color-warning)_18%,transparent)] text-[var(--color-warning)]",
   },
   awaiting_payout_account: {
-    label: "Stripe-Konto ausstehend",
+    labelKey: "referral_status_awaiting_payout_account",
     className: "bg-[color-mix(in_oklab,var(--color-warning)_18%,transparent)] text-[var(--color-warning)]",
   },
   awaiting_data_forwarding: {
-    label: "Datenweitergabe ausstehend",
+    labelKey: "referral_status_awaiting_data_forwarding",
     className: "bg-[color-mix(in_oklab,var(--color-warning)_18%,transparent)] text-[var(--color-warning)]",
   },
   invoice_pending: {
-    label: "Rechnung versendet",
-    className:
-      "bg-[color-mix(in_oklab,var(--color-brand)_18%,transparent)] text-[var(--color-brand)]",
+    labelKey: "referral_status_invoice_pending",
+    className: "bg-[color-mix(in_oklab,var(--color-brand)_18%,transparent)] text-[var(--color-brand)]",
   },
   invoice_paid: {
-    label: "Rechnung bezahlt",
-    className:
-      "bg-[color-mix(in_oklab,var(--color-success)_22%,transparent)] text-[var(--color-success)]",
+    labelKey: "referral_status_invoice_paid",
+    className: "bg-[color-mix(in_oklab,var(--color-success)_22%,transparent)] text-[var(--color-success)]",
   },
   disputed: {
-    label: "Dispute",
-    className:
-      "bg-[color-mix(in_oklab,var(--color-error)_18%,transparent)] text-[var(--color-error)]",
+    labelKey: "referral_status_disputed",
+    className: "bg-[color-mix(in_oklab,var(--color-error)_18%,transparent)] text-[var(--color-error)]",
   },
 };
 
@@ -81,6 +76,7 @@ export function ReferralStatusBadge({
   status: ReferralStatus;
   className?: string;
 }) {
+  const { t } = useLang();
   const meta = STATUS_META[status];
   return (
     <span
@@ -90,7 +86,7 @@ export function ReferralStatusBadge({
         className,
       )}
     >
-      {meta.label}
+      {t(meta.labelKey)}
     </span>
   );
 }

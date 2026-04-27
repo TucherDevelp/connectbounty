@@ -2,6 +2,7 @@
 
 import "server-only";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -18,7 +19,9 @@ import {
   fieldErrorsFromZod,
   type ActionState,
 } from "@/lib/auth/action-result";
-import { bountyCreateSchema, bountyIdSchema } from "./schemas";
+import { t } from "@/lib/i18n";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { bountyIdSchema, createBountyCreateSchema } from "./schemas";
 
 /**
  * Server Actions für den Bounty-Lifecycle.
@@ -56,24 +59,24 @@ export async function createBountyAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+
   try {
     await requireKycApproved();
   } catch (err) {
     if (err instanceof UnauthenticatedError) {
-      return actionError("Bitte melde dich an.");
+      return actionError(t(lang, "bounty_action_login"));
     }
     if (err instanceof KycRequiredError) {
-      return actionError(
-        "Zum Erstellen einer Bounty ist ein erfolgreicher KYC erforderlich.",
-      );
+      return actionError(t(lang, "bounty_action_kyc"));
     }
     throw err;
   }
 
-  const parsed = bountyCreateSchema.safeParse(safeFormDataToObject(formData));
+  const parsed = createBountyCreateSchema(lang).safeParse(safeFormDataToObject(formData));
   if (!parsed.success) {
     return actionError(
-      "Bitte prüfe deine Eingaben.",
+      t(lang, "bounty_action_check_input"),
       fieldErrorsFromZod(parsed.error.issues),
     );
   }
@@ -103,7 +106,7 @@ export async function createBountyAction(
     .single();
 
   if (error || !data) {
-    return actionError("Bounty konnte nicht gespeichert werden.");
+    return actionError(t(lang, "bounty_action_save_failed"));
   }
 
   await auditSafe("bounty.created", data.id, {

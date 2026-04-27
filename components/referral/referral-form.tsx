@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { useLang } from "@/context/lang-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,16 +11,17 @@ import { FieldError, FormAlert } from "@/components/ui/form-error";
 import { submitReferralAction } from "@/lib/referral/actions";
 import { idleAction } from "@/lib/auth/action-result";
 
-function SubmitButton() {
+function SubmitButton({ pendingLabel, label }: { pendingLabel: string; label: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" size="md" disabled={pending}>
-      {pending ? "Wird gesendet …" : "Empfehlung absenden"}
+      {pending ? pendingLabel : label}
     </Button>
   );
 }
 
 export function ReferralForm({ bountyId }: { bountyId: string }) {
+  const { t } = useLang();
   const [state, formAction] = useActionState(submitReferralAction, idleAction);
   const fe = state.status === "error" ? state.fieldErrors : undefined;
 
@@ -31,7 +33,7 @@ export function ReferralForm({ bountyId }: { bountyId: string }) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="candidateName">Name der:s Kandidat:in</Label>
+          <Label htmlFor="candidateName">{t("referral_form_name_label")}</Label>
           <Input
             id="candidateName"
             name="candidateName"
@@ -45,7 +47,7 @@ export function ReferralForm({ bountyId }: { bountyId: string }) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="candidateEmail">E-Mail</Label>
+          <Label htmlFor="candidateEmail">{t("referral_form_email_label")}</Label>
           <Input
             id="candidateEmail"
             name="candidateEmail"
@@ -60,11 +62,11 @@ export function ReferralForm({ bountyId }: { bountyId: string }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="candidateContact">Weitere Kontaktdaten (optional)</Label>
+        <Label htmlFor="candidateContact">{t("referral_form_contact_label")}</Label>
         <Input
           id="candidateContact"
           name="candidateContact"
-          placeholder="LinkedIn-URL, Telefonnummer …"
+          placeholder={t("referral_form_contact_ph")}
           maxLength={500}
           invalid={Boolean(fe?.candidateContact)}
           aria-describedby={fe?.candidateContact ? "cand-contact-err" : undefined}
@@ -73,30 +75,30 @@ export function ReferralForm({ bountyId }: { bountyId: string }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="message">Nachricht an den:die Bounty-Ersteller:in (optional)</Label>
+        <Label htmlFor="message">{t("referral_form_message_label")}</Label>
         <Textarea
           id="message"
           name="message"
           rows={5}
           maxLength={2000}
-          placeholder="Warum ist diese Person ein Match? Wie kennst du sie?"
+          placeholder={t("referral_form_message_ph")}
           invalid={Boolean(fe?.message)}
           aria-describedby={fe?.message ? "msg-err" : "msg-help"}
         />
         <FieldError id="msg-err" message={fe?.message} />
         {!fe?.message && (
           <p id="msg-help" className="text-xs text-[var(--color-text-faint)]">
-            Max. 2000 Zeichen.
+            {t("referral_form_message_help")}
           </p>
         )}
       </div>
 
       <div className="flex items-center justify-between border-t border-[var(--color-surface-border)] pt-4">
-        <p className="text-xs text-[var(--color-text-faint)]">
-          Mit dem Absenden bestätigst du, dass der:die Kandidat:in informiert ist und
-          der Weitergabe zustimmt.
-        </p>
-        <SubmitButton />
+        <p className="text-xs text-[var(--color-text-faint)]">{t("referral_form_footer")}</p>
+        <SubmitButton
+          pendingLabel={t("referral_form_submit_pending")}
+          label={t("referral_form_submit")}
+        />
       </div>
     </form>
   );

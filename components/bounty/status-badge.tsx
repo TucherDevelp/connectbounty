@@ -1,32 +1,33 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import type { BountyStatus } from "@/lib/supabase/types";
+import { useLang } from "@/context/lang-context";
+import type { TranslationKey } from "@/lib/i18n";
 
-const STATUS_META: Record<
-  BountyStatus,
-  { label: string; className: string }
-> = {
+const STATUS_META: Record<BountyStatus, { labelKey: TranslationKey; className: string }> = {
   pending_review: {
-    label: "Zur Prüfung",
+    labelKey: "bounty_status_pending_review",
     className: "bg-[color-mix(in_oklab,var(--color-warning)_18%,transparent)] text-[var(--color-warning)]",
   },
   draft: {
-    label: "Entwurf",
+    labelKey: "bounty_status_draft",
     className: "bg-[var(--color-surface-2)] text-[var(--color-text-muted)]",
   },
   open: {
-    label: "Aktiv",
+    labelKey: "bounty_status_open",
     className: "bg-[color-mix(in_oklab,var(--color-success)_18%,transparent)] text-[var(--color-success)]",
   },
   closed: {
-    label: "Geschlossen",
+    labelKey: "bounty_status_closed",
     className: "bg-[var(--color-surface-2)] text-[var(--color-text-muted)]",
   },
   expired: {
-    label: "Abgelaufen",
+    labelKey: "bounty_status_expired",
     className: "bg-[color-mix(in_oklab,var(--color-warning)_18%,transparent)] text-[var(--color-warning)]",
   },
   cancelled: {
-    label: "Storniert",
+    labelKey: "bounty_status_cancelled",
     className: "bg-[color-mix(in_oklab,var(--color-error)_18%,transparent)] text-[var(--color-error)]",
   },
 };
@@ -38,6 +39,7 @@ export function BountyStatusBadge({
   status: BountyStatus;
   className?: string;
 }) {
+  const { t } = useLang();
   const meta = STATUS_META[status];
   return (
     <span
@@ -47,7 +49,7 @@ export function BountyStatusBadge({
         className,
       )}
     >
-      {meta.label}
+      {t(meta.labelKey)}
     </span>
   );
 }

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth/roles";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t } from "@/lib/i18n";
 import { PageHeader } from "@/components/ui/page-header";
 import { CompanyBillingForm } from "./company-billing-form";
 
@@ -41,11 +44,13 @@ export default async function ConfirmPayoutPage({
     redirect(`/bounties/${bountyId}/referrals/${rid}`);
   }
 
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
       <PageHeader
-        title="Firmendaten + Stripe-Konto angeben"
-        description={`Inserat: ${bounty?.title ?? "–"} · Schritt 3 von 4`}
+        title={t(lang, "confirm_payout_page_title")}
+        description={t(lang, "confirm_payout_page_desc").replace("{title}", bounty?.title ?? "–")}
       />
       <div className="mt-8">
         <CompanyBillingForm referralId={rid} bountyId={bountyId} />

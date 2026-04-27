@@ -12,39 +12,41 @@ import {
 import { Button } from "@/components/ui/button";
 import { startStripeConnectAction } from "@/lib/stripe/actions";
 import type { ConnectAccountStatus } from "@/lib/stripe/connect";
+import { useLang } from "@/context/lang-context";
+import type { TranslationKey } from "@/lib/i18n";
 
 const STATUS_CONFIG: Record<
   ConnectAccountStatus["onboardingStatus"],
-  { Icon: LucideIcon; label: string; description: string; color: string }
+  { Icon: LucideIcon; labelKey: TranslationKey; descriptionKey: TranslationKey; color: string }
 > = {
   pending: {
     Icon: Link2,
-    label: "Stripe-Konto verbinden",
-    description: "Verbinde dein Bankkonto, um Prämien-Auszahlungen zu empfangen.",
+    labelKey: "connect_label_pending",
+    descriptionKey: "connect_desc_pending",
     color: "border-[var(--color-brand-400)]/30 bg-[var(--color-brand-400)]/5",
   },
   onboarding: {
     Icon: Loader2,
-    label: "Onboarding läuft",
-    description: "Du hast das Onboarding gestartet, aber noch nicht abgeschlossen. Bitte vervollständige alle Angaben.",
+    labelKey: "connect_label_onboarding",
+    descriptionKey: "connect_desc_onboarding",
     color: "border-[var(--color-warning)]/30 bg-[var(--color-warning)]/5",
   },
   active: {
     Icon: CheckCircle2,
-    label: "Stripe-Konto aktiv",
-    description: "Dein Konto ist verifiziert. Auszahlungen werden automatisch verarbeitet.",
+    labelKey: "connect_label_active",
+    descriptionKey: "connect_desc_active",
     color: "border-[var(--color-success)]/30 bg-[var(--color-success)]/5",
   },
   restricted: {
     Icon: AlertTriangle,
-    label: "Konto eingeschränkt",
-    description: "Stripe benötigt zusätzliche Informationen. Bitte schließe das Onboarding ab.",
+    labelKey: "connect_label_restricted",
+    descriptionKey: "connect_desc_restricted",
     color: "border-[var(--color-warning)]/30 bg-[var(--color-warning)]/5",
   },
   disabled: {
     Icon: Ban,
-    label: "Konto deaktiviert",
-    description: "Dein Stripe-Konto wurde deaktiviert. Bitte kontaktiere den Support.",
+    labelKey: "connect_label_disabled",
+    descriptionKey: "connect_desc_disabled",
     color: "border-[var(--color-error)]/30 bg-[var(--color-error)]/5",
   },
 };
@@ -54,6 +56,7 @@ interface Props {
 }
 
 export function ConnectOnboardingCard({ connectStatus }: Props) {
+  const { t } = useLang();
   const [pending, startTransition] = useTransition();
 
   const status = connectStatus?.onboardingStatus ?? "pending";
@@ -71,11 +74,11 @@ export function ConnectOnboardingCard({ connectStatus }: Props) {
             aria-hidden
           />
           <div>
-            <p className="text-sm font-semibold text-[var(--color-text-primary)]">{config.label}</p>
-            <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">{config.description}</p>
+            <p className="text-sm font-semibold text-[var(--color-text-primary)]">{t(config.labelKey)}</p>
+            <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">{t(config.descriptionKey)}</p>
             {connectStatus?.stripeAccountId && (
               <p className="mt-1.5 text-xs text-[var(--color-text-faint)]">
-                Account-ID:{" "}
+                {t("connect_account_id")}{" "}
                 <code className="rounded bg-black/20 px-1 py-0.5">{connectStatus.stripeAccountId}</code>
               </p>
             )}
@@ -91,10 +94,10 @@ export function ConnectOnboardingCard({ connectStatus }: Props) {
             onClick={() => startTransition(() => void startStripeConnectAction())}
           >
             {pending
-              ? "Weiterleitung …"
+              ? t("connect_btn_redirecting")
               : status === "pending"
-              ? "Jetzt verbinden"
-              : "Onboarding fortsetzen"}
+                ? t("connect_btn_connect")
+                : t("connect_btn_resume")}
           </Button>
         )}
       </div>

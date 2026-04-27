@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { AlertTriangle, Check } from "lucide-react";
 import { localizedMetadata } from "@/lib/i18n-metadata";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t, type TranslationKey } from "@/lib/i18n";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireUser } from "@/lib/auth/roles";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getConnectAccountStatus } from "@/lib/stripe/connect";
-import { formatBonus, formatDate } from "@/lib/format";
+import { formatBonus, formatDate, formatLocaleForLang } from "@/lib/format";
 import type { PayoutStatus } from "@/lib/supabase/types";
 import { FintechPayoutMark } from "@/components/icons/fintech-payout-mark";
 import { ConnectOnboardingCard } from "./onboarding-card";
@@ -17,12 +20,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 export const dynamic = "force-dynamic";
 
-const STATUS_LABEL: Record<PayoutStatus, string> = {
-  pending: "Ausstehend",
-  processing: "In Bearbeitung",
-  paid: "Ausgezahlt",
-  failed: "Fehlgeschlagen",
-  cancelled: "Storniert",
+const STATUS_LABEL_KEY: Record<PayoutStatus, TranslationKey> = {
+  pending: "payout_status_pending",
+  processing: "payout_status_processing",
+  paid: "payout_status_paid",
+  failed: "payout_status_failed",
+  cancelled: "payout_status_cancelled",
 };
 
 const STATUS_COLOR: Record<PayoutStatus, string> = {
@@ -69,34 +72,34 @@ export default async function PayoutsPage({
   const stripeParam = sp.stripe;
   const errorParam = sp.error;
 
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const locale = formatLocaleForLang(lang);
+
   return (
     <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <PageHeader title="Auszahlungen" description="Deine Prämien-Auszahlungen via Stripe Connect." />
+      <PageHeader title={t(lang, "payout_page_title")} description={t(lang, "payout_page_desc")} />
 
       {/* Flash-Messages */}
       {stripeParam === "return" && isStripeReady && (
         <div className="mb-6 flex items-start gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-success)]/10 px-4 py-3 text-sm text-[var(--color-success)]">
           <Check className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden />
-          <span>Stripe-Konto erfolgreich verbunden! Du kannst jetzt Auszahlungen empfangen.</span>
+          <span>{t(lang, "payout_stripe_ok")}</span>
         </div>
       )}
       {stripeParam === "return" && !isStripeReady && (
         <div className="mb-6 flex items-start gap-2.5 rounded-[var(--radius-md)] bg-[var(--color-warning)]/10 px-4 py-3 text-sm text-[var(--color-warning)]">
           <AlertTriangle className="mt-0.5 size-5 shrink-0" strokeWidth={2.25} aria-hidden />
-          <span>
-            Das Onboarding wurde gestartet, aber noch nicht vollständig abgeschlossen. Bitte vollende
-            alle Schritte.
-          </span>
+          <span>{t(lang, "payout_stripe_incomplete")}</span>
         </div>
       )}
       {stripeParam === "refresh" && (
         <div className="mb-6 rounded-[var(--radius-md)] bg-[var(--color-info)]/10 px-4 py-3 text-sm text-[var(--color-info)]">
-          Der Onboarding-Link ist abgelaufen. Bitte starte das Onboarding erneut.
+          {t(lang, "payout_stripe_link_expired")}
         </div>
       )}
       {errorParam && (
         <div className="mb-6 rounded-[var(--radius-md)] bg-[var(--color-error)]/10 px-4 py-3 text-sm text-[var(--color-error)]">
-          Fehler: {decodeURIComponent(errorParam)}
+          {t(lang, "payout_error_prefix")} {decodeURIComponent(errorParam)}
         </div>
       )}
 
@@ -107,15 +110,15 @@ export default async function PayoutsPage({
       {(payouts?.length ?? 0) > 0 && (
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-4">
-            <p className="text-xs text-[var(--color-text-muted)]">Gesamt ausgezahlt</p>
+            <p className="text-xs text-[var(--color-text-muted)]">{t(lang, "payout_stat_total")}</p>
             <p className="mt-1 font-display text-2xl font-bold text-[var(--color-success)]">
-              {formatBonus(totalPaid, "EUR")}
+              {formatBonus(totalPaid, "EUR", locale)}
             </p>
           </div>
           <div className="rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-4">
-            <p className="text-xs text-[var(--color-text-muted)]">Ausstehend</p>
+            <p className="text-xs text-[var(--color-text-muted)]">{t(lang, "payout_stat_pending")}</p>
             <p className="mt-1 font-display text-2xl font-bold text-[var(--color-warning)]">
-              {formatBonus(pendingAmount, "EUR")}
+              {formatBonus(pendingAmount, "EUR", locale)}
             </p>
           </div>
         </div>
@@ -125,7 +128,7 @@ export default async function PayoutsPage({
       <div className="mt-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
-            Auszahlungs-Verlauf
+            {t(lang, "payout_history_title")}
           </h2>
           {connectStatus?.stripeAccountId && (
             <RefreshStatusButton />
@@ -141,32 +144,38 @@ export default async function PayoutsPage({
               <FintechPayoutMark className="size-11" />
             </div>
             <p className="text-sm font-medium text-[var(--color-text-primary)]">
-              Noch keine Auszahlungen
+              {t(lang, "payout_empty_title")}
             </p>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Wenn ein Kandidat eingestellt wird, erscheint hier deine Prämie.
-            </p>
+            <p className="text-xs text-[var(--color-text-muted)]">{t(lang, "payout_empty_desc")}</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-surface-border)]">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)]">Betrag</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)]">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] hidden sm:table-cell">Transfer-ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] hidden md:table-cell">Datum</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)]">
+                    {t(lang, "payout_col_amount")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)]">
+                    {t(lang, "payout_col_status")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] hidden sm:table-cell">
+                    {t(lang, "payout_col_transfer")}
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] hidden md:table-cell">
+                    {t(lang, "payout_col_date")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-surface-border)]">
                 {payouts?.map((p) => (
                   <tr key={p.id} className="hover:bg-[var(--color-surface-2)] transition-colors">
                     <td className="px-4 py-3 font-medium tabular-nums">
-                      {formatBonus(Number(p.amount), p.currency.toUpperCase())}
+                      {formatBonus(Number(p.amount), p.currency.toUpperCase(), locale)}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs font-medium ${STATUS_COLOR[p.status as PayoutStatus]}`}>
-                        {STATUS_LABEL[p.status as PayoutStatus]}
+                        {t(lang, STATUS_LABEL_KEY[p.status as PayoutStatus])}
                       </span>
                       {p.stripe_error_code && (
                         <span className="ml-2 text-xs text-[var(--color-error)]">
@@ -184,7 +193,7 @@ export default async function PayoutsPage({
                       )}
                     </td>
                     <td className="hidden px-4 py-3 text-xs text-[var(--color-text-muted)] md:table-cell">
-                      {p.paid_at ? formatDate(p.paid_at) : formatDate(p.created_at)}
+                      {p.paid_at ? formatDate(p.paid_at, locale) : formatDate(p.created_at, locale)}
                     </td>
                   </tr>
                 ))}
@@ -197,14 +206,14 @@ export default async function PayoutsPage({
       {/* Info-Box */}
       <Card className="mt-6 border-[var(--color-surface-border)]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Wie funktionieren Auszahlungen?</CardTitle>
+          <CardTitle className="text-sm">{t(lang, "payout_how_title")}</CardTitle>
         </CardHeader>
         <CardContent>
           <CardDescription className="space-y-1.5 text-xs">
-            <p>1. Du verbindest dein Bankkonto via Stripe Connect (einmalig).</p>
-            <p>2. Wenn ein von dir empfohlener Kandidat eingestellt wird, legt der Admin die Prämie fest.</p>
-            <p>3. Die Prämie (abzüglich Platform-Gebühr) wird an dein Stripe-Konto überwiesen.</p>
-            <p>4. Stripe überträgt den Betrag auf dein Bankkonto gemäß deinen Auszahlungseinstellungen.</p>
+            <p>{t(lang, "payout_how_1")}</p>
+            <p>{t(lang, "payout_how_2")}</p>
+            <p>{t(lang, "payout_how_3")}</p>
+            <p>{t(lang, "payout_how_4")}</p>
           </CardDescription>
         </CardContent>
       </Card>

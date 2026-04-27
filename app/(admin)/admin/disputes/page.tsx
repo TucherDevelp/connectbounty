@@ -86,10 +86,12 @@ export default async function AdminDisputesPage() {
                         {bounty?.title ?? "–"}
                       </p>
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        Kandidat: {referral?.candidate_name} ({referral?.candidate_email})
+                        {t(lang, "admin_disputes_candidate")} {referral?.candidate_name} (
+                        {referral?.candidate_email})
                       </p>
                       <p className="text-xs text-[var(--color-text-muted)]">
-                        Eröffnet: {new Date(dispute.created_at).toLocaleDateString("de-DE")}
+                        {t(lang, "admin_disputes_opened")}{" "}
+                        {new Date(dispute.created_at).toLocaleDateString(locale)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
