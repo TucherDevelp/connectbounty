@@ -38,6 +38,8 @@ export function AppHeader({
     { href: "/referrals/mine", labelKey: "nav_referrals" as const },
     { href: "/payouts", labelKey: "nav_payouts" as const },
     { href: "/kyc", labelKey: "nav_kyc" as const },
+    { href: "/profile", labelKey: "nav_profile" as const, exact: true },
+    { href: "/settings/security", labelKey: "nav_security" as const, exact: true },
   ];
 
   return (
@@ -62,10 +64,12 @@ export function AppHeader({
           <ThemeToggle />
         </div>
         <div className="hidden items-center gap-3 sm:flex">
-          <UserAvatar email={email} />
-          <span className="max-w-[140px] truncate text-xs text-muted-foreground" title={email}>
-            {displayName}
-          </span>
+          <Link href="/profile" className="flex items-center gap-2 rounded-[var(--radius-md)] px-2 py-1 hover:bg-[var(--color-surface-2)]">
+            <UserAvatar email={email} />
+            <span className="max-w-[140px] truncate text-xs text-muted-foreground" title={email}>
+              {displayName}
+            </span>
+          </Link>
           <form action={logoutAction}>
             <Button type="submit" variant="secondary" size="sm">
               {t("nav_logout")}

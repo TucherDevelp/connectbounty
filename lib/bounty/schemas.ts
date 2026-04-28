@@ -137,7 +137,27 @@ function buildBountyBaseSchema(lang: Lang) {
   const splitCandidateBpsSchema = bpsSchema.default(4000);
   const splitPlatformBpsSchema = bpsSchema.default(2000);
 
-  const paymentModeSchema = z.enum(["on_confirmation", "escrow"]).default("on_confirmation");
+  const paymentModeSchema = z.literal("on_confirmation").default("on_confirmation");
+  const acceptPaymentTermsSchema = z
+    .union([z.boolean(), z.string()])
+    .transform((val) => {
+      if (typeof val === "boolean") return val;
+      const normalized = val.trim().toLowerCase();
+      return normalized === "true" || normalized === "on" || normalized === "1";
+    })
+    .refine((accepted) => accepted, {
+      message: t(lang, "bounty_zod_terms_required"),
+    });
+  const acceptAgbTermsSchema = z
+    .union([z.boolean(), z.string()])
+    .transform((val) => {
+      if (typeof val === "boolean") return val;
+      const normalized = val.trim().toLowerCase();
+      return normalized === "true" || normalized === "on" || normalized === "1";
+    })
+    .refine((accepted) => accepted, {
+      message: t(lang, "bounty_zod_agb_required"),
+    });
 
   return z.object({
     title: titleSchema,
@@ -152,6 +172,8 @@ function buildBountyBaseSchema(lang: Lang) {
     splitCandidateBps: splitCandidateBpsSchema,
     splitPlatformBps: splitPlatformBpsSchema,
     paymentMode: paymentModeSchema,
+    acceptPaymentTerms: acceptPaymentTermsSchema,
+    acceptAgbTerms: acceptAgbTermsSchema,
   });
 }
 

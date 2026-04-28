@@ -267,7 +267,7 @@ export default async function BountyDetailPage({
                 <span>
                   {tr("bounty_detail_by")}{" "}
                   <strong className="text-[var(--color-text-primary)]">
-                    {bounty.owner_display_name ?? tr("bounty_detail_unknown")}
+                    {isOwner ? tr("bounty_detail_by_you") : tr("bounty_detail_by_verified_poster")}
                   </strong>
                 </span>
               </div>

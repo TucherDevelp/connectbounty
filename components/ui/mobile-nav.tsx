@@ -22,6 +22,8 @@ export function MobileNav({ email }: { email: string }) {
     { href: "/referrals/mine", labelKey: "nav_referrals" as const },
     { href: "/payouts", labelKey: "nav_payouts" as const },
     { href: "/kyc", labelKey: "nav_kyc" as const },
+    { href: "/profile", labelKey: "nav_profile" as const, exact: true },
+    { href: "/settings/security", labelKey: "nav_security" as const, exact: true },
   ];
 
   const navActive = (href: string, exact = false) => isNavItemActive(pathname, href, exact);

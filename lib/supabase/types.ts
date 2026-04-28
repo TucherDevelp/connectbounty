@@ -136,6 +136,11 @@ export type Database = {
           avatar_url: string | null;
           bio: string | null;
           locale: string;
+          address_line1: string | null;
+          address_line2: string | null;
+          address_postal_code: string | null;
+          address_city: string | null;
+          address_country: string | null;
           kyc_status: KycStatus;
           email_verified_at: string | null;
           last_seen_at: string | null;
@@ -150,6 +155,11 @@ export type Database = {
           avatar_url?: string | null;
           bio?: string | null;
           locale?: string;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          address_postal_code?: string | null;
+          address_city?: string | null;
+          address_country?: string | null;
           kyc_status?: KycStatus;
           email_verified_at?: string | null;
           last_seen_at?: string | null;
@@ -164,6 +174,11 @@ export type Database = {
           avatar_url?: string | null;
           bio?: string | null;
           locale?: string;
+          address_line1?: string | null;
+          address_line2?: string | null;
+          address_postal_code?: string | null;
+          address_city?: string | null;
+          address_country?: string | null;
           kyc_status?: KycStatus;
           email_verified_at?: string | null;
           last_seen_at?: string | null;

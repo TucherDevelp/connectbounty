@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 
-const ALLOWED_BUCKETS = ["hire-proofs"] as const;
+const ALLOWED_BUCKETS = ["hire-proofs", "profile-avatars"] as const;
 
 /**
  * POST /api/storage/sign-upload

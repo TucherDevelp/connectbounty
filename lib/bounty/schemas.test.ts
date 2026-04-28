@@ -11,6 +11,8 @@ const base = {
   industry: "Software",
   tags: "node,postgres, supabase",
   expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+  acceptPaymentTerms: "true",
+  acceptAgbTerms: "true",
 };
 
 describe("bountyCreateSchema", () => {
@@ -97,6 +99,21 @@ describe("bountyCreateSchema", () => {
       expect(res.data.location).toBeNull();
       expect(res.data.industry).toBeNull();
     }
+  });
+
+  it("weist fehlende Akzeptanz der Zahlungsbedingungen ab", () => {
+    const res = bountyCreateSchema.safeParse({ ...base, acceptPaymentTerms: "false" });
+    expect(res.success).toBe(false);
+  });
+
+  it("lässt nur on_confirmation als Zahlungsmodus zu", () => {
+    const res = bountyCreateSchema.safeParse({ ...base, paymentMode: "escrow" });
+    expect(res.success).toBe(false);
+  });
+
+  it("weist fehlende Akzeptanz der AGB ab", () => {
+    const res = bountyCreateSchema.safeParse({ ...base, acceptAgbTerms: "false" });
+    expect(res.success).toBe(false);
   });
 });
 

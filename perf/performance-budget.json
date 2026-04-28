@@ -1,0 +1,6 @@
+{
+  "description": "Performance budget v1 for CI gate checks.",
+  "maxTotalJsKb": 550,
+  "maxLargestChunkKb": 220,
+  "maxRouteAssetCount": 45
+}

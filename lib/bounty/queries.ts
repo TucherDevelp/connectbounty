@@ -154,7 +154,6 @@ export async function listOpenBounties(
 
 export type BountyDetail = BountyListItem & {
   owner_id: string;
-  owner_display_name: string | null;
 };
 
 /**
@@ -167,25 +166,14 @@ export async function getBountyById(id: string): Promise<BountyDetail | null> {
   const { data, error } = await supabase
     .from("bounties")
     .select(
-      "id, title, description, bonus_amount, bonus_currency, location, industry, tags, status, published_at, expires_at, created_at, owner_id, profiles!bounties_owner_id_fkey(display_name)",
+      "id, title, description, bonus_amount, bonus_currency, location, industry, tags, status, published_at, expires_at, created_at, owner_id",
     )
     .eq("id", id)
     .maybeSingle();
 
   if (error) throw error;
   if (!data) return null;
-
-  // Supabase gibt embedded FK als Objekt oder Array zurück (je nach Kardinalität).
-  const profile = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
-  const { profiles: _omit, ...rest } = data as typeof data & {
-    profiles: { display_name: string | null } | null;
-  };
-  void _omit;
-
-  return {
-    ...(rest as Omit<BountyDetail, "owner_display_name">),
-    owner_display_name: profile?.display_name ?? null,
-  };
+  return data as BountyDetail;
 }
 
 // ── Referrals ─────────────────────────────────────────────────────────────

@@ -3,8 +3,10 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { z } from "zod";
+import { getSupabaseServerClient, getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { clientEnv } from "@/lib/env";
 import { logAuditEvent } from "./roles";
 import type { AuditAction, Json } from "@/lib/supabase/types";
@@ -20,6 +22,8 @@ import {
   fieldErrorsFromZod,
   type ActionState,
 } from "./action-result";
+import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
+import { t } from "@/lib/i18n";
 
 /**
  * Server Actions für Auth-Flows.
@@ -85,9 +89,24 @@ export async function registerAction(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
   const parsed = registerSchema.safeParse(safeFormDataToObject(formData));
   if (!parsed.success) {
-    return actionError("Bitte prüfe deine Eingaben.", fieldErrorsFromZod(parsed.error.issues));
+    return actionError(t(lang, "profile_action_input_invalid"), fieldErrorsFromZod(parsed.error.issues));
+  }
+
+  const serviceSb = getSupabaseServiceRoleClient();
+  const normalizedAlias = parsed.data.displayName.trim();
+  const { data: aliasTaken } = await serviceSb
+    .from("profiles")
+    .select("id")
+    .ilike("display_name", normalizedAlias)
+    .limit(1)
+    .maybeSingle();
+  if (aliasTaken) {
+    return actionError(t(lang, "profile_action_input_invalid"), {
+      displayName: t(lang, "profile_error_display_name_taken"),
+    });
   }
 
   const supabase = await getSupabaseServerClient();
@@ -102,7 +121,12 @@ export async function registerAction(
   });
 
   if (error) {
-    return actionError("Registrierung fehlgeschlagen. Bitte später erneut versuchen.");
+    if (String(error.message).toLowerCase().includes("profiles_display_name_unique_ci")) {
+      return actionError(t(lang, "profile_action_input_invalid"), {
+        displayName: t(lang, "profile_error_display_name_taken"),
+      });
+    }
+    return actionError(t(lang, "auth_register_failed"));
   }
 
   // Falls Confirm-Mail aktiviert ist, gibt es noch keine Session -
@@ -198,4 +222,239 @@ export async function updatePasswordAction(
   await auditSafe("user.password_change");
   revalidatePath("/", "layout");
   return actionOk("Passwort aktualisiert. Du kannst dich jetzt einloggen.");
+}
+
+const updateProfileSchema = z.object({
+  displayName: z
+    .string({ message: "display_name" })
+    .trim()
+    .min(2, "display_name")
+    .max(64, "display_name"),
+  bio: z
+    .string()
+    .trim()
+    .max(280, "bio")
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? null : v)),
+  avatarUrl: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v, ctx) => {
+      if (!v) return null;
+      try {
+        const u = new URL(v);
+        if (u.protocol !== "http:" && u.protocol !== "https:") {
+          ctx.addIssue({ code: "custom", message: "avatar" });
+          return z.NEVER;
+        }
+        return u.toString();
+      } catch {
+        ctx.addIssue({ code: "custom", message: "avatar" });
+        return z.NEVER;
+      }
+    }),
+});
+
+export async function updateProfileAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const supabase = await getSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return actionError(t(lang, "profile_action_login_required"));
+
+  const parsed = updateProfileSchema.safeParse(safeFormDataToObject(formData));
+  if (!parsed.success) {
+    const fields: Record<string, string> = {};
+    for (const issue of parsed.error.issues) {
+      const field = String(issue.path[0] ?? "");
+      if (field === "displayName") fields.displayName = t(lang, "profile_error_display_name");
+      if (field === "bio") fields.bio = t(lang, "profile_error_bio");
+      if (field === "avatarUrl") fields.avatarUrl = t(lang, "profile_error_avatar");
+    }
+    return actionError(t(lang, "profile_action_input_invalid"), fields);
+  }
+
+  const normalizedAlias = parsed.data.displayName.trim();
+  const { data: aliasTaken } = await supabase
+    .from("profiles")
+    .select("id")
+    .ilike("display_name", normalizedAlias)
+    .neq("id", userData.user.id)
+    .limit(1)
+    .maybeSingle();
+  if (aliasTaken) {
+    return actionError(t(lang, "profile_action_input_invalid"), {
+      displayName: t(lang, "profile_error_display_name_taken"),
+    });
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      display_name: parsed.data.displayName,
+      bio: parsed.data.bio,
+      avatar_url: parsed.data.avatarUrl,
+    })
+    .eq("id", userData.user.id);
+
+  if (error) {
+    if (String(error.message).toLowerCase().includes("profiles_display_name_unique_ci")) {
+      return actionError(t(lang, "profile_action_input_invalid"), {
+        displayName: t(lang, "profile_error_display_name_taken"),
+      });
+    }
+    return actionError(t(lang, "profile_action_save_failed"));
+  }
+
+  await supabase.auth.updateUser({ data: { display_name: parsed.data.displayName } });
+  await auditSafe("user.profile_update", {
+    bio_set: parsed.data.bio !== null,
+  });
+  revalidatePath("/", "layout");
+  revalidatePath("/profile");
+  return actionOk(t(lang, "profile_action_saved"));
+}
+
+export async function requestCurrentUserPasswordResetAction(
+  _prev: ActionState,
+  _formData: FormData,
+): Promise<ActionState> {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const supabase = await getSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user?.email) return actionError(t(lang, "profile_action_login_required"));
+
+  const env = clientEnv();
+  const { error } = await supabase.auth.resetPasswordForEmail(userData.user.email, {
+    redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/reset/confirm`,
+  });
+
+  if (error) return actionError(t(lang, "security_password_reset_failed"));
+  await auditSafe("user.password_change", { source: "security_center_reset_request" });
+  return actionOk(t(lang, "security_password_reset_sent"));
+}
+
+async function ensureAal2(
+  supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
+  lang: ReturnType<typeof parseLangCookie>,
+): Promise<ActionState | null> {
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (error) return actionError(t(lang, "security_2fa_required"));
+  if ((data?.currentLevel ?? "aal1") !== "aal2") {
+    return actionError(t(lang, "security_2fa_required"));
+  }
+  return null;
+}
+
+const changeEmailSchema = z.object({
+  newEmail: z
+    .string()
+    .trim()
+    .min(1)
+    .max(254)
+    .email(),
+});
+
+export async function changeEmailWith2faAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const supabase = await getSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return actionError(t(lang, "profile_action_login_required"));
+
+  const aalError = await ensureAal2(supabase, lang);
+  if (aalError) return aalError;
+
+  const parsed = changeEmailSchema.safeParse(safeFormDataToObject(formData));
+  if (!parsed.success) {
+    return actionError(t(lang, "security_change_email_invalid"), {
+      newEmail: t(lang, "security_change_email_invalid"),
+    });
+  }
+
+  const { error } = await supabase.auth.updateUser({ email: parsed.data.newEmail });
+  if (error) return actionError(t(lang, "security_change_email_failed"));
+
+  await auditSafe("user.email_change", { pending_email: parsed.data.newEmail });
+  return actionOk(t(lang, "security_change_email_success"));
+}
+
+const changePhoneSchema = z.object({
+  newPhone: z
+    .string()
+    .trim()
+    .regex(/^\+?[1-9]\d{7,14}$/),
+});
+
+export async function changePhoneWith2faAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const supabase = await getSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return actionError(t(lang, "profile_action_login_required"));
+
+  const aalError = await ensureAal2(supabase, lang);
+  if (aalError) return aalError;
+
+  const parsed = changePhoneSchema.safeParse(safeFormDataToObject(formData));
+  if (!parsed.success) {
+    return actionError(t(lang, "security_change_phone_invalid"), {
+      newPhone: t(lang, "security_change_phone_invalid"),
+    });
+  }
+
+  const { error } = await supabase.auth.updateUser({ phone: parsed.data.newPhone });
+  if (error) return actionError(t(lang, "security_change_phone_failed"));
+
+  await auditSafe("user.profile_update", { phone_changed: true });
+  return actionOk(t(lang, "security_change_phone_success"));
+}
+
+const changeAddressSchema = z.object({
+  addressLine1: z.string().trim().min(3).max(120),
+  addressLine2: z.string().trim().max(120).optional().transform((v) => (v ? v : null)),
+  postalCode: z.string().trim().min(3).max(20),
+  city: z.string().trim().min(2).max(80),
+  country: z.string().trim().length(2).toUpperCase(),
+});
+
+export async function changeAddressWith2faAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
+  const supabase = await getSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return actionError(t(lang, "profile_action_login_required"));
+
+  const aalError = await ensureAal2(supabase, lang);
+  if (aalError) return aalError;
+
+  const parsed = changeAddressSchema.safeParse(safeFormDataToObject(formData));
+  if (!parsed.success) {
+    return actionError(t(lang, "security_change_address_invalid"));
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      address_line1: parsed.data.addressLine1,
+      address_line2: parsed.data.addressLine2,
+      address_postal_code: parsed.data.postalCode,
+      address_city: parsed.data.city,
+      address_country: parsed.data.country,
+    })
+    .eq("id", userData.user.id);
+  if (error) return actionError(t(lang, "security_change_address_failed"));
+
+  await auditSafe("user.profile_update", { address_changed: true });
+  revalidatePath("/profile");
+  return actionOk(t(lang, "security_change_address_success"));
 }
