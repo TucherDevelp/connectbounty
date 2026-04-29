@@ -19,7 +19,7 @@ import { updateSupabaseSession } from "@/lib/supabase/middleware";
  *   - Phase 7: Upstash-Rate-Limits, CSP-Nonce statt 'unsafe-inline'.
  */
 
-const AUTH_ROUTES = ["/login", "/register", "/reset"];
+const AUTH_ROUTES = ["/", "/login", "/register", "/reset"];
 const PUBLIC_ROUTES = [
   "/",
   "/login",

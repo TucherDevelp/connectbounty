@@ -19,7 +19,8 @@
     "db:verify": "node --env-file=.env.local scripts/verify-schema.mjs",
     "smoke:bounty": "node --env-file=.env.local scripts/smoke-bounty.mjs",
     "seed:demo": "node --env-file=.env.local scripts/seed-demo.mjs",
-    "prepare": "husky"
+    "prepare": "husky",
+    "perf:ci": "node scripts/sourcemap-guard.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
