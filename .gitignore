@@ -44,3 +44,6 @@ logs/
 # Supabase local
 supabase/.branches
 supabase/.temp
+
+# Versehentlich verschachtelter Klon
+connectbounty/
