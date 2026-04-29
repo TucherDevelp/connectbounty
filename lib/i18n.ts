@@ -281,6 +281,8 @@ export const translations = {
     profile_form_avatar_help: "Du kannst eine Bilddatei hochladen oder eine direkte Bild-URL einfügen.",
     profile_form_avatar_uploading: "Profilbild wird hochgeladen …",
     profile_form_avatar_preview_alt: "Profilbild-Vorschau",
+    profile_form_avatar_bad_type:
+      "Dieses Bildformat wird im Browser oft nicht angezeigt (z. B. HEIC vom iPhone). Bitte als JPG oder PNG hochladen.",
     profile_form_display_name: "Alias / Anzeigename",
     profile_form_bio: "Kurzbeschreibung",
     profile_form_bio_help: "Optional, maximal 280 Zeichen.",
@@ -327,6 +329,8 @@ export const translations = {
     security_sensitive_changes_title: "Sensible Daten ändern (2FA Pflicht)",
     security_sensitive_changes_desc:
       "E-Mail, Telefonnummer und Adresse können nur geändert werden, wenn deine Session zuvor per 2FA bestätigt wurde.",
+    security_sensitive_changes_hint:
+      "Klappt es nicht? Öffne weiter oben \"2FA bestätigen\", gib den Code ein und versuche es danach erneut.",
     security_change_email_label: "Neue E-Mail-Adresse",
     security_change_email_button: "E-Mail ändern",
     security_change_email_invalid: "Bitte gib eine gültige E-Mail-Adresse ein.",
@@ -1154,6 +1158,8 @@ export const translations = {
     profile_form_avatar_help: "Upload an image file or enter a direct image URL.",
     profile_form_avatar_uploading: "Uploading profile picture …",
     profile_form_avatar_preview_alt: "Profile picture preview",
+    profile_form_avatar_bad_type:
+      "This image format often won't display in the browser (e.g. HEIC from iPhone). Please upload as JPG or PNG.",
     profile_form_display_name: "Alias / display name",
     profile_form_bio: "Short bio",
     profile_form_bio_help: "Optional, up to 280 characters.",
@@ -1200,6 +1206,8 @@ export const translations = {
     security_sensitive_changes_title: "Change sensitive data (2FA required)",
     security_sensitive_changes_desc:
       "Email, phone number, and address can only be changed after this session is confirmed with 2FA.",
+    security_sensitive_changes_hint:
+      "Nothing changed? Open \"2FA Verify\" above, enter your code, then try the change again.",
     security_change_email_label: "New email address",
     security_change_email_button: "Change email",
     security_change_email_invalid: "Please enter a valid email address.",
