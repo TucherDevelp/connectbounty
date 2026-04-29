@@ -242,6 +242,14 @@ const updateProfileSchema = z.object({
     .optional()
     .transform((v, ctx) => {
       if (!v) return null;
+      // Preferred format: storage path inside profile-avatars bucket.
+      if (!v.startsWith("http://") && !v.startsWith("https://")) {
+        if (v.includes("..") || !/^avatars\/[a-zA-Z0-9/_\-.]{1,240}$/.test(v)) {
+          ctx.addIssue({ code: "custom", message: "avatar" });
+          return z.NEVER;
+        }
+        return v;
+      }
       try {
         const u = new URL(v);
         if (u.protocol !== "http:" && u.protocol !== "https:") {
@@ -337,10 +345,20 @@ export async function requestCurrentUserPasswordResetAction(
   return actionOk(t(lang, "security_password_reset_sent"));
 }
 
-async function ensureAal2(
+async function ensureAal2IfMfaEnabled(
   supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
   lang: ReturnType<typeof parseLangCookie>,
 ): Promise<ActionState | null> {
+  const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
+  // If listFactors fails (e.g. MFA not enabled in Supabase project) → treat as no factors enrolled
+  if (factorsError) return null;
+
+  const hasAnyFactor =
+    (factorsData?.all ?? []).length > 0 ||
+    (factorsData?.totp ?? []).length > 0 ||
+    (factorsData?.phone ?? []).length > 0;
+  if (!hasAnyFactor) return null;
+
   const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (error) return actionError(t(lang, "security_2fa_required"));
   if ((data?.currentLevel ?? "aal1") !== "aal2") {
@@ -367,9 +385,6 @@ export async function changeEmailWith2faAction(
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return actionError(t(lang, "profile_action_login_required"));
 
-  const aalError = await ensureAal2(supabase, lang);
-  if (aalError) return aalError;
-
   const parsed = changeEmailSchema.safeParse(safeFormDataToObject(formData));
   if (!parsed.success) {
     return actionError(t(lang, "security_change_email_invalid"), {
@@ -377,10 +392,14 @@ export async function changeEmailWith2faAction(
     });
   }
 
+  const aalError = await ensureAal2IfMfaEnabled(supabase, lang);
+  if (aalError) return aalError;
+
   const { error } = await supabase.auth.updateUser({ email: parsed.data.newEmail });
   if (error) return actionError(t(lang, "security_change_email_failed"));
 
   await auditSafe("user.email_change", { pending_email: parsed.data.newEmail });
+  revalidatePath("/profile");
   return actionOk(t(lang, "security_change_email_success"));
 }
 
@@ -388,7 +407,8 @@ const changePhoneSchema = z.object({
   newPhone: z
     .string()
     .trim()
-    .regex(/^\+?[1-9]\d{7,14}$/),
+    .transform((v) => v.replace(/[^\d+]/g, ""))
+    .pipe(z.string().regex(/^\+?[1-9]\d{7,14}$/)),
 });
 
 export async function changePhoneWith2faAction(
@@ -400,9 +420,6 @@ export async function changePhoneWith2faAction(
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return actionError(t(lang, "profile_action_login_required"));
 
-  const aalError = await ensureAal2(supabase, lang);
-  if (aalError) return aalError;
-
   const parsed = changePhoneSchema.safeParse(safeFormDataToObject(formData));
   if (!parsed.success) {
     return actionError(t(lang, "security_change_phone_invalid"), {
@@ -410,10 +427,14 @@ export async function changePhoneWith2faAction(
     });
   }
 
+  const aalError = await ensureAal2IfMfaEnabled(supabase, lang);
+  if (aalError) return aalError;
+
   const { error } = await supabase.auth.updateUser({ phone: parsed.data.newPhone });
   if (error) return actionError(t(lang, "security_change_phone_failed"));
 
   await auditSafe("user.profile_update", { phone_changed: true });
+  revalidatePath("/profile");
   return actionOk(t(lang, "security_change_phone_success"));
 }
 
@@ -434,7 +455,7 @@ export async function changeAddressWith2faAction(
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return actionError(t(lang, "profile_action_login_required"));
 
-  const aalError = await ensureAal2(supabase, lang);
+  const aalError = await ensureAal2IfMfaEnabled(supabase, lang);
   if (aalError) return aalError;
 
   const parsed = changeAddressSchema.safeParse(safeFormDataToObject(formData));

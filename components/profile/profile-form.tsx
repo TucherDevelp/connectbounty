@@ -1,10 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { UserRound } from "lucide-react";
 import { useLang } from "@/context/lang-context";
-import { clientEnv } from "@/lib/env";
 import { updateProfileAction } from "@/lib/auth/actions";
 import { idleAction } from "@/lib/auth/action-result";
 import { Button } from "@/components/ui/button";
@@ -26,32 +25,82 @@ function SaveButton() {
 export function ProfileForm({
   initialDisplayName,
   initialBio,
-  initialAvatarUrl,
+  initialAvatarValue,
+  initialAvatarPreviewUrl,
 }: {
   initialDisplayName: string;
   initialBio: string;
-  initialAvatarUrl: string;
+  initialAvatarValue: string;
+  initialAvatarPreviewUrl: string;
 }) {
   const { t } = useLang();
   const [state, formAction] = useActionState(updateProfileAction, idleAction);
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [bio, setBio] = useState(initialBio);
-  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
+  const [avatarValue, setAvatarValue] = useState(initialAvatarValue);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState(initialAvatarPreviewUrl);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
+  const objectUrlRevokeRef = useRef<string | null>(null);
   const fe = state.status === "error" ? state.fieldErrors : undefined;
 
+  // Sync preview when server re-renders after save (revalidatePath sends new props)
+  useEffect(() => {
+    if (initialAvatarPreviewUrl && !objectUrlRevokeRef.current) {
+      setAvatarPreviewUrl(initialAvatarPreviewUrl);
+    }
+  }, [initialAvatarPreviewUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (objectUrlRevokeRef.current) {
+        URL.revokeObjectURL(objectUrlRevokeRef.current);
+      }
+    };
+  }, []);
+
+  const revokePreviousObjectUrl = () => {
+    if (objectUrlRevokeRef.current) {
+      URL.revokeObjectURL(objectUrlRevokeRef.current);
+      objectUrlRevokeRef.current = null;
+    }
+  };
+
   const uploadAvatar = async (file: File) => {
-    if (!file.type.startsWith("image/")) return;
+    // HEIC/iPhone: Browser report often image/heic oder leer → <img> zeigt dann nichts
+    const isHeicLike =
+      file.type.includes("heic") ||
+      file.type.includes("heif") ||
+      /\.(heic|heif)$/i.test(file.name);
+    if (!file.type.startsWith("image/") || isHeicLike) {
+      setAvatarUploadError(t("profile_form_avatar_bad_type"));
+      return;
+    }
+    setAvatarUploadError(null);
+
+    revokePreviousObjectUrl();
+    const preview = URL.createObjectURL(file);
+    objectUrlRevokeRef.current = preview;
+    setAvatarPreviewUrl(preview);
+
     setUploadingAvatar(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const rawExt = file.name.split(".").pop()?.toLowerCase();
+      const ext =
+        rawExt && /^[a-z0-9]+$/.test(rawExt)
+          ? rawExt
+          : file.type.split("/")[1]?.replace("+xml", "") || "jpg";
+
       const path = `avatars/${crypto.randomUUID()}.${ext}`;
       const res = await fetch("/api/storage/sign-upload", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ bucket: "profile-avatars", path }),
       });
-      if (!res.ok) throw new Error("sign failed");
+      if (!res.ok) {
+        const errBody = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(errBody?.error ?? "sign failed");
+      }
       const data = (await res.json()) as { signedUrl: string };
       const up = await fetch(data.signedUrl, {
         method: "PUT",
@@ -60,8 +109,9 @@ export function ProfileForm({
       });
       if (!up.ok) throw new Error("upload failed");
 
-      const env = clientEnv();
-      setAvatarUrl(`${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/profile-avatars/${path}`);
+      setAvatarValue(path);
+    } catch {
+      setAvatarUploadError(t("profile_action_save_failed"));
     } finally {
       setUploadingAvatar(false);
     }
@@ -74,8 +124,9 @@ export function ProfileForm({
 
       <div className="space-y-1.5">
         <Label>{t("profile_form_avatar")}</Label>
+        {avatarUploadError && <FormAlert>{avatarUploadError}</FormAlert>}
         <div className="flex items-center gap-4">
-          <input type="hidden" id="avatarUrl" name="avatarUrl" value={avatarUrl} />
+          <input type="hidden" id="avatarUrl" name="avatarUrl" value={avatarValue} />
           <input
             id="profileAvatarFile"
             type="file"
@@ -92,9 +143,13 @@ export function ProfileForm({
             className="cursor-pointer rounded-full focus-within:outline-none focus-within:ring-2 focus-within:ring-[var(--color-brand-400)]"
             aria-label={t("profile_form_avatar")}
           >
-            {avatarUrl ? (
+            {avatarPreviewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={t("profile_form_avatar_preview_alt")} className="h-20 w-20 rounded-full object-cover" />
+              <img
+                src={avatarPreviewUrl}
+                alt={t("profile_form_avatar_preview_alt")}
+                className="h-20 w-20 rounded-full object-cover"
+              />
             ) : (
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--color-brand-400)]/15 text-[var(--color-brand-400)]">
                 <UserRound className="h-10 w-10" strokeWidth={1.75} aria-hidden />
