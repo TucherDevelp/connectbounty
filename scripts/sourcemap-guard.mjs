@@ -6,6 +6,11 @@
  * in next.config.ts/js. Exposing source maps in production leaks original
  * source code to any visitor and must be an explicit opt-in only.
  *
+ * Server-side source maps (.next/server/*.map) are intentionally DISABLED via
+ * experimental.serverSourceMaps: false in next.config.ts to reduce build CPU
+ * and SSD I/O (~28 MB per build). This is safe because those maps are never
+ * served to browsers. Error stack traces remain readable from compiled output.
+ *
  * Usage:  node scripts/sourcemap-guard.mjs
  * Exit 0: safe (no browser source maps)
  * Exit 1: unsafe (browser source maps would be shipped to clients)
