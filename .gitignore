@@ -47,3 +47,4 @@ logs/
 # Supabase local
 supabase/.branches
 supabase/.temp
+connectbounty/
