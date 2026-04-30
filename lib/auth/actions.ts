@@ -299,9 +299,14 @@ export async function updateProfileAction(
     });
   }
 
-  // Use service role for upsert because RLS forbids client INSERT on
-  // profiles. This also self-heals if handle_new_user trigger never ran.
+  // Use service role for upsert: RLS forbids client INSERT on profiles.
+  // This also self-heals if handle_new_user trigger never ran.
   const serviceSb = getSupabaseServiceRoleClient();
+
+  // Strip avatar_url from the upsert when it looks invalid — the field is
+  // optional, so a bad value should not block saving display_name / bio.
+  const safeAvatarUrl = parsed.data.avatarUrl ?? null;
+
   const { data: upserted, error } = await serviceSb
     .from("profiles")
     .upsert(
@@ -309,7 +314,7 @@ export async function updateProfileAction(
         id: userData.user.id,
         display_name: parsed.data.displayName,
         bio: parsed.data.bio,
-        avatar_url: parsed.data.avatarUrl,
+        avatar_url: safeAvatarUrl,
       },
       { onConflict: "id" },
     )
@@ -317,7 +322,12 @@ export async function updateProfileAction(
     .maybeSingle();
 
   if (error) {
-    console.error("[updateProfileAction] upsert error:", error.message);
+    console.error(
+      "[updateProfileAction] upsert error:",
+      error.message,
+      "| code:", (error as { code?: string }).code ?? "n/a",
+      "| user:", userData.user.id,
+    );
     if (String(error.message).toLowerCase().includes("profiles_display_name_unique_ci")) {
       return actionError(t(lang, "profile_action_input_invalid"), {
         displayName: t(lang, "profile_error_display_name_taken"),
@@ -326,8 +336,21 @@ export async function updateProfileAction(
     return actionError(`${t(lang, "profile_action_save_failed")} (${error.message})`);
   }
   if (!upserted) {
-    console.error("[updateProfileAction] upsert returned no row");
-    return actionError(t(lang, "profile_action_save_failed"));
+    // Upsert returned no row — try a plain UPDATE as fallback (row may exist
+    // but upsert conflict detection failed for some reason)
+    const { error: updateErr } = await serviceSb
+      .from("profiles")
+      .update({
+        display_name: parsed.data.displayName,
+        bio: parsed.data.bio,
+        avatar_url: safeAvatarUrl,
+      })
+      .eq("id", userData.user.id);
+    if (updateErr) {
+      console.error("[updateProfileAction] fallback update error:", updateErr.message);
+      return actionError(t(lang, "profile_action_save_failed"));
+    }
+    console.warn("[updateProfileAction] upsert returned no row but fallback update succeeded");
   }
 
   await supabase.auth.updateUser({ data: { display_name: parsed.data.displayName } });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { clientEnv } from "@/lib/env";
 
 const ALLOWED_BUCKETS = ["hire-proofs", "profile-avatars"] as const;
 
@@ -44,16 +45,44 @@ export async function POST(request: Request) {
 
   // Signed URL via Service-Role (umgeht Storage-RLS)
   const sb = getSupabaseServiceRoleClient();
+
+  // Auto-create the bucket if it does not exist yet.
+  // This happens when migrations haven't been applied to the Supabase project
+  // (migration 0010_profile_avatar_bucket.sql creates the bucket via SQL).
+  const BUCKET_CONFIG: Record<string, { public: boolean }> = {
+    "profile-avatars": { public: true },
+    "hire-proofs":     { public: false },
+  };
+  const bucketCfg = BUCKET_CONFIG[bucket];
+  if (bucketCfg) {
+    const { error: bucketErr } = await sb.storage.createBucket(bucket, {
+      public: bucketCfg.public,
+      allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+      fileSizeLimit: 5 * 1024 * 1024, // 5 MB
+    });
+    // "already exists" (23505 / Duplicate) is fine — ignore it
+    if (bucketErr && !bucketErr.message.toLowerCase().includes("already exist")) {
+      console.error("[sign-upload] bucket auto-create error:", bucketErr.message);
+      // non-fatal: continue and try the signed URL anyway
+    }
+  }
+
   const { data, error } = await sb.storage
     .from(bucket)
     .createSignedUploadUrl(path);
 
   if (error || !data) {
+    console.error("[sign-upload] createSignedUploadUrl error:", error?.message, "bucket:", bucket);
     return NextResponse.json(
       { error: error?.message ?? "Signed URL konnte nicht erstellt werden" },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ signedUrl: data.signedUrl });
+  const env = clientEnv();
+  const signedUrl = data.signedUrl.startsWith("http")
+    ? data.signedUrl
+    : `${env.NEXT_PUBLIC_SUPABASE_URL}${data.signedUrl}`;
+
+  return NextResponse.json({ signedUrl });
 }
