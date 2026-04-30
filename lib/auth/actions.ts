@@ -300,66 +300,78 @@ export async function updateProfileAction(
   }
 
   const serviceSb = getSupabaseServiceRoleClient();
+  const userId = userData.user.id;
 
-  // Fetch current profile to avoid accidentally overwriting avatar_url with
-  // null when the user saved display_name/bio but didn't change their picture.
-  const { data: currentProfile } = await serviceSb
+  // ── Step 1: load current row (service role → bypasses all RLS) ────────────
+  const { data: existingRow, error: selectErr } = await serviceSb
     .from("profiles")
     .select("id, avatar_url")
-    .eq("id", userData.user.id)
+    .eq("id", userId)
     .maybeSingle();
 
-  // If the form submitted an avatar path, use it. Otherwise keep the DB value.
-  const resolvedAvatarUrl =
-    parsed.data.avatarUrl ?? currentProfile?.avatar_url ?? null;
-
-  const payload = {
-    id: userData.user.id,
-    display_name: parsed.data.displayName,
-    bio: parsed.data.bio ?? null,
-    avatar_url: resolvedAvatarUrl,
-  };
-
-  console.log("[updateProfileAction] saving payload:", {
-    user: userData.user.id,
-    display_name: payload.display_name,
-    bio: payload.bio,
-    avatar_url: payload.avatar_url,
-  });
-
-  const { data: upserted, error } = await serviceSb
-    .from("profiles")
-    .upsert(payload, { onConflict: "id" })
-    .select("id, display_name, bio, avatar_url")
-    .maybeSingle();
-
-  if (error) {
-    console.error(
-      "[updateProfileAction] upsert error:", error.message,
-      "| code:", (error as { code?: string }).code ?? "n/a",
-      "| user:", userData.user.id,
-    );
-    if (String(error.message).toLowerCase().includes("profiles_display_name_unique_ci")) {
-      return actionError(t(lang, "profile_action_input_invalid"), {
-        displayName: t(lang, "profile_error_display_name_taken"),
-      });
-    }
-    return actionError(`${t(lang, "profile_action_save_failed")} (${error.message})`);
+  if (selectErr) {
+    console.error("[updateProfileAction] select error:", selectErr.message);
+    return actionError(`${t(lang, "profile_action_save_failed")} (select: ${selectErr.message})`);
   }
 
-  console.log("[updateProfileAction] DB confirms saved:", upserted);
+  // Never overwrite a stored avatar with null when the form didn't touch it.
+  const resolvedAvatarUrl = parsed.data.avatarUrl ?? existingRow?.avatar_url ?? null;
+  const newBio = parsed.data.bio ?? null;
 
-  if (!upserted) {
-    // Fallback: upsert returned no row (rare race) — explicit UPDATE
-    const { error: updateErr } = await serviceSb
+  console.log("[updateProfileAction] writing to DB:", {
+    userId,
+    display_name: parsed.data.displayName,
+    bio: newBio,
+    avatar_url: resolvedAvatarUrl,
+    rowExists: !!existingRow,
+  });
+
+  // ── Step 2: UPDATE or INSERT ───────────────────────────────────────────────
+  if (existingRow) {
+    const { data: updated, error: updateErr } = await serviceSb
       .from("profiles")
-      .update({ display_name: payload.display_name, bio: payload.bio, avatar_url: payload.avatar_url })
-      .eq("id", userData.user.id);
+      .update({
+        display_name: parsed.data.displayName,
+        bio: newBio,
+        avatar_url: resolvedAvatarUrl,
+      })
+      .eq("id", userId)
+      .select("id, display_name, bio, avatar_url")
+      .maybeSingle();
+
     if (updateErr) {
-      console.error("[updateProfileAction] fallback update error:", updateErr.message);
-      return actionError(t(lang, "profile_action_save_failed"));
+      console.error("[updateProfileAction] update error:", updateErr.message);
+      if (updateErr.message.toLowerCase().includes("profiles_display_name_unique_ci")) {
+        return actionError(t(lang, "profile_action_input_invalid"), {
+          displayName: t(lang, "profile_error_display_name_taken"),
+        });
+      }
+      return actionError(`${t(lang, "profile_action_save_failed")} (${updateErr.message})`);
     }
-    console.warn("[updateProfileAction] upsert returned no row — fallback update applied");
+    console.log("[updateProfileAction] UPDATE confirmed:", updated);
+  } else {
+    // Profile row missing — create it (handle_new_user trigger did not run)
+    const { data: inserted, error: insertErr } = await serviceSb
+      .from("profiles")
+      .insert({
+        id: userId,
+        display_name: parsed.data.displayName,
+        bio: newBio,
+        avatar_url: resolvedAvatarUrl,
+      })
+      .select("id, display_name, bio, avatar_url")
+      .maybeSingle();
+
+    if (insertErr) {
+      console.error("[updateProfileAction] insert error:", insertErr.message);
+      if (insertErr.message.toLowerCase().includes("profiles_display_name_unique_ci")) {
+        return actionError(t(lang, "profile_action_input_invalid"), {
+          displayName: t(lang, "profile_error_display_name_taken"),
+        });
+      }
+      return actionError(`${t(lang, "profile_action_save_failed")} (${insertErr.message})`);
+    }
+    console.log("[updateProfileAction] INSERT confirmed:", inserted);
   }
 
   await supabase.auth.updateUser({ data: { display_name: parsed.data.displayName } });
