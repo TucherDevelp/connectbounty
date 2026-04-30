@@ -326,6 +326,36 @@ export async function updateProfileAction(
   return actionOk(t(lang, "profile_action_saved"));
 }
 
+/**
+ * Saves only the avatar_url immediately after the file is uploaded to storage.
+ * Called automatically from the profile form after a successful upload so the
+ * user does not have to click "Save profile" to persist the new picture.
+ */
+export async function saveAvatarAction(avatarPath: string): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return;
+
+  // Same validation as updateProfileSchema
+  if (!avatarPath || avatarPath.includes("..") || !/^avatars\/[a-zA-Z0-9/_\-.]{1,240}$/.test(avatarPath)) {
+    console.error("[saveAvatarAction] invalid path rejected:", avatarPath);
+    return;
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarPath })
+    .eq("id", userData.user.id);
+
+  if (error) {
+    console.error("[saveAvatarAction] DB error:", error.message);
+    return;
+  }
+
+  revalidatePath("/", "layout");
+  revalidatePath("/profile");
+}
+
 export async function requestCurrentUserPasswordResetAction(
   _prev: ActionState,
   _formData: FormData,
@@ -351,7 +381,10 @@ async function ensureAal2IfMfaEnabled(
 ): Promise<ActionState | null> {
   const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
   // If listFactors fails (e.g. MFA not enabled in Supabase project) → treat as no factors enrolled
-  if (factorsError) return null;
+  if (factorsError) {
+    console.error("[ensureAal2IfMfaEnabled] listFactors error:", factorsError.message);
+    return null;
+  }
 
   const hasAnyFactor =
     (factorsData?.all ?? []).length > 0 ||
@@ -360,8 +393,12 @@ async function ensureAal2IfMfaEnabled(
   if (!hasAnyFactor) return null;
 
   const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (error) return actionError(t(lang, "security_2fa_required"));
+  if (error) {
+    console.error("[ensureAal2IfMfaEnabled] getAuthenticatorAssuranceLevel error:", error.message);
+    return actionError(t(lang, "security_2fa_required"));
+  }
   if ((data?.currentLevel ?? "aal1") !== "aal2") {
+    console.error("[ensureAal2IfMfaEnabled] currentLevel is not aal2:", data?.currentLevel, "nextLevel:", data?.nextLevel);
     return actionError(t(lang, "security_2fa_required"));
   }
   return null;
@@ -396,7 +433,10 @@ export async function changeEmailWith2faAction(
   if (aalError) return aalError;
 
   const { error } = await supabase.auth.updateUser({ email: parsed.data.newEmail });
-  if (error) return actionError(t(lang, "security_change_email_failed"));
+  if (error) {
+    console.error("[changeEmailWith2faAction] updateUser error:", error.message, error.status);
+    return actionError(`${t(lang, "security_change_email_failed")} (${error.message})`);
+  }
 
   await auditSafe("user.email_change", { pending_email: parsed.data.newEmail });
   revalidatePath("/profile");
@@ -431,7 +471,10 @@ export async function changePhoneWith2faAction(
   if (aalError) return aalError;
 
   const { error } = await supabase.auth.updateUser({ phone: parsed.data.newPhone });
-  if (error) return actionError(t(lang, "security_change_phone_failed"));
+  if (error) {
+    console.error("[changePhoneWith2faAction] updateUser error:", error.message, error.status);
+    return actionError(`${t(lang, "security_change_phone_failed")} (${error.message})`);
+  }
 
   await auditSafe("user.profile_update", { phone_changed: true });
   revalidatePath("/profile");

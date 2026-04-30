@@ -10,8 +10,21 @@ import { LangToggle } from "@/components/lang-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useLang } from "@/context/lang-context";
 
-function UserAvatar({ email }: { email: string }) {
-  const initials = email.slice(0, 2).toUpperCase();
+function UserAvatar({ email, displayName, avatarUrl }: { email: string; displayName: string; avatarUrl?: string }) {
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt={displayName || email}
+        className="h-7 w-7 shrink-0 rounded-full object-cover"
+      />
+    );
+  }
+  // Fallback: initials from displayName, or first 2 chars of email
+  const initials = displayName
+    ? displayName.slice(0, 2).toUpperCase()
+    : email.slice(0, 2).toUpperCase();
   return (
     <div
       aria-hidden="true"
@@ -25,9 +38,11 @@ function UserAvatar({ email }: { email: string }) {
 export function AppHeader({
   email,
   displayName,
+  avatarUrl,
 }: {
   email: string;
   displayName: string;
+  avatarUrl?: string;
 }) {
   const { t } = useLang();
 
@@ -65,7 +80,7 @@ export function AppHeader({
         </div>
         <div className="hidden items-center gap-3 sm:flex">
           <Link href="/profile" className="flex items-center gap-2 rounded-[var(--radius-md)] px-2 py-1 hover:bg-[var(--color-surface-2)]">
-            <UserAvatar email={email} />
+            <UserAvatar email={email} displayName={displayName} avatarUrl={avatarUrl} />
             <span className="max-w-[140px] truncate text-xs text-muted-foreground" title={email}>
               {displayName}
             </span>

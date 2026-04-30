@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const supabase = await getSupabaseServerClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name")
+    .select("display_name, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -23,9 +23,22 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     email.split("@")[0] ??
     "";
 
+  // Build public avatar URL (bucket is public=true, no auth needed)
+  let avatarPublicUrl = "";
+  if (profile?.avatar_url) {
+    if (profile.avatar_url.startsWith("http")) {
+      avatarPublicUrl = profile.avatar_url;
+    } else {
+      const { data: pubData } = supabase.storage
+        .from("profile-avatars")
+        .getPublicUrl(profile.avatar_url);
+      avatarPublicUrl = pubData.publicUrl;
+    }
+  }
+
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader email={email} displayName={displayName} />
+      <AppHeader email={email} displayName={displayName} avatarUrl={avatarPublicUrl} />
       <main className="flex-1">{children}</main>
       <AppFooter />
     </div>

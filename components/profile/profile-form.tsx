@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { UserRound } from "lucide-react";
 import { useLang } from "@/context/lang-context";
-import { updateProfileAction } from "@/lib/auth/actions";
+import { updateProfileAction, saveAvatarAction } from "@/lib/auth/actions";
 import { idleAction } from "@/lib/auth/action-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,12 +44,15 @@ export function ProfileForm({
   const objectUrlRevokeRef = useRef<string | null>(null);
   const fe = state.status === "error" ? state.fieldErrors : undefined;
 
-  // Sync preview when server re-renders after save (revalidatePath sends new props)
+  // Sync preview when the server re-renders with a new public URL after save.
+  // Only update when the incoming URL is a real https URL (not empty, not a blob:).
+  // This avoids overwriting the immediate local object-URL preview while uploading.
   useEffect(() => {
-    if (initialAvatarPreviewUrl && !objectUrlRevokeRef.current) {
+    if (initialAvatarPreviewUrl && !initialAvatarPreviewUrl.startsWith("blob:")) {
       setAvatarPreviewUrl(initialAvatarPreviewUrl);
+      setAvatarValue(initialAvatarValue);
     }
-  }, [initialAvatarPreviewUrl]);
+  }, [initialAvatarPreviewUrl, initialAvatarValue]);
 
   useEffect(() => {
     return () => {
@@ -109,6 +112,8 @@ export function ProfileForm({
       });
       if (!up.ok) throw new Error("upload failed");
 
+      // Persist path to DB immediately — user doesn't need to click "Save"
+      await saveAvatarAction(path);
       setAvatarValue(path);
     } catch {
       setAvatarUploadError(t("profile_action_save_failed"));
