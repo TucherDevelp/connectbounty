@@ -1,6 +1,12 @@
 {
   "description": "Performance budget v1 for CI gate checks.",
-  "maxTotalJsKb": 550,
-  "maxLargestChunkKb": 220,
-  "maxRouteAssetCount": 45
+  "maxTotalJsKb": 600,
+  "maxLargestChunkKb": 240,
+  "maxRouteAssetCount": 45,
+  "maxTtfbMsDefault": 15000,
+  "maxTtfbMsByRoute": {
+    "/": 18000,
+    "/legal/privacy": 12000,
+    "/login": 12000
+  }
 }

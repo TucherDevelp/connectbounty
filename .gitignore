@@ -11,6 +11,9 @@ node_modules/
 # Testing
 coverage/
 
+# Performance (lokal generiert)
+perf/route-timings-report.json
+
 # Next.js
 .next/
 out/
@@ -44,6 +47,3 @@ logs/
 # Supabase local
 supabase/.branches
 supabase/.temp
-
-# Versehentlich verschachtelter Klon
-connectbounty/

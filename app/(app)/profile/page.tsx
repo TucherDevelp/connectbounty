@@ -1,6 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
+
+// Always fetch fresh profile data — never serve a cached/stale version.
+export const dynamic = "force-dynamic";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { SecurityActions } from "@/components/profile/security-actions";
 import { MfaSetupCard } from "@/components/profile/mfa-setup-card";

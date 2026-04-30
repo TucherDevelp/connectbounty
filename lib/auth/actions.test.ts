@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { supabaseAuth, redirectMock, logAuditEventMock } = vi.hoisted(() => ({
+const { supabaseAuth, serviceRoleClient, redirectMock, logAuditEventMock } = vi.hoisted(() => ({
   supabaseAuth: {
     signInWithPassword: vi.fn(),
     signUp: vi.fn(),
@@ -9,6 +9,18 @@ const { supabaseAuth, redirectMock, logAuditEventMock } = vi.hoisted(() => ({
     resetPasswordForEmail: vi.fn(),
     updateUser: vi.fn(),
     getUser: vi.fn(),
+    mfa: {
+      listFactors: vi.fn(),
+      getAuthenticatorAssuranceLevel: vi.fn(),
+    },
+  },
+  serviceRoleClient: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      ilike: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn(async () => ({ data: null })),
+    })),
   },
   redirectMock: vi.fn((url: string) => {
     void url;
@@ -19,13 +31,21 @@ const { supabaseAuth, redirectMock, logAuditEventMock } = vi.hoisted(() => ({
 
 vi.mock("@/lib/supabase/server", () => ({
   getSupabaseServerClient: () => Promise.resolve({ auth: supabaseAuth }),
+  getSupabaseServiceRoleClient: () => serviceRoleClient,
 }));
 vi.mock("@/lib/auth/roles", () => ({ logAuditEvent: logAuditEventMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({
+    get: vi.fn(() => undefined),
+  })),
+}));
 
 import { idleAction } from "./action-result";
 import {
+  changeEmailWith2faAction,
+  changePhoneWith2faAction,
   loginAction,
   logoutAction,
   registerAction,
@@ -41,7 +61,12 @@ function fd(entries: Record<string, string>): FormData {
 }
 
 beforeEach(() => {
-  for (const fn of Object.values(supabaseAuth)) fn.mockReset();
+  for (const fn of Object.values(supabaseAuth)) {
+    if (typeof fn === "function" && "mockReset" in fn) fn.mockReset();
+  }
+  supabaseAuth.mfa.listFactors.mockReset();
+  supabaseAuth.mfa.getAuthenticatorAssuranceLevel.mockReset();
+  serviceRoleClient.from.mockClear();
   redirectMock.mockClear();
   logAuditEventMock.mockClear();
 });
@@ -221,5 +246,106 @@ describe("updatePasswordAction", () => {
     );
     expect(res.status).toBe("error");
     expect(supabaseAuth.getUser).not.toHaveBeenCalled();
+  });
+});
+
+// ── sensitive changes (email/phone) ────────────────────────────────────────
+
+describe("changeEmailWith2faAction", () => {
+  it("allows email change when no MFA factor is enrolled", async () => {
+    supabaseAuth.getUser.mockResolvedValueOnce({ data: { user: { id: "u1" } } });
+    supabaseAuth.mfa.listFactors.mockResolvedValueOnce({
+      data: { all: [], totp: [], phone: [] },
+      error: null,
+    });
+    supabaseAuth.updateUser.mockResolvedValueOnce({ error: null });
+
+    const res = await changeEmailWith2faAction(
+      idleAction,
+      fd({ newEmail: "new@example.com" }),
+    );
+
+    expect(supabaseAuth.updateUser).toHaveBeenCalledWith({ email: "new@example.com" });
+    expect(res.status).toBe("ok");
+  });
+
+  it("requires aal2 when MFA factors exist", async () => {
+    supabaseAuth.getUser.mockResolvedValueOnce({ data: { user: { id: "u1" } } });
+    supabaseAuth.mfa.listFactors.mockResolvedValueOnce({
+      data: { all: [{ id: "f1" }], totp: [], phone: [] },
+      error: null,
+    });
+    supabaseAuth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValueOnce({
+      data: { currentLevel: "aal1" },
+      error: null,
+    });
+
+    const res = await changeEmailWith2faAction(
+      idleAction,
+      fd({ newEmail: "new@example.com" }),
+    );
+
+    expect(res.status).toBe("error");
+    expect(supabaseAuth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("allows email change when MFA exists and session is already aal2", async () => {
+    supabaseAuth.getUser.mockResolvedValueOnce({ data: { user: { id: "u1" } } });
+    supabaseAuth.mfa.listFactors.mockResolvedValueOnce({
+      data: { all: [{ id: "f1" }], totp: [], phone: [] },
+      error: null,
+    });
+    supabaseAuth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValueOnce({
+      data: { currentLevel: "aal2" },
+      error: null,
+    });
+    supabaseAuth.updateUser.mockResolvedValueOnce({ error: null });
+
+    const res = await changeEmailWith2faAction(
+      idleAction,
+      fd({ newEmail: "new@example.com" }),
+    );
+
+    expect(res.status).toBe("ok");
+    expect(supabaseAuth.updateUser).toHaveBeenCalledWith({ email: "new@example.com" });
+  });
+});
+
+describe("changePhoneWith2faAction", () => {
+  it("allows phone change when no MFA factor is enrolled", async () => {
+    supabaseAuth.getUser.mockResolvedValueOnce({ data: { user: { id: "u1" } } });
+    supabaseAuth.mfa.listFactors.mockResolvedValueOnce({
+      data: { all: [], totp: [], phone: [] },
+      error: null,
+    });
+    supabaseAuth.updateUser.mockResolvedValueOnce({ error: null });
+
+    const res = await changePhoneWith2faAction(
+      idleAction,
+      fd({ newPhone: "+491701234567" }),
+    );
+
+    expect(supabaseAuth.updateUser).toHaveBeenCalledWith({ phone: "+491701234567" });
+    expect(res.status).toBe("ok");
+  });
+
+  it("requires aal2 when MFA factors exist", async () => {
+    supabaseAuth.getUser.mockResolvedValueOnce({ data: { user: { id: "u1" } } });
+    supabaseAuth.mfa.listFactors.mockResolvedValueOnce({
+      data: { all: [{ id: "f1" }], totp: [], phone: [] },
+      error: null,
+    });
+    supabaseAuth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValueOnce({
+      data: { currentLevel: "aal1" },
+      error: null,
+    });
+
+    const res = await changePhoneWith2faAction(
+      idleAction,
+      fd({ newPhone: "+491701234567" }),
+    );
+
+    expect(res.status).toBe("error");
+    expect(supabaseAuth.updateUser).not.toHaveBeenCalled();
   });
 });

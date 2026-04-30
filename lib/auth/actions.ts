@@ -299,32 +299,43 @@ export async function updateProfileAction(
     });
   }
 
-  // Use service role for upsert: RLS forbids client INSERT on profiles.
-  // This also self-heals if handle_new_user trigger never ran.
   const serviceSb = getSupabaseServiceRoleClient();
 
-  // Strip avatar_url from the upsert when it looks invalid — the field is
-  // optional, so a bad value should not block saving display_name / bio.
-  const safeAvatarUrl = parsed.data.avatarUrl ?? null;
+  // Fetch current profile to avoid accidentally overwriting avatar_url with
+  // null when the user saved display_name/bio but didn't change their picture.
+  const { data: currentProfile } = await serviceSb
+    .from("profiles")
+    .select("id, avatar_url")
+    .eq("id", userData.user.id)
+    .maybeSingle();
+
+  // If the form submitted an avatar path, use it. Otherwise keep the DB value.
+  const resolvedAvatarUrl =
+    parsed.data.avatarUrl ?? currentProfile?.avatar_url ?? null;
+
+  const payload = {
+    id: userData.user.id,
+    display_name: parsed.data.displayName,
+    bio: parsed.data.bio ?? null,
+    avatar_url: resolvedAvatarUrl,
+  };
+
+  console.log("[updateProfileAction] saving payload:", {
+    user: userData.user.id,
+    display_name: payload.display_name,
+    bio: payload.bio,
+    avatar_url: payload.avatar_url,
+  });
 
   const { data: upserted, error } = await serviceSb
     .from("profiles")
-    .upsert(
-      {
-        id: userData.user.id,
-        display_name: parsed.data.displayName,
-        bio: parsed.data.bio,
-        avatar_url: safeAvatarUrl,
-      },
-      { onConflict: "id" },
-    )
-    .select("id")
+    .upsert(payload, { onConflict: "id" })
+    .select("id, display_name, bio, avatar_url")
     .maybeSingle();
 
   if (error) {
     console.error(
-      "[updateProfileAction] upsert error:",
-      error.message,
+      "[updateProfileAction] upsert error:", error.message,
       "| code:", (error as { code?: string }).code ?? "n/a",
       "| user:", userData.user.id,
     );
@@ -335,22 +346,20 @@ export async function updateProfileAction(
     }
     return actionError(`${t(lang, "profile_action_save_failed")} (${error.message})`);
   }
+
+  console.log("[updateProfileAction] DB confirms saved:", upserted);
+
   if (!upserted) {
-    // Upsert returned no row — try a plain UPDATE as fallback (row may exist
-    // but upsert conflict detection failed for some reason)
+    // Fallback: upsert returned no row (rare race) — explicit UPDATE
     const { error: updateErr } = await serviceSb
       .from("profiles")
-      .update({
-        display_name: parsed.data.displayName,
-        bio: parsed.data.bio,
-        avatar_url: safeAvatarUrl,
-      })
+      .update({ display_name: payload.display_name, bio: payload.bio, avatar_url: payload.avatar_url })
       .eq("id", userData.user.id);
     if (updateErr) {
       console.error("[updateProfileAction] fallback update error:", updateErr.message);
       return actionError(t(lang, "profile_action_save_failed"));
     }
-    console.warn("[updateProfileAction] upsert returned no row but fallback update succeeded");
+    console.warn("[updateProfileAction] upsert returned no row — fallback update applied");
   }
 
   await supabase.auth.updateUser({ data: { display_name: parsed.data.displayName } });
@@ -583,18 +592,44 @@ export async function changeAddressWith2faAction(
     return actionError(t(lang, "security_change_address_invalid"));
   }
 
-  const { error } = await supabase
+  // Use service role so the UPDATE always goes through regardless of RLS.
+  // The user's identity is already verified above via getUser().
+  const serviceSbAddr = getSupabaseServiceRoleClient();
+  const { data: updatedAddr, error } = await serviceSbAddr
     .from("profiles")
     .update({
       address_line1: parsed.data.addressLine1,
-      address_line2: parsed.data.addressLine2,
+      address_line2: parsed.data.addressLine2 ?? null,
       address_postal_code: parsed.data.postalCode,
       address_city: parsed.data.city,
       address_country: parsed.data.country,
     })
-    .eq("id", userData.user.id);
-  if (error) return actionError(t(lang, "security_change_address_failed"));
+    .eq("id", userData.user.id)
+    .select("id")
+    .maybeSingle();
 
+  if (error) {
+    console.error("[changeAddressWith2faAction] update error:", error.message);
+    return actionError(t(lang, "security_change_address_failed"));
+  }
+  if (!updatedAddr) {
+    // Row missing — auto-create it first, then retry
+    console.warn("[changeAddressWith2faAction] no profile row found, creating one first");
+    const fallbackName =
+      (userData.user.user_metadata?.display_name as string | undefined)?.trim() ||
+      userData.user.email?.split("@")[0] || "Neuer Nutzer";
+    await serviceSbAddr.from("profiles").insert({
+      id: userData.user.id,
+      display_name: fallbackName,
+      address_line1: parsed.data.addressLine1,
+      address_line2: parsed.data.addressLine2 ?? null,
+      address_postal_code: parsed.data.postalCode,
+      address_city: parsed.data.city,
+      address_country: parsed.data.country,
+    });
+  }
+
+  console.log("[changeAddressWith2faAction] address saved for user:", userData.user.id);
   await auditSafe("user.profile_update", { address_changed: true });
   revalidatePath("/profile");
   return actionOk(t(lang, "security_change_address_success"));
