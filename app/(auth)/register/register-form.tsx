@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,8 @@ function SubmitButton() {
 
 export function RegisterForm() {
   const [state, formAction] = useActionState(registerAction, idleAction);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const fe = state.status === "error" ? state.fieldErrors : undefined;
   const { t } = useLang();
 
@@ -82,15 +84,27 @@ export function RegisterForm() {
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="password">{t("auth_password")}</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            invalid={Boolean(fe?.password)}
-            aria-describedby={fe?.password ? "password-error" : "password-hint"}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              invalid={Boolean(fe?.password)}
+              aria-describedby={fe?.password ? "password-error" : "password-hint"}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? t("auth_password_hide") : t("auth_password_show")}
+              title={showPassword ? t("auth_password_hide") : t("auth_password_show")}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+            </button>
+          </div>
           <FieldError id="password-error" message={fe?.password} />
           {!fe?.password && (
             <p id="password-hint" className="text-xs text-muted-foreground">
@@ -101,15 +115,31 @@ export function RegisterForm() {
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="confirmPassword">{t("auth_password_confirm")}</Label>
-          <Input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            required
-            invalid={Boolean(fe?.confirmPassword)}
-            aria-describedby={fe?.confirmPassword ? "confirmPassword-error" : undefined}
-          />
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              invalid={Boolean(fe?.confirmPassword)}
+              aria-describedby={fe?.confirmPassword ? "confirmPassword-error" : undefined}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((v) => !v)}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+              aria-label={showConfirmPassword ? t("auth_password_hide") : t("auth_password_show")}
+              title={showConfirmPassword ? t("auth_password_hide") : t("auth_password_show")}
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4" aria-hidden />
+              ) : (
+                <Eye className="h-4 w-4" aria-hidden />
+              )}
+            </button>
+          </div>
           <FieldError id="confirmPassword-error" message={fe?.confirmPassword} />
         </div>
 

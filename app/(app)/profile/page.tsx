@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { SecurityActions } from "@/components/profile/security-actions";
@@ -6,23 +7,20 @@ import { MfaSetupCard } from "@/components/profile/mfa-setup-card";
 import { MfaVerifyCard } from "@/components/profile/mfa-verify-card";
 import { SensitiveChangeForms } from "@/components/profile/sensitive-change-forms";
 import { getCurrentUser } from "@/lib/auth/roles";
+import { ensureProfileForUser } from "@/lib/auth/ensure-profile";
 import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
 import { t } from "@/lib/i18n";
 
 export default async function ProfilePage() {
   const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
   const user = await getCurrentUser();
-  const sb = await getSupabaseServerClient();
-  const { data: profile } = user
-    ? await sb
-        .from("profiles")
-        .select("display_name, bio, avatar_url, address_line1, address_line2, address_postal_code, address_city, address_country")
-        .eq("id", user.id)
-        .maybeSingle()
-    : { data: null };
+  if (!user) redirect("/login");
 
-  let initialAvatarPreviewUrl = profile?.avatar_url ?? "";
-  if (profile?.avatar_url && !profile.avatar_url.startsWith("http")) {
+  const profile = await ensureProfileForUser(user);
+  const sb = await getSupabaseServerClient();
+
+  let initialAvatarPreviewUrl = profile.avatar_url ?? "";
+  if (profile.avatar_url && !profile.avatar_url.startsWith("http")) {
     // Bucket is public → getPublicUrl needs no auth and no RLS policy
     const { data: publicData } = sb.storage
       .from("profile-avatars")
@@ -37,9 +35,9 @@ export default async function ProfilePage() {
 
       <div className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-5">
         <ProfileForm
-          initialDisplayName={profile?.display_name ?? ""}
-          initialBio={profile?.bio ?? ""}
-          initialAvatarValue={profile?.avatar_url ?? ""}
+          initialDisplayName={profile.display_name ?? ""}
+          initialBio={profile.bio ?? ""}
+          initialAvatarValue={profile.avatar_url ?? ""}
           initialAvatarPreviewUrl={initialAvatarPreviewUrl}
         />
       </div>
@@ -78,14 +76,14 @@ export default async function ProfilePage() {
         </p>
         <div className="mt-4">
           <SensitiveChangeForms
-            initialEmail={user?.email ?? ""}
-            initialPhone={user?.phone ?? ""}
+            initialEmail={user.email ?? ""}
+            initialPhone={user.phone ?? ""}
             initialAddress={{
-              line1: profile?.address_line1 ?? "",
-              line2: profile?.address_line2 ?? "",
-              postalCode: profile?.address_postal_code ?? "",
-              city: profile?.address_city ?? "",
-              country: profile?.address_country ?? "",
+              line1: profile.address_line1 ?? "",
+              line2: profile.address_line2 ?? "",
+              postalCode: profile.address_postal_code ?? "",
+              city: profile.address_city ?? "",
+              country: profile.address_country ?? "",
             }}
           />
         </div>

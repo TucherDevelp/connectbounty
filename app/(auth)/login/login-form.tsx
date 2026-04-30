@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +32,7 @@ function SubmitButton() {
 
 export function LoginForm() {
   const [state, formAction] = useActionState(loginAction, idleAction);
+  const [showPassword, setShowPassword] = useState(false);
   const fe = state.status === "error" ? state.fieldErrors : undefined;
   const { t } = useLang();
 
@@ -68,15 +69,27 @@ export function LoginForm() {
               {t("auth_forgot")}
             </Link>
           </div>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            invalid={Boolean(fe?.password)}
-            aria-describedby={fe?.password ? "password-error" : undefined}
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              invalid={Boolean(fe?.password)}
+              aria-describedby={fe?.password ? "password-error" : undefined}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? t("auth_password_hide") : t("auth_password_show")}
+              title={showPassword ? t("auth_password_hide") : t("auth_password_show")}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+            </button>
+          </div>
           <FieldError id="password-error" message={fe?.password} />
         </div>
 

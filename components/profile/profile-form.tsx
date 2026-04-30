@@ -113,10 +113,18 @@ export function ProfileForm({
       if (!up.ok) throw new Error("upload failed");
 
       // Persist path to DB immediately — user doesn't need to click "Save"
-      await saveAvatarAction(path);
+      const saveResult = await saveAvatarAction(path);
+      if (!saveResult.ok) {
+        throw new Error(saveResult.error ?? "save failed");
+      }
       setAvatarValue(path);
-    } catch {
-      setAvatarUploadError(t("profile_action_save_failed"));
+    } catch (err) {
+      console.error("[profile-form] avatar upload failed:", err);
+      setAvatarUploadError(
+        err instanceof Error
+          ? `${t("profile_action_save_failed")} (${err.message})`
+          : t("profile_action_save_failed"),
+      );
     } finally {
       setUploadingAvatar(false);
     }

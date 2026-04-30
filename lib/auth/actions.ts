@@ -299,21 +299,34 @@ export async function updateProfileAction(
     });
   }
 
-  const { error } = await supabase
+  // Use service role for upsert because RLS forbids client INSERT on
+  // profiles. This also self-heals if handle_new_user trigger never ran.
+  const serviceSb = getSupabaseServiceRoleClient();
+  const { data: upserted, error } = await serviceSb
     .from("profiles")
-    .update({
-      display_name: parsed.data.displayName,
-      bio: parsed.data.bio,
-      avatar_url: parsed.data.avatarUrl,
-    })
-    .eq("id", userData.user.id);
+    .upsert(
+      {
+        id: userData.user.id,
+        display_name: parsed.data.displayName,
+        bio: parsed.data.bio,
+        avatar_url: parsed.data.avatarUrl,
+      },
+      { onConflict: "id" },
+    )
+    .select("id")
+    .maybeSingle();
 
   if (error) {
+    console.error("[updateProfileAction] upsert error:", error.message);
     if (String(error.message).toLowerCase().includes("profiles_display_name_unique_ci")) {
       return actionError(t(lang, "profile_action_input_invalid"), {
         displayName: t(lang, "profile_error_display_name_taken"),
       });
     }
+    return actionError(`${t(lang, "profile_action_save_failed")} (${error.message})`);
+  }
+  if (!upserted) {
+    console.error("[updateProfileAction] upsert returned no row");
     return actionError(t(lang, "profile_action_save_failed"));
   }
 
@@ -330,30 +343,71 @@ export async function updateProfileAction(
  * Saves only the avatar_url immediately after the file is uploaded to storage.
  * Called automatically from the profile form after a successful upload so the
  * user does not have to click "Save profile" to persist the new picture.
+ *
+ * Returns { ok: boolean, error?: string } so the client can surface failures.
  */
-export async function saveAvatarAction(avatarPath: string): Promise<void> {
+export async function saveAvatarAction(
+  avatarPath: string,
+): Promise<{ ok: boolean; error?: string }> {
   const supabase = await getSupabaseServerClient();
   const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) return;
+  if (!userData.user) return { ok: false, error: "not_authenticated" };
 
   // Same validation as updateProfileSchema
-  if (!avatarPath || avatarPath.includes("..") || !/^avatars\/[a-zA-Z0-9/_\-.]{1,240}$/.test(avatarPath)) {
+  if (
+    !avatarPath ||
+    avatarPath.includes("..") ||
+    !/^avatars\/[a-zA-Z0-9/_\-.]{1,240}$/.test(avatarPath)
+  ) {
     console.error("[saveAvatarAction] invalid path rejected:", avatarPath);
-    return;
+    return { ok: false, error: "invalid_path" };
   }
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({ avatar_url: avatarPath })
-    .eq("id", userData.user.id);
+  // Use service role to bypass RLS (RLS forbids client INSERT on profiles).
+  const serviceSb = getSupabaseServiceRoleClient();
 
-  if (error) {
-    console.error("[saveAvatarAction] DB error:", error.message);
-    return;
+  // Step 1: check if profile row exists
+  const { data: existing } = await serviceSb
+    .from("profiles")
+    .select("id")
+    .eq("id", userData.user.id)
+    .maybeSingle();
+
+  if (existing) {
+    // Update only avatar_url, preserve everything else
+    const { data: updated, error } = await serviceSb
+      .from("profiles")
+      .update({ avatar_url: avatarPath })
+      .eq("id", userData.user.id)
+      .select("id")
+      .maybeSingle();
+    if (error) {
+      console.error("[saveAvatarAction] update error:", error.message);
+      return { ok: false, error: error.message };
+    }
+    if (!updated) {
+      return { ok: false, error: "no_row_written" };
+    }
+  } else {
+    // Insert new profile row with sensible defaults
+    const fallbackName =
+      (userData.user.user_metadata?.display_name as string | undefined) ??
+      userData.user.email?.split("@")[0] ??
+      "Neuer Nutzer";
+    const { error } = await serviceSb.from("profiles").insert({
+      id: userData.user.id,
+      display_name: fallbackName,
+      avatar_url: avatarPath,
+    });
+    if (error) {
+      console.error("[saveAvatarAction] insert error:", error.message);
+      return { ok: false, error: error.message };
+    }
   }
 
   revalidatePath("/", "layout");
   revalidatePath("/profile");
+  return { ok: true };
 }
 
 export async function requestCurrentUserPasswordResetAction(
