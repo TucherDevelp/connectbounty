@@ -36,7 +36,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader email={email} displayName={displayName} avatarUrl={avatarPublicUrl} />
-      <main className="flex-1">{children}</main>
+      <main className="min-w-0 flex-1">{children}</main>
       <AppFooter />
     </div>
   );

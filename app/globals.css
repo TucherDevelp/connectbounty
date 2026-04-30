@@ -62,6 +62,7 @@
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
     transition: background-color 200ms ease, color 200ms ease;
+    overflow-x: hidden;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -73,6 +74,7 @@
   body {
     margin: 0;
     min-height: 100dvh;
+    overflow-x: hidden;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;

@@ -58,13 +58,14 @@ export function AppHeader({
   ];
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-surface/90 px-4 py-3 backdrop-blur-md sm:px-6">
-      <div className="flex items-center gap-6">
+    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-surface/90 px-4 py-3 backdrop-blur-md lg:px-6">
+      <div className="flex min-w-0 items-center gap-4 lg:gap-6">
         <Link href="/dashboard" className="flex shrink-0 items-center gap-2" aria-label="ConnectBounty">
           <Logo size="sm" showWordmark compact />
         </Link>
 
-        <nav aria-label={t("a11y_main_nav")} className="hidden items-center gap-5 sm:flex">
+        {/* Desktop nav — only visible on large screens (1024 px+) */}
+        <nav aria-label={t("a11y_main_nav")} className="hidden items-center gap-4 lg:flex xl:gap-5">
           {nav.map((n) => (
             <NavLink key={n.href} href={n.href} exact={n.exact}>
               {t(n.labelKey)}
@@ -73,15 +74,19 @@ export function AppHeader({
         </nav>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3">
-        <div className="hidden items-center gap-2 sm:flex">
+      <div className="flex shrink-0 items-center gap-2">
+        {/* Toggles + user chip — desktop only */}
+        <div className="hidden items-center gap-2 lg:flex">
           <LangToggle />
           <ThemeToggle />
         </div>
-        <div className="hidden items-center gap-3 sm:flex">
-          <Link href="/profile" className="flex items-center gap-2 rounded-[var(--radius-md)] px-2 py-1 hover:bg-[var(--color-surface-2)]">
+        <div className="hidden items-center gap-2 lg:flex">
+          <Link
+            href="/profile"
+            className="flex items-center gap-2 rounded-[var(--radius-md)] px-2 py-1 hover:bg-[var(--color-surface-2)]"
+          >
             <UserAvatar email={email} displayName={displayName} avatarUrl={avatarUrl} />
-            <span className="max-w-[140px] truncate text-xs text-muted-foreground" title={email}>
+            <span className="max-w-[120px] truncate text-xs text-muted-foreground" title={email}>
               {displayName}
             </span>
           </Link>
@@ -91,7 +96,8 @@ export function AppHeader({
             </Button>
           </form>
         </div>
-        <MobileNav email={email} />
+        {/* Hamburger — mobile + tablet (< 1024 px) */}
+        <MobileNav email={email} avatarUrl={avatarUrl} displayName={displayName} />
       </div>
     </header>
   );

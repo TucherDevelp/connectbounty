@@ -29,52 +29,49 @@ export default async function ProfilePage() {
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
-      <h1 className="font-display text-3xl font-semibold tracking-tight">{t(lang, "profile_page_title")}</h1>
-      <p className="mt-2 text-sm text-[var(--color-text-muted)]">{t(lang, "profile_page_intro")}</p>
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
+      {/* Page heading */}
+      <div className="mb-8">
+        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+          {t(lang, "profile_page_title")}
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">{t(lang, "profile_page_intro")}</p>
+      </div>
 
-      <div className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-5">
+      {/* Profile card */}
+      <section className="rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
         <ProfileForm
           initialDisplayName={profile.display_name ?? ""}
           initialBio={profile.bio ?? ""}
           initialAvatarValue={profile.avatar_url ?? ""}
           initialAvatarPreviewUrl={initialAvatarPreviewUrl}
         />
-      </div>
+      </section>
 
-      <div className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-5">
-        <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-          {t(lang, "security_password_section_title")}
-        </h2>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          {t(lang, "security_password_section_desc")}
-        </p>
+      {/* Password card */}
+      <section className="mt-5 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
+        <h2 className="text-base font-semibold">{t(lang, "security_password_section_title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t(lang, "security_password_section_desc")}</p>
         <div className="mt-4">
           <SecurityActions />
         </div>
-      </div>
+      </section>
 
-      <div className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-5">
-        <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-          {t(lang, "security_2fa_section_title")}
-        </h2>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          {t(lang, "security_2fa_section_desc")}
-        </p>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
+      {/* 2FA card */}
+      <section className="mt-5 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
+        <h2 className="text-base font-semibold">{t(lang, "security_2fa_section_title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t(lang, "security_2fa_section_desc")}</p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <MfaSetupCard />
           <MfaVerifyCard />
         </div>
-      </div>
+      </section>
 
-      <div className="mt-6 rounded-[var(--radius-lg)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-5">
-        <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-          {t(lang, "security_sensitive_changes_title")}
-        </h2>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-          {t(lang, "security_sensitive_changes_desc")}
-        </p>
-        <div className="mt-4">
+      {/* Sensitive changes card */}
+      <section className="mt-5 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
+        <h2 className="text-base font-semibold">{t(lang, "security_sensitive_changes_title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t(lang, "security_sensitive_changes_desc")}</p>
+        <div className="mt-5">
           <SensitiveChangeForms
             initialEmail={user.email ?? ""}
             initialPhone={user.phone ?? ""}
@@ -87,7 +84,7 @@ export default async function ProfilePage() {
             }}
           />
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

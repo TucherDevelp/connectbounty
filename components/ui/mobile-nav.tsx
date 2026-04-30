@@ -10,7 +10,15 @@ import { LangToggle } from "@/components/lang-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useLang } from "@/context/lang-context";
 
-export function MobileNav({ email }: { email: string }) {
+export function MobileNav({
+  email,
+  avatarUrl,
+  displayName,
+}: {
+  email: string;
+  avatarUrl?: string;
+  displayName?: string;
+}) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { t } = useLang();
@@ -29,7 +37,7 @@ export function MobileNav({ email }: { email: string }) {
   const navActive = (href: string, exact = false) => isNavItemActive(pathname, href, exact);
 
   return (
-    <div className="sm:hidden">
+    <div className="lg:hidden">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -65,11 +73,34 @@ export function MobileNav({ email }: { email: string }) {
           />
           <div className="fixed inset-y-0 right-0 z-50 flex w-72 flex-col bg-surface shadow-2xl">
             <div className="flex items-center justify-between border-b border-border/40 px-5 py-4">
-              <span className="text-sm font-medium text-muted-foreground">{email}</span>
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 min-w-0"
+              >
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatarUrl}
+                    alt={displayName || email}
+                    className="h-9 w-9 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-sm font-semibold text-primary">
+                    {(displayName || email).slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  {displayName && (
+                    <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
+                  )}
+                  <p className="truncate text-xs text-muted-foreground">{email}</p>
+                </div>
+              </Link>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="min-h-11 min-w-11 text-muted-foreground hover:text-foreground"
+                className="ml-2 shrink-0 min-h-11 min-w-11 text-muted-foreground hover:text-foreground"
                 aria-label="Schließen"
               >
                 ✕
