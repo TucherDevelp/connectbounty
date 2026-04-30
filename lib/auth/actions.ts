@@ -622,6 +622,13 @@ export async function changeAddressWith2faAction(
 
   if (error) {
     console.error("[changeAddressWith2faAction] update error:", error.message);
+    if (/column .*address.* does not exist/i.test(error.message)) {
+      return actionError(
+        "Die Adressspalten existieren noch nicht in der Datenbank. " +
+          "Bitte führe die SQL-Datei supabase/migrations/0008_profile_security_fields.sql " +
+          "im Supabase Dashboard SQL-Editor aus.",
+      );
+    }
     return actionError(t(lang, "security_change_address_failed"));
   }
   if (!updatedAddr) {
