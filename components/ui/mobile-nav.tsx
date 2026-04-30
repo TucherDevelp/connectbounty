@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { User, ShieldCheck } from "lucide-react";
 import { isNavItemActive } from "@/lib/nav-active";
 import { cn } from "@/lib/utils";
 import { logoutAction } from "@/lib/auth/actions";
@@ -23,6 +24,7 @@ export function MobileNav({
   const pathname = usePathname();
   const { t } = useLang();
 
+  // Main nav items (Profile + Security are shown in the account section)
   const navItems = [
     { href: "/dashboard", labelKey: "nav_dashboard" as const, exact: true },
     { href: "/bounties", labelKey: "nav_marketplace" as const },
@@ -30,8 +32,11 @@ export function MobileNav({
     { href: "/referrals/mine", labelKey: "nav_referrals" as const },
     { href: "/payouts", labelKey: "nav_payouts" as const },
     { href: "/kyc", labelKey: "nav_kyc" as const },
-    { href: "/profile", labelKey: "nav_profile" as const, exact: true },
-    { href: "/settings/security", labelKey: "nav_security" as const, exact: true },
+  ];
+
+  const accountItems = [
+    { href: "/profile", labelKey: "nav_profile" as const, exact: true, icon: User },
+    { href: "/settings/security", labelKey: "nav_security" as const, exact: true, icon: ShieldCheck },
   ];
 
   const navActive = (href: string, exact = false) => isNavItemActive(pathname, href, exact);
@@ -72,12 +77,9 @@ export function MobileNav({
             aria-hidden
           />
           <div className="fixed inset-y-0 right-0 z-50 flex w-72 flex-col bg-surface shadow-2xl">
+            {/* User info header */}
             <div className="flex items-center justify-between border-b border-border/40 px-5 py-4">
-              <Link
-                href="/profile"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 min-w-0"
-              >
+              <div className="flex items-center gap-3 min-w-0">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -96,7 +98,7 @@ export function MobileNav({
                   )}
                   <p className="truncate text-xs text-muted-foreground">{email}</p>
                 </div>
-              </Link>
+              </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -107,11 +109,13 @@ export function MobileNav({
               </button>
             </div>
 
+            {/* Lang + Theme toggles */}
             <div className="flex items-center justify-center gap-2 border-b border-border/40 px-4 py-3">
               <LangToggle />
               <ThemeToggle />
             </div>
 
+            {/* Main navigation */}
             <nav className="flex-1 overflow-y-auto px-4 py-4">
               <ul className="space-y-1">
                 {navItems.map((item) => (
@@ -131,13 +135,43 @@ export function MobileNav({
                   </li>
                 ))}
               </ul>
+
+              {/* Account section separator */}
+              <div className="mt-4 border-t border-border/40 pt-4">
+                <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground/60">
+                  Account
+                </p>
+                <ul className="space-y-1">
+                  {accountItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className={cn(
+                            "flex min-h-11 items-center gap-2.5 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors",
+                            navActive(item.href, item.exact)
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
+                          )}
+                        >
+                          <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                          {t(item.labelKey)}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             </nav>
 
+            {/* Sign out */}
             <div className="border-t border-border/40 p-4">
               <form action={logoutAction}>
                 <button
                   type="submit"
-                  className="min-h-11 w-full rounded-[var(--radius-md)] border border-border/60 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="min-h-11 w-full rounded-[var(--radius-md)] border border-border/60 py-2 text-sm text-muted-foreground transition-colors hover:text-destructive hover:border-destructive/40"
                 >
                   {t("nav_logout")}
                 </button>

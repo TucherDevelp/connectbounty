@@ -99,7 +99,8 @@ function applySecurityHeaders(response: NextResponse): void {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "img-src 'self' data: blob:",
+      // Supabase Storage public URLs (avatar images, hire-proofs thumbnails)
+      "img-src 'self' data: blob: https://*.supabase.co",
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
       scriptSrc,
