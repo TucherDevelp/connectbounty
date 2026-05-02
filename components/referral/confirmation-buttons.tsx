@@ -10,11 +10,12 @@ import {
   confirmDataForwardedAction,
   rejectConfirmationAction,
   openDisputeAction,
+  flagApplicationSubmittedAction,
 } from "@/lib/referral/confirmations";
 import { idleAction } from "@/lib/auth/action-result";
 import type { ReferralStatus, RejectionStage } from "@/lib/supabase/types";
 import { useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Send } from "lucide-react";
 
 function PendingButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
@@ -141,6 +142,73 @@ export function RejectButton({
         >
           {t("ref_reject_submit")}
         </Button>
+      </div>
+    </form>
+  );
+}
+
+/* ── Bewerbung markieren (Kandidat, beendet die anonyme Phase) ───────────
+ *
+ * Konzept: docs/KONZEPTPLATTFORM-GESCHAEFTSMODELL.md, Abschnitt 4, Schritt 3.
+ * Setzt das Bewerbungs-Flag und gibt damit die Kontaktdaten des Kandidaten
+ * an den Inserenten frei. Bestätigung in zwei Schritten (Klick → Confirm).
+ */
+export function FlagApplicationButton({ referralId }: { referralId: string }) {
+  const { t } = useLang();
+  const [state, formAction] = useActionState(flagApplicationSubmittedAction, idleAction);
+  const [confirming, setConfirming] = useState(false);
+
+  if (state.status === "ok") {
+    return (
+      <p className="flex items-center gap-2 text-sm font-medium text-[var(--color-success)]">
+        <Check className="size-4 shrink-0" strokeWidth={2.5} aria-hidden />
+        {state.message}
+      </p>
+    );
+  }
+
+  if (!confirming) {
+    return (
+      <div className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-4">
+        <p className="text-sm font-medium text-[var(--color-text-primary)]">
+          {t("ref_application_flag_title")}
+        </p>
+        <p className="text-xs text-[var(--color-text-muted)]">
+          {t("ref_application_flag_explainer")}
+        </p>
+        <Button onClick={() => setConfirming(true)} size="sm" className="self-start">
+          <Send className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+          {t("ref_application_flag_btn")}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      action={formAction}
+      className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-warning)] bg-[color-mix(in_oklab,var(--color-warning)_8%,transparent)] p-4"
+    >
+      {state.status === "error" && <FormAlert>{state.message}</FormAlert>}
+      <input type="hidden" name="referralId" value={referralId} />
+      <p className="text-sm font-medium text-[var(--color-text-primary)]">
+        {t("ref_application_flag_confirm_title")}
+      </p>
+      <p className="text-xs text-[var(--color-text-muted)]">
+        {t("ref_application_flag_confirm_explainer")}
+      </p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setConfirming(false)}
+          className="text-xs underline text-[var(--color-text-muted)]"
+        >
+          {t("ref_cancel")}
+        </button>
+        <PendingButton
+          pendingLabel={t("ref_confirm_pending")}
+          label={t("ref_application_flag_confirm_btn")}
+        />
       </div>
     </form>
   );

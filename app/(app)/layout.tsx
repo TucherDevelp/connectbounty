@@ -36,7 +36,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader email={email} displayName={displayName} avatarUrl={avatarPublicUrl} />
-      <main className="min-w-0 flex-1">{children}</main>
+      {/* overflow-x-hidden: lange URLs/Wörter in Cards erzeugen kein horizontales Scrollen */}
+      <main className="min-w-0 flex-1 overflow-x-hidden">{children}</main>
       <AppFooter />
     </div>
   );

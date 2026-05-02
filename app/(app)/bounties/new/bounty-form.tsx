@@ -11,11 +11,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { FieldError, FormAlert } from "@/components/ui/form-error";
 import { createBountyAction } from "@/lib/bounty/actions";
 import { idleAction } from "@/lib/auth/action-result";
+import {
+  INSERENT_BPS,
+  CANDIDATE_BPS,
+  PLATFORM_NO_REFERRER_BPS,
+} from "@/lib/stripe/split-constants";
 
 const DEFAULT_SPLIT = {
-  referrerBps: 4000,
-  candidateBps: 4000,
-  platformBps: 2000,
+  inserentBps: INSERENT_BPS,
+  candidateBps: CANDIDATE_BPS,
+  platformBps: PLATFORM_NO_REFERRER_BPS,
 } as const;
 
 const BOUNTY_DRAFT_KEY = "bounty-new:draft-v1";
@@ -69,7 +74,7 @@ export function BountyForm() {
   const fe = state.status === "error" ? state.fieldErrors : undefined;
   const splitPreview = useMemo(() => {
     const bonusAmount = parseBonusAmount(bonusAmountInput);
-    const referrerAmount = (bonusAmount * DEFAULT_SPLIT.referrerBps) / 10_000;
+    const referrerAmount = (bonusAmount * DEFAULT_SPLIT.inserentBps) / 10_000;
     const candidateAmount = (bonusAmount * DEFAULT_SPLIT.candidateBps) / 10_000;
     const platformAmount = (bonusAmount * DEFAULT_SPLIT.platformBps) / 10_000;
 
@@ -328,10 +333,10 @@ export function BountyForm() {
         </legend>
         <p className="text-xs text-[var(--color-text-faint)]">{t("bounty_form_split_intro")}</p>
         <input
-          id="splitReferrerBps"
+          id="splitInserentBps"
           type="hidden"
-          name="splitReferrerBps"
-          value={DEFAULT_SPLIT.referrerBps}
+          name="splitInserentBps"
+          value={DEFAULT_SPLIT.inserentBps}
         />
         <input
           id="splitCandidateBps"
@@ -347,7 +352,7 @@ export function BountyForm() {
         />
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="splitReferrerBps">{t("bounty_form_split_a")}</Label>
+            <Label htmlFor="splitInserentBps">{t("bounty_form_split_a")}</Label>
             <div className="h-10 rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 text-sm leading-10 text-[var(--color-text-primary)]">
               {splitPreview.referrer}
             </div>

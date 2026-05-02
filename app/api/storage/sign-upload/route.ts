@@ -3,7 +3,7 @@ import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { clientEnv } from "@/lib/env";
 
-const ALLOWED_BUCKETS = ["hire-proofs", "profile-avatars"] as const;
+const ALLOWED_BUCKETS = ["hire-proofs", "profile-avatars", "rejection-documents"] as const;
 
 /**
  * POST /api/storage/sign-upload
@@ -49,16 +49,32 @@ export async function POST(request: Request) {
   // Auto-create the bucket if it does not exist yet.
   // This happens when migrations haven't been applied to the Supabase project
   // (migration 0010_profile_avatar_bucket.sql creates the bucket via SQL).
-  const BUCKET_CONFIG: Record<string, { public: boolean }> = {
-    "profile-avatars": { public: true },
-    "hire-proofs":     { public: false },
+  const BUCKET_CONFIG: Record<
+    string,
+    { public: boolean; mimeTypes: string[]; sizeLimit: number }
+  > = {
+    "profile-avatars": {
+      public: true,
+      mimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+      sizeLimit: 5 * 1024 * 1024,
+    },
+    "hire-proofs": {
+      public: false,
+      mimeTypes: ["application/pdf", "image/jpeg", "image/png", "image/webp"],
+      sizeLimit: 10 * 1024 * 1024,
+    },
+    "rejection-documents": {
+      public: false,
+      mimeTypes: ["application/pdf", "image/jpeg", "image/png", "image/webp"],
+      sizeLimit: 10 * 1024 * 1024,
+    },
   };
   const bucketCfg = BUCKET_CONFIG[bucket];
   if (bucketCfg) {
     const { error: bucketErr } = await sb.storage.createBucket(bucket, {
       public: bucketCfg.public,
-      allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
-      fileSizeLimit: 5 * 1024 * 1024, // 5 MB
+      allowedMimeTypes: bucketCfg.mimeTypes,
+      fileSizeLimit: bucketCfg.sizeLimit,
     });
     // "already exists" (23505 / Duplicate) is fine — ignore it
     if (bucketErr && !bucketErr.message.toLowerCase().includes("already exist")) {

@@ -1,0 +1,29 @@
+---
+description: Responsive Layout, Mobile-Nav und schmale Viewports (ConnectBounty)
+globs: "**/components/{layout,ui,profile}/**/*.tsx,**/app/(app)/**/*.tsx"
+alwaysApply: false
+---
+
+# Responsive UI (ConnectBounty)
+
+## Mobile-Navigation (`components/ui/mobile-nav.tsx`)
+
+- Menü **unter `lg` immer Vollbild** (`fixed inset-0 z-50`, `max-h-[100dvh]`): kein schmales Side-Panel, damit Seiteninhalt (z. B. Profil) nicht **neben** dem Panel sichtbar bleibt und Abmelden nicht optisch mit Fließtext kollidiert.
+- Struktur: fester **Kopf** (Logo + Schließen) → Nutzerzeile → Sprache/Theme → **nur `nav` scrollt** mit `min-h-0 flex-1 overflow-y-auto` → **Abmelden** `shrink-0` unten.
+- Bei `open`: `document.body.style.overflow = "hidden"`, `Escape` schließt.
+
+## App-Shell
+
+- `main` im App-Layout: `min-w-0 overflow-x-hidden`, damit lange Strings keine horizontale Scrollbar erzeugen.
+- **Safe Areas**: Header/Footer/Profil mit `pl-[max(1rem,env(safe-area-inset-left))]` und analog `pr` / `pb` wo nötig (Notch, Home-Indicator).
+
+## Header (`components/layout/app-header.tsx`)
+
+- Linker Block `min-w-0 flex-1`; Logo-Link auf sehr schmalen Screens optional `max-w-[min(100%,11rem)] sm:max-w-none`, damit Hamburger sichtbar bleibt.
+- Kompaktere Gaps/Padding auf XS; `pt-[max(0.5rem,env(safe-area-inset-top))]` für die Statusleiste.
+
+## Profil & Fließtext
+
+- Container/Sections: `min-w-0` wo Flex-Kinder breit werden können.
+- Einleitungen: `max-w-prose text-pretty leading-relaxed [overflow-wrap:anywhere]` für Lesbarkeit und Umbüche.
+- Profilformular Avatar-Zeile: `flex-col … sm:flex-row` für enge Breiten.

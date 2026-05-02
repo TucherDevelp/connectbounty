@@ -105,3 +105,29 @@ export async function adminDeleteReferralAction(formData: FormData): Promise<voi
   revalidatePath("/admin/referrals");
   redirect("/admin/referrals?deleted=" + parsed.data.id);
 }
+
+// ── Referral erneut prüfen (beliebiger Status → pending_review) ──────────
+
+export async function adminReprocessReferralAction(formData: FormData): Promise<void> {
+  try {
+    await requireAnyRole(["admin", "superadmin"]);
+  } catch {
+    redirect("/login");
+  }
+
+  const parsed = idSchema.safeParse(formToObject(formData));
+  if (!parsed.success) redirect("/admin/referrals?error=invalid_id");
+
+  const sb = getSupabaseServiceRoleClient();
+  const { error } = await sb
+    .from("bounty_referrals")
+    .update({ status: "pending_review" })
+    .eq("id", parsed.data.id);
+
+  if (error) redirect("/admin/referrals?error=reprocess_failed");
+
+  await auditSafe("admin.action", parsed.data.id, { type: "reprocess_referral" });
+
+  revalidatePath("/admin/referrals");
+  redirect("/admin/referrals?reprocessed=" + parsed.data.id);
+}

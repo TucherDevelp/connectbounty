@@ -7,6 +7,7 @@ import { useLang } from "@/context/lang-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { FormAlert, FieldError } from "@/components/ui/form-error";
 import { confirmPayoutAccountAction } from "@/lib/referral/confirmations";
 import { idleAction } from "@/lib/auth/action-result";
@@ -140,15 +141,43 @@ export function CompanyBillingForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="addressCountry">{t("billing_country")}</Label>
-          <Input
+          <Select
             id="addressCountry"
             name="addressCountry"
-            placeholder="DE"
-            maxLength={2}
             defaultValue="DE"
             required
             invalid={Boolean(fe?.addressCountry)}
-          />
+          >
+            <option value="AT">Österreich (AT)</option>
+            <option value="BE">Belgien (BE)</option>
+            <option value="BG">Bulgarien (BG)</option>
+            <option value="CY">Zypern (CY)</option>
+            <option value="CZ">Tschechien (CZ)</option>
+            <option value="DE">Deutschland (DE)</option>
+            <option value="DK">Dänemark (DK)</option>
+            <option value="EE">Estland (EE)</option>
+            <option value="ES">Spanien (ES)</option>
+            <option value="FI">Finnland (FI)</option>
+            <option value="FR">Frankreich (FR)</option>
+            <option value="GR">Griechenland (GR)</option>
+            <option value="HR">Kroatien (HR)</option>
+            <option value="HU">Ungarn (HU)</option>
+            <option value="IE">Irland (IE)</option>
+            <option value="IT">Italien (IT)</option>
+            <option value="LT">Litauen (LT)</option>
+            <option value="LU">Luxemburg (LU)</option>
+            <option value="LV">Lettland (LV)</option>
+            <option value="MT">Malta (MT)</option>
+            <option value="NL">Niederlande (NL)</option>
+            <option value="PL">Polen (PL)</option>
+            <option value="PT">Portugal (PT)</option>
+            <option value="RO">Rumänien (RO)</option>
+            <option value="SE">Schweden (SE)</option>
+            <option value="SI">Slowenien (SI)</option>
+            <option value="SK">Slowakei (SK)</option>
+            <option value="CH">Schweiz (CH)</option>
+            <option value="GB">Vereinigtes Königreich (GB)</option>
+          </Select>
           <FieldError id="country-error" message={fe?.addressCountry} />
         </div>
       </fieldset>

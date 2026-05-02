@@ -8,7 +8,9 @@ import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
 import { t } from "@/lib/i18n";
 import { PageHeader } from "@/components/ui/page-header";
 import { ReferralStatusBadge } from "@/components/referral/status-badge";
+import { Button } from "@/components/ui/button";
 import { ResolveForm } from "./resolve-form";
+import { adminDeleteDisputeAction, adminReprocessDisputeAction } from "@/lib/admin/dispute-actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   return localizedMetadata({ title: "meta_admin_disputes_title" });
@@ -111,6 +113,24 @@ export default async function AdminDisputesPage() {
 
                   {/* Auflösungs-Form */}
                   <ResolveForm disputeId={dispute.id} />
+
+                  {/* Löschen + Erneut prüfen */}
+                  <div className="flex gap-2 border-t border-[var(--color-surface-border)] pt-3">
+                    <form action={adminDeleteDisputeAction}>
+                      <input type="hidden" name="id" value={dispute.id} />
+                      <Button size="sm" variant="ghost" type="submit"
+                        className="text-[var(--color-error)] hover:bg-[color-mix(in_oklab,var(--color-error)_10%,transparent)]">
+                        {t(lang, "admin_btn_delete")}
+                      </Button>
+                    </form>
+                    <form action={adminReprocessDisputeAction}>
+                      <input type="hidden" name="id" value={dispute.id} />
+                      <Button size="sm" variant="ghost" type="submit"
+                        className="text-[var(--color-warning)] hover:bg-[color-mix(in_oklab,var(--color-warning)_10%,transparent)]">
+                        {t(lang, "admin_btn_reprocess")}
+                      </Button>
+                    </form>
+                  </div>
                 </li>
               );
             })}
@@ -149,6 +169,22 @@ export default async function AdminDisputesPage() {
                     ? new Date(dispute.resolved_at).toLocaleDateString(locale)
                     : "–"}
                 </span>
+                <div className="flex gap-1.5">
+                  <form action={adminDeleteDisputeAction}>
+                    <input type="hidden" name="id" value={dispute.id} />
+                    <Button size="sm" variant="ghost" type="submit"
+                      className="text-[var(--color-error)] hover:bg-[color-mix(in_oklab,var(--color-error)_10%,transparent)]">
+                      {t(lang, "admin_btn_delete")}
+                    </Button>
+                  </form>
+                  <form action={adminReprocessDisputeAction}>
+                    <input type="hidden" name="id" value={dispute.id} />
+                    <Button size="sm" variant="ghost" type="submit"
+                      className="text-[var(--color-warning)] hover:bg-[color-mix(in_oklab,var(--color-warning)_10%,transparent)]">
+                      {t(lang, "admin_btn_reprocess")}
+                    </Button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>

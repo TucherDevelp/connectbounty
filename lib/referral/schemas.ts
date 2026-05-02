@@ -175,6 +175,50 @@ export function createDisputeOpenSchema(lang: Lang) {
 }
 export const disputeOpenSchema = createDisputeOpenSchema("de");
 
+/**
+ * Kandidat flaggt „Bewerbung wird/wurde abgeschickt" - löst Übergang von der
+ * anonymen in die operative Phase aus (Kontaktdaten werden freigegeben).
+ * Konzeptbezug: Abschnitt 4, Tracking-Schritt 3.
+ */
+export function createApplicationFlagSchema(lang: Lang) {
+  return z.object({
+    referralId: uuidField(lang),
+  });
+}
+export const applicationFlagSchema = createApplicationFlagSchema("de");
+
+/**
+ * Inserent lädt offizielles Ablehnungsschreiben hoch und beendet damit den
+ * Vorgang formal. Konzeptbezug: Abschnitt 4, Tracking-Schritt 4.
+ *
+ * Datei wird vorab via signed-upload in den Bucket 'rejection-documents'
+ * geladen; diese Action verarbeitet die Metadaten + setzt den Status.
+ */
+export function createRejectionDocumentSchema(lang: Lang) {
+  return z.object({
+    referralId: uuidField(lang),
+    storagePath: z.string().min(1, t(lang, "ref_zod_storage_path")),
+    mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp"]),
+    fileSize: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(10_485_760, t(lang, "ref_zod_file_max")),
+    originalName: z
+      .string()
+      .trim()
+      .max(200)
+      .optional()
+      .transform((v) => (v === "" || v === undefined ? null : v)),
+    reason: z
+      .string()
+      .trim()
+      .min(50, t(lang, "ref_zod_reason_min"))
+      .max(2000, t(lang, "ref_zod_reason_max")),
+  });
+}
+export const rejectionDocumentSchema = createRejectionDocumentSchema("de");
+
 export type ReferralSubmitInput = z.infer<typeof referralSubmitSchema>;
 export type ReferralStatusUpdateInput = z.infer<typeof referralStatusUpdateSchema>;
 export type ClaimHireInput = z.infer<typeof claimHireSchema>;

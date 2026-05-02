@@ -10,7 +10,7 @@ import { LANG_COOKIE, parseLangCookie } from "@/lib/lang-cookie";
 import { t } from "@/lib/i18n";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
-import { adminReviewKycAction } from "@/lib/admin/kyc-actions";
+import { adminReviewKycAction, adminDeleteKycAction, adminReprocessKycAction } from "@/lib/admin/kyc-actions";
 import { KycDocumentGallery } from "./document-gallery";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -228,6 +228,24 @@ export default async function AdminKycPage({
                     </p>
                   )}
                 </form>
+
+                {/* Löschen + Erneut prüfen */}
+                <div className="flex gap-2 border-t border-[var(--color-surface-border)] pt-3">
+                  <form action={adminDeleteKycAction}>
+                    <input type="hidden" name="applicantId" value={app.applicant_id} />
+                    <Button size="sm" variant="ghost" type="submit"
+                      className="text-[var(--color-error)] hover:bg-[color-mix(in_oklab,var(--color-error)_10%,transparent)]">
+                      {t(lang, "admin_btn_delete")}
+                    </Button>
+                  </form>
+                  <form action={adminReprocessKycAction}>
+                    <input type="hidden" name="applicantId" value={app.applicant_id} />
+                    <Button size="sm" variant="ghost" type="submit"
+                      className="text-[var(--color-warning)] hover:bg-[color-mix(in_oklab,var(--color-warning)_10%,transparent)]">
+                      {t(lang, "admin_btn_reprocess")}
+                    </Button>
+                  </form>
+                </div>
               </CardContent>
             </Card>
           );
@@ -253,6 +271,9 @@ export default async function AdminKycPage({
                   <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">
                     {t(lang, "admin_kyc_recent_col_decided")}
                   </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-[var(--color-text-muted)]">
+                    {t(lang, "admin_bounty_col_actions")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-surface-border)]">
@@ -271,6 +292,24 @@ export default async function AdminKycPage({
                       </td>
                       <td className="px-4 py-2 text-[var(--color-text-muted)]">
                         {app.reviewed_at ? formatDate(app.reviewed_at) : "-"}
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="flex flex-wrap gap-1.5">
+                          <form action={adminDeleteKycAction}>
+                            <input type="hidden" name="applicantId" value={app.applicant_id} />
+                            <Button size="sm" variant="ghost" type="submit"
+                              className="text-[var(--color-error)] hover:bg-[color-mix(in_oklab,var(--color-error)_10%,transparent)]">
+                              {t(lang, "admin_btn_delete")}
+                            </Button>
+                          </form>
+                          <form action={adminReprocessKycAction}>
+                            <input type="hidden" name="applicantId" value={app.applicant_id} />
+                            <Button size="sm" variant="ghost" type="submit"
+                              className="text-[var(--color-warning)] hover:bg-[color-mix(in_oklab,var(--color-warning)_10%,transparent)]">
+                              {t(lang, "admin_btn_reprocess")}
+                            </Button>
+                          </form>
+                        </div>
                       </td>
                     </tr>
                   );

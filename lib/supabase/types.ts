@@ -82,7 +82,12 @@ export type AuditAction =
   | "payout.invoice_paid"
   | "payout.transfers_dispatched"
   | "payout.completed"
-  | "reminder.sent";
+  | "reminder.sent"
+  // v11 - Anonyme Phase + Bewerbungs-Flag
+  | "referral.application_flagged"
+  | "referral.contact_released"
+  // v12 - Ablehnungsschreiben
+  | "referral.rejection_uploaded";
 
 export type BountyStatus = "draft" | "pending_review" | "open" | "closed" | "expired" | "cancelled";
 
@@ -321,7 +326,8 @@ export type Database = {
           expires_at: string | null;
           published_at: string | null;
           closed_at: string | null;
-          split_referrer_bps: number;
+          /** Inserenten-Quote in BPS (40 % = 4000). Persona: Bounty-Ersteller. */
+          split_inserent_bps: number;
           split_candidate_bps: number;
           split_platform_bps: number;
           payment_mode: BountyPaymentMode;
@@ -343,7 +349,7 @@ export type Database = {
           expires_at?: string | null;
           published_at?: string | null;
           closed_at?: string | null;
-          split_referrer_bps?: number;
+          split_inserent_bps?: number;
           split_candidate_bps?: number;
           split_platform_bps?: number;
           payment_mode?: BountyPaymentMode;
@@ -365,7 +371,7 @@ export type Database = {
           expires_at?: string | null;
           published_at?: string | null;
           closed_at?: string | null;
-          split_referrer_bps?: number;
+          split_inserent_bps?: number;
           split_candidate_bps?: number;
           split_platform_bps?: number;
           payment_mode?: BountyPaymentMode;
@@ -415,6 +421,11 @@ export type Database = {
           rejection_at: string | null;
           rejection_by: string | null;
           all_confirmations_done: boolean;
+          // v11 - Anonyme Phase + Bewerbungs-Flag
+          application_submitted_at: string | null;
+          application_submitted_by: string | null;
+          contact_released_at: string | null;
+          contact_released_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -449,6 +460,10 @@ export type Database = {
           rejection_stage?: RejectionStage | null;
           rejection_at?: string | null;
           rejection_by?: string | null;
+          application_submitted_at?: string | null;
+          application_submitted_by?: string | null;
+          contact_released_at?: string | null;
+          contact_released_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -483,6 +498,10 @@ export type Database = {
           rejection_stage?: RejectionStage | null;
           rejection_at?: string | null;
           rejection_by?: string | null;
+          application_submitted_at?: string | null;
+          application_submitted_by?: string | null;
+          contact_released_at?: string | null;
+          contact_released_by?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -536,7 +555,8 @@ export type Database = {
           id: string;
           referral_id: string;
           bounty_id: string;
-          referrer_id: string;
+          /** User-ID des Inserenten (Bounty-Ersteller, nicht zu verwechseln mit Referrer/Recruiter). */
+          inserent_id: string;
           stripe_account_id: string | null;
           amount: number;
           currency: string;
@@ -555,12 +575,14 @@ export type Database = {
           invoice_hosted_url: string | null;
           transfer_group: string | null;
           total_cents: number | null;
-          amount_referrer_cents: number | null;
+          /** Inserent-Anteil (40 %) in Cent. */
+          amount_inserent_cents: number | null;
           amount_candidate_cents: number | null;
           amount_ref_of_a_cents: number | null;
           amount_ref_of_b_cents: number | null;
           amount_platform_fee_cents: number | null;
-          referrer_transfer_id: string | null;
+          /** Stripe-Transfer-ID für den Inserenten (40 %-Überweisung). */
+          inserent_transfer_id: string | null;
           candidate_transfer_id: string | null;
           ref_of_a_transfer_id: string | null;
           ref_of_b_transfer_id: string | null;
@@ -572,7 +594,7 @@ export type Database = {
           id?: string;
           referral_id: string;
           bounty_id: string;
-          referrer_id: string;
+          inserent_id: string;
           stripe_account_id?: string | null;
           amount: number;
           currency: string;
@@ -585,12 +607,12 @@ export type Database = {
           invoice_hosted_url?: string | null;
           transfer_group?: string | null;
           total_cents?: number | null;
-          amount_referrer_cents?: number | null;
+          amount_inserent_cents?: number | null;
           amount_candidate_cents?: number | null;
           amount_ref_of_a_cents?: number | null;
           amount_ref_of_b_cents?: number | null;
           amount_platform_fee_cents?: number | null;
-          referrer_transfer_id?: string | null;
+          inserent_transfer_id?: string | null;
           candidate_transfer_id?: string | null;
           ref_of_a_transfer_id?: string | null;
           ref_of_b_transfer_id?: string | null;
@@ -610,12 +632,12 @@ export type Database = {
           invoice_hosted_url?: string | null;
           transfer_group?: string | null;
           total_cents?: number | null;
-          amount_referrer_cents?: number | null;
+          amount_inserent_cents?: number | null;
           amount_candidate_cents?: number | null;
           amount_ref_of_a_cents?: number | null;
           amount_ref_of_b_cents?: number | null;
           amount_platform_fee_cents?: number | null;
-          referrer_transfer_id?: string | null;
+          inserent_transfer_id?: string | null;
           candidate_transfer_id?: string | null;
           ref_of_a_transfer_id?: string | null;
           ref_of_b_transfer_id?: string | null;
@@ -625,7 +647,7 @@ export type Database = {
         Relationships: [
           { foreignKeyName: "payouts_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
           { foreignKeyName: "payouts_bounty_id_fkey"; columns: ["bounty_id"]; referencedRelation: "bounties"; referencedColumns: ["id"]; },
-          { foreignKeyName: "payouts_referrer_id_fkey"; columns: ["referrer_id"]; referencedRelation: "profiles"; referencedColumns: ["id"]; },
+          { foreignKeyName: "payouts_inserent_id_fkey"; columns: ["inserent_id"]; referencedRelation: "profiles"; referencedColumns: ["id"]; },
         ];
       };
       audit_logs: {
@@ -710,6 +732,34 @@ export type Database = {
         Update: never;
         Relationships: [
           { foreignKeyName: "referral_rejections_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
+        ];
+      };
+      // v12 - Ablehnungsschreiben (offizielle Pflicht-Dokumente nach Kontaktfreigabe)
+      rejection_documents: {
+        Row: {
+          id: string;
+          referral_id: string;
+          uploaded_by: string;
+          storage_path: string;
+          original_name: string | null;
+          mime_type: string | null;
+          file_size: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          referral_id: string;
+          uploaded_by: string;
+          storage_path: string;
+          original_name?: string | null;
+          mime_type?: string | null;
+          file_size?: number | null;
+          created_at?: string;
+        };
+        Update: never;
+        Relationships: [
+          { foreignKeyName: "rejection_documents_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
+          { foreignKeyName: "rejection_documents_uploaded_by_fkey"; columns: ["uploaded_by"]; referencedRelation: "profiles"; referencedColumns: ["id"]; },
         ];
       };
       referral_disputes: {

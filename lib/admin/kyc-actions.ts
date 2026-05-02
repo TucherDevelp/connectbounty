@@ -66,3 +66,75 @@ export async function adminReviewKycAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/users");
   redirect("/admin/kyc?reviewed=" + applicantId);
 }
+
+// ── KYC-Antrag löschen (hard-delete) ─────────────────────────────────────
+
+const kycIdSchema = z.object({ applicantId: z.string().min(1) });
+
+export async function adminDeleteKycAction(formData: FormData): Promise<void> {
+  try {
+    await requireAnyRole(["admin", "superadmin"]);
+  } catch {
+    redirect("/login");
+  }
+
+  const parsed = kycIdSchema.safeParse({
+    applicantId: formData.get("applicantId"),
+  });
+  if (!parsed.success) redirect("/admin/kyc?error=invalid_input");
+
+  const sb = getSupabaseServiceRoleClient();
+  const { error } = await sb
+    .from("kyc_applicants")
+    .delete()
+    .eq("applicant_id", parsed.data.applicantId);
+
+  if (error) redirect("/admin/kyc?error=delete_failed");
+
+  try {
+    await logAuditEvent({
+      action: "admin.action",
+      targetId: parsed.data.applicantId,
+      metadata: { by: "admin", type: "delete_kyc" } as Json,
+    });
+  } catch { /* audit darf nicht blockieren */ }
+
+  revalidatePath("/admin/kyc");
+  revalidatePath("/admin/users");
+  redirect("/admin/kyc?deleted=" + parsed.data.applicantId);
+}
+
+// ── KYC-Antrag erneut prüfen (→ pending) ─────────────────────────────────
+
+export async function adminReprocessKycAction(formData: FormData): Promise<void> {
+  try {
+    await requireAnyRole(["admin", "superadmin"]);
+  } catch {
+    redirect("/login");
+  }
+
+  const parsed = kycIdSchema.safeParse({
+    applicantId: formData.get("applicantId"),
+  });
+  if (!parsed.success) redirect("/admin/kyc?error=invalid_input");
+
+  const sb = getSupabaseServiceRoleClient();
+  const { error } = await sb
+    .from("kyc_applicants")
+    .update({ status: "pending", reviewed_at: null, reject_labels: null })
+    .eq("applicant_id", parsed.data.applicantId);
+
+  if (error) redirect("/admin/kyc?error=reprocess_failed");
+
+  try {
+    await logAuditEvent({
+      action: "admin.action",
+      targetId: parsed.data.applicantId,
+      metadata: { type: "reprocess_kyc" } as Json,
+    });
+  } catch { /* audit darf nicht blockieren */ }
+
+  revalidatePath("/admin/kyc");
+  revalidatePath("/admin/users");
+  redirect("/admin/kyc?reprocessed=" + parsed.data.applicantId);
+}

@@ -72,6 +72,7 @@ export const translations = {
     admin_btn_reject: "Ablehnen",
     admin_btn_close: "Schließen",
     admin_btn_delete: "Löschen",
+    admin_btn_reprocess: "Erneut prüfen",
     admin_pagination_back: "Zurück",
     admin_pagination_next: "Weiter",
     admin_pagination_page: "Seite {current} / {total}",
@@ -501,6 +502,8 @@ export const translations = {
     connect_btn_redirecting: "Weiterleitung …",
     connect_btn_connect: "Jetzt verbinden",
     connect_btn_resume: "Onboarding fortsetzen",
+    connect_req_missing: "Fehlende Angaben:",
+    connect_req_more: "weitere",
     refresh_status_pending: "Aktualisiere …",
     refresh_status_label: "Status aktualisieren",
     kyc_page_title: "Identitätsprüfung",
@@ -598,10 +601,10 @@ export const translations = {
       "Nach diesem Zeitpunkt wird die Bounty automatisch auf „expired“ gesetzt.",
     bounty_form_split_legend: "Auszahlungs-Split",
     bounty_form_split_intro:
-      "Der Auszahlungssplit wird automatisch aus der Prämie berechnet: 40 % Inserent · 40 % Kandidat (pro Kandidat) · 20 % Plattform.",
+      "Der Auszahlungssplit wird automatisch aus der Prämie berechnet: 40 % Inserent · 35 % Kandidat (pro Kandidat) · 25 % Plattform.",
     bounty_form_split_a: "Inserent A (40 %)",
-    bounty_form_split_b: "Kandidat B (40 %)",
-    bounty_form_split_p: "Plattform (20 %)",
+    bounty_form_split_b: "Kandidat B (35 %)",
+    bounty_form_split_p: "Plattform (25 %)",
     bounty_form_acceptances_label: "Zahlungsbedingungen und AGB",
     bounty_form_acceptances_help:
       "Bitte lies die Zahlungsbedingungen und die AGB vollständig und akzeptiere beides, bevor du die Bounty speicherst.",
@@ -743,6 +746,22 @@ export const translations = {
     billing_tax: "USt-IdNr. (optional)",
     billing_tax_help:
       "EU-Umsatzsteuer-Identifikationsnummer. Wird auf der Rechnung ausgewiesen.",
+    billing_split_title: "Auszahlungs-Übersicht",
+    billing_split_desc: "Die Gesamtsumme wird wie folgt aufgeteilt:",
+    billing_split_total: "Rechnungsbetrag",
+    billing_split_referrer: "Empfehlungsgeber",
+    billing_split_inserent: "Inserent (Auftraggeber)",
+    billing_split_candidate: "Kandidat:in",
+    billing_split_referrer_share: "Referrer-Provision (Akquise)",
+    billing_split_referrer_share_inserent: "Referrer:in des Inserenten",
+    billing_split_referrer_share_candidate: "Referrer:in des Kandidaten",
+    billing_split_platform: "Plattform- & Servicegebühr",
+    billing_split_note_no_referrer:
+      "Kein Referrer beteiligt – der 5 %-Akquiseanteil fließt an die Plattform (Plattform 25 %).",
+    billing_split_note_one_referrer:
+      "Ein Referrer beteiligt – Akquiseanteil 5 %; Plattform behält 20 %.",
+    billing_split_note_two_referrers:
+      "Zwei Referrer beteiligt – Akquiseanteil je 2,5 %; Plattform behält 20 %.",
     referral_detail_title: "Referral-Detail",
     referral_detail_desc: "Kandidat: {name} · {email}",
     referral_detail_bonus: "Prämie:",
@@ -775,6 +794,39 @@ export const translations = {
     ref_dispute_reason_label: "Begründung (min. 50 Zeichen)",
     ref_dispute_reason_ph: "Warum stimmst du der Ablehnung nicht zu?",
     ref_dispute_submit: "Dispute einreichen",
+    ref_application_flag_title: "Bewerbung markieren",
+    ref_application_flag_explainer:
+      "Markiere die Bewerbung, sobald du sie an die Firma abgeschickt hast oder im Begriff bist, sie abzuschicken. Erst dann werden deine Kontaktdaten an den Inserenten freigegeben – bis dahin bleibt die Kommunikation anonym.",
+    ref_application_flag_btn: "Bewerbung markieren",
+    ref_application_flag_confirm_title: "Bist du sicher?",
+    ref_application_flag_confirm_explainer:
+      "Mit der Bestätigung werden Name und E-Mail an den Inserenten weitergegeben. Diese Aktion kann nicht zurückgenommen werden.",
+    ref_application_flag_confirm_btn: "Ja, jetzt freigeben",
+    ref_phase_anonymous: "Anonyme Phase – Kontaktdaten werden nicht ausgetauscht",
+    ref_phase_application_submitted: "Bewerbung markiert – Kontaktdaten freigegeben",
+    ref_phase_contact_released: "Kontaktdaten freigegeben",
+    ref_owner_anonymous_label: "Kandidat:in (anonym)",
+    ref_owner_anonymous_help:
+      "Identität und Kontaktdaten werden erst sichtbar, wenn der/die Bewerber:in das Bewerbungs-Flag setzt.",
+    ref_reject_doc_open: "Mit Ablehnungsschreiben ablehnen",
+    ref_reject_doc_title: "Offizielles Ablehnungsschreiben hochladen",
+    ref_reject_doc_explainer:
+      "Nach Kontaktfreigabe ist eine formale Ablehnung nur mit hochgeladenem Schreiben möglich. PDF oder Bild (max. 10 MB).",
+    ref_reject_doc_drop_aria: "Ablehnungsschreiben hochladen",
+    ref_reject_doc_cta: "Datei auswählen",
+    ref_reject_doc_formats: "PDF, JPG, PNG oder WebP – max. 10 MB",
+    ref_reject_doc_uploading: "Wird hochgeladen …",
+    ref_reject_doc_replace_hint: "Klicke erneut, um eine andere Datei zu wählen",
+    ref_reject_doc_reason_label: "Begründung (min. 50 Zeichen)",
+    ref_reject_doc_reason_ph:
+      "Beschreibe kurz, warum der Vorgang beendet wird (z. B. Stelle anders besetzt) …",
+    ref_reject_doc_reason_counter: "{n}/{max} Zeichen (min. {min} erforderlich)",
+    ref_reject_doc_submit: "Ablehnung jetzt einreichen",
+    ref_reject_doc_submit_pending: "Wird übermittelt …",
+    ref_reject_doc_err_mime: "Nur PDF, JPG, PNG oder WebP sind erlaubt.",
+    ref_reject_doc_err_size: "Datei zu groß (max. 10 MB).",
+    ref_reject_doc_err_sign: "Signed-Upload-URL konnte nicht erzeugt werden.",
+    ref_reject_doc_err_upload: "Upload fehlgeschlagen. Bitte erneut versuchen.",
     ref_action_invalid_input: "Ungültige Eingaben.",
     ref_action_bounty_gone: "Inserat nicht gefunden oder nicht mehr offen.",
     ref_action_own_bounty: "Du kannst nicht dein eigenes Inserat beanspruchen.",
@@ -798,6 +850,24 @@ export const translations = {
     ref_action_dispute_failed: "Dispute konnte nicht eröffnet werden.",
     ref_action_dispute_ok:
       "Dispute eröffnet. Das Team wird sich innerhalb von 14 Tagen melden.",
+    ref_action_application_forbidden:
+      "Referral nicht gefunden oder Du bist nicht der zugeordnete Kandidat.",
+    ref_action_application_already:
+      "Bewerbung wurde bereits markiert – Kontaktdaten sind freigegeben.",
+    ref_action_application_failed:
+      "Bewerbungs-Markierung konnte nicht gespeichert werden.",
+    ref_action_application_ok:
+      "Bewerbung markiert – Deine Kontaktdaten sind jetzt für den Inserenten sichtbar.",
+    ref_action_rejection_doc_premature:
+      "Ablehnung ist vor der Kontaktfreigabe nicht erforderlich – nutze die Standard-Ablehnung.",
+    ref_action_rejection_doc_already:
+      "Vorgang ist bereits abgelehnt.",
+    ref_action_rejection_doc_path_invalid:
+      "Storage-Pfad gehört nicht zu diesem Vorgang.",
+    ref_action_rejection_doc_save_failed:
+      "Ablehnungsschreiben konnte nicht gespeichert werden.",
+    ref_action_rejection_doc_ok:
+      "Ablehnungsschreiben hochgeladen. Der Vorgang ist beendet.",
     ref_zod_uuid: "Ungültige ID",
     ref_zod_storage_path: "Storage-Pfad ist erforderlich",
     ref_zod_file_max: "Datei zu groß (max 10 MB)",
@@ -878,6 +948,16 @@ export const translations = {
     kyc_wizard_submitting: "Wird hochgeladen …",
     kyc_wizard_submit: "Antrag einreichen",
     kyc_wizard_preview_alt: "Vorschau",
+    timeline_title: "Zahlungsverlauf",
+    timeline_open_invoice: "Rechnung öffnen & bezahlen",
+    timeline_inv_created: "Rechnung erstellt",
+    timeline_inv_created_desc: "Invoice {id}…",
+    timeline_inv_sent: "Rechnung versendet",
+    timeline_inv_sent_desc_done: "Zahlungslink wurde an die Firma gesendet.",
+    timeline_inv_sent_desc_pending: "Wartet auf Invoice-Erstellung",
+    timeline_inv_paid: "Rechnung bezahlt",
+    timeline_transfers_done: "Transfers ausgeführt",
+    timeline_payout_complete: "Auszahlung abgeschlossen",
   },
   en: {
     nav_home: "Home",
@@ -952,6 +1032,7 @@ export const translations = {
     admin_btn_reject: "Reject",
     admin_btn_close: "Close",
     admin_btn_delete: "Delete",
+    admin_btn_reprocess: "Re-review",
     admin_pagination_back: "Back",
     admin_pagination_next: "Next",
     admin_pagination_page: "Page {current} / {total}",
@@ -1375,9 +1456,11 @@ export const translations = {
     connect_label_disabled: "Account disabled",
     connect_desc_disabled: "Your Stripe account was disabled. Please contact support.",
     connect_account_id: "Account ID:",
-    connect_btn_redirecting: "Redirecting…",
+    connect_btn_redirecting: "Redirecting …",
     connect_btn_connect: "Connect now",
     connect_btn_resume: "Continue onboarding",
+    connect_req_missing: "Missing requirements:",
+    connect_req_more: "more",
     refresh_status_pending: "Refreshing…",
     refresh_status_label: "Refresh status",
     kyc_page_title: "Identity verification",
@@ -1474,10 +1557,10 @@ export const translations = {
       "After this point the bounty is automatically set to expired.",
     bounty_form_split_legend: "Payout split",
     bounty_form_split_intro:
-      "The payout split is calculated automatically from the bonus: 40% poster · 40% candidate (per candidate) · 20% platform.",
+      "The payout split is calculated automatically from the bonus: 40% poster · 35% candidate (per candidate) · 25% platform.",
     bounty_form_split_a: "Poster A (40%)",
-    bounty_form_split_b: "Candidate B (40%)",
-    bounty_form_split_p: "Platform (20%)",
+    bounty_form_split_b: "Candidate B (35%)",
+    bounty_form_split_p: "Platform (25%)",
     bounty_form_acceptances_label: "Payment terms and terms of service",
     bounty_form_acceptances_help:
       "Please read the payment terms and the terms of service completely and accept both before saving the bounty.",
@@ -1614,10 +1697,26 @@ export const translations = {
     billing_addr2_ph: "Suite, floor …",
     billing_plz: "Postal code",
     billing_city: "City",
-    billing_country: "Country (ISO code)",
+    billing_country: "Country (ISO)",
     billing_tax: "VAT ID (optional)",
-    billing_tax_help: "EU VAT number. Shown on the invoice.",
-    referral_detail_title: "Referral detail",
+    billing_tax_help: "EU VAT Identification Number. Will be printed on the invoice.",
+    billing_split_title: "Payout summary",
+    billing_split_desc: "The total amount will be split as follows:",
+    billing_split_total: "Invoice total",
+    billing_split_referrer: "Referrer",
+    billing_split_inserent: "Lister (job poster)",
+    billing_split_candidate: "Candidate",
+    billing_split_referrer_share: "Referrer share (acquisition)",
+    billing_split_referrer_share_inserent: "Lister's referrer",
+    billing_split_referrer_share_candidate: "Candidate's referrer",
+    billing_split_platform: "Platform & service fee",
+    billing_split_note_no_referrer:
+      "No referrer involved – the 5 % acquisition share goes to the platform (platform 25 %).",
+    billing_split_note_one_referrer:
+      "One referrer involved – acquisition share 5 %; platform keeps 20 %.",
+    billing_split_note_two_referrers:
+      "Two referrers involved – acquisition share 2.5 % each; platform keeps 20 %.",
+    referral_detail_title: "Referral details",
     referral_detail_desc: "Candidate: {name} · {email}",
     referral_detail_bonus: "Bonus:",
     referral_detail_payment_window: "Payment window:",
@@ -1646,6 +1745,39 @@ export const translations = {
     ref_cancel: "Cancel",
     ref_reject_submit: "Confirm rejection",
     ref_dispute_open: "Open dispute",
+    ref_application_flag_title: "Mark application as submitted",
+    ref_application_flag_explainer:
+      "Mark the application once you have sent it to the company or are about to send it. Only then will your contact details be released to the lister – until then, communication stays anonymous.",
+    ref_application_flag_btn: "Mark application",
+    ref_application_flag_confirm_title: "Are you sure?",
+    ref_application_flag_confirm_explainer:
+      "Confirming will release your name and email to the lister. This action cannot be undone.",
+    ref_application_flag_confirm_btn: "Yes, release now",
+    ref_phase_anonymous: "Anonymous phase – no contact details are exchanged",
+    ref_phase_application_submitted: "Application flagged – contact details released",
+    ref_phase_contact_released: "Contact details released",
+    ref_owner_anonymous_label: "Candidate (anonymous)",
+    ref_owner_anonymous_help:
+      "Identity and contact details become visible once the candidate sets the application flag.",
+    ref_reject_doc_open: "Reject with formal letter",
+    ref_reject_doc_title: "Upload official rejection letter",
+    ref_reject_doc_explainer:
+      "After contact release, a formal rejection requires an uploaded letter. PDF or image (max. 10 MB).",
+    ref_reject_doc_drop_aria: "Upload rejection letter",
+    ref_reject_doc_cta: "Choose file",
+    ref_reject_doc_formats: "PDF, JPG, PNG or WebP – max. 10 MB",
+    ref_reject_doc_uploading: "Uploading …",
+    ref_reject_doc_replace_hint: "Click again to pick a different file",
+    ref_reject_doc_reason_label: "Reason (min. 50 characters)",
+    ref_reject_doc_reason_ph:
+      "Briefly describe why the process is being closed (e.g. position filled differently) …",
+    ref_reject_doc_reason_counter: "{n}/{max} characters (min. {min} required)",
+    ref_reject_doc_submit: "Submit rejection now",
+    ref_reject_doc_submit_pending: "Submitting …",
+    ref_reject_doc_err_mime: "Only PDF, JPG, PNG or WebP files are allowed.",
+    ref_reject_doc_err_size: "File too large (max. 10 MB).",
+    ref_reject_doc_err_sign: "Could not create signed upload URL.",
+    ref_reject_doc_err_upload: "Upload failed. Please try again.",
     ref_dispute_reason_label: "Reason (min. 50 characters)",
     ref_dispute_reason_ph: "Why do you disagree with the rejection?",
     ref_dispute_submit: "Submit dispute",
@@ -1671,6 +1803,24 @@ export const translations = {
     ref_action_dispute_duplicate: "A dispute was already opened for this referral.",
     ref_action_dispute_failed: "Could not open dispute.",
     ref_action_dispute_ok: "Dispute opened. The team will respond within 14 days.",
+    ref_action_application_forbidden:
+      "Referral not found, or you are not the assigned candidate.",
+    ref_action_application_already:
+      "Application already flagged – contact details have been released.",
+    ref_action_application_failed:
+      "Could not save the application flag.",
+    ref_action_application_ok:
+      "Application flagged – your contact details are now visible to the lister.",
+    ref_action_rejection_doc_premature:
+      "Rejection is not required before contact release – use the standard rejection flow.",
+    ref_action_rejection_doc_already:
+      "Process is already rejected.",
+    ref_action_rejection_doc_path_invalid:
+      "Storage path does not belong to this referral.",
+    ref_action_rejection_doc_save_failed:
+      "Could not save rejection document.",
+    ref_action_rejection_doc_ok:
+      "Rejection document uploaded. The process is closed.",
     ref_zod_uuid: "Invalid ID",
     ref_zod_storage_path: "Storage path is required",
     ref_zod_file_max: "File too large (max 10 MB)",
@@ -1751,6 +1901,16 @@ export const translations = {
     kyc_wizard_submitting: "Uploading …",
     kyc_wizard_submit: "Submit application",
     kyc_wizard_preview_alt: "Preview",
+    timeline_title: "Payment timeline",
+    timeline_open_invoice: "Open & pay invoice",
+    timeline_inv_created: "Invoice created",
+    timeline_inv_created_desc: "Invoice {id}…",
+    timeline_inv_sent: "Invoice sent",
+    timeline_inv_sent_desc_done: "Payment link was sent to the company.",
+    timeline_inv_sent_desc_pending: "Waiting for invoice creation",
+    timeline_inv_paid: "Invoice paid",
+    timeline_transfers_done: "Transfers executed",
+    timeline_payout_complete: "Payout completed",
   },
 } as const;
 

@@ -96,7 +96,7 @@ export async function createBountyAction(
       industry: parsed.data.industry,
       tags: parsed.data.tags,
       expires_at: parsed.data.expiresAt,
-      split_referrer_bps: parsed.data.splitReferrerBps,
+      split_inserent_bps: parsed.data.splitInserentBps,
       split_candidate_bps: parsed.data.splitCandidateBps,
       split_platform_bps: parsed.data.splitPlatformBps,
       payment_mode: parsed.data.paymentMode,

@@ -133,7 +133,7 @@ export async function POST(request: Request) {
         if (!referralId || !role) break;
 
         const roleToColumn: Record<string, string> = {
-          person_a: "referrer_transfer_id",
+          person_a: "inserent_transfer_id",
           person_b: "candidate_transfer_id",
           ref_of_a: "ref_of_a_transfer_id",
           ref_of_b: "ref_of_b_transfer_id",

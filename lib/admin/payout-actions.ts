@@ -17,14 +17,13 @@ const payoutSchema = z.object({
 });
 
 /**
- * Admin: Zahlt eine Prämie an den Referrer aus via Stripe Connect Transfer.
+ * Admin: Legacy-Direktzahlung an den Referrer (Recruiter) via Stripe Connect.
+ * Nur für den alten Pre-V7-Flow; ab V7 wird die Invoice-Split-Methode verwendet.
  *
- * Ablauf:
- *   1. Referral → Status muss "hired" sein
- *   2. Referrer muss einen aktiven Connect-Account haben (payouts_enabled)
- *   3. Stripe Transfer erstellen
- *   4. payouts-Eintrag in DB anlegen (Status "processing")
- *   5. Audit-Log
+ * Persona-Hinweis:
+ *   bounty_referrals.referrer_id = der REFERRER (Recruiter, der den Kandidaten
+ *   auf die Plattform gebracht hat) — NICHT der Inserent (Bounty-Ersteller).
+ *   In `payouts.inserent_id` wird hier die Bounty-Owner-ID eingetragen.
  */
 export async function adminCreatePayoutAction(formData: FormData): Promise<void> {
   try {
@@ -46,10 +45,10 @@ export async function adminCreatePayoutAction(formData: FormData): Promise<void>
   const { referralId, amountCents, currency } = parsed.data;
   const sb = getSupabaseServiceRoleClient();
 
-  // Referral laden
+  // Referral laden (inkl. Bounty-Owner für inserent_id-Pflichtfeld)
   const { data: referral } = await sb
     .from("bounty_referrals")
-    .select("id, status, referrer_id, bounty_id")
+    .select("id, status, referrer_id, bounty_id, bounties(owner_id)")
     .eq("id", referralId)
     .maybeSingle();
 
@@ -103,11 +102,13 @@ export async function adminCreatePayoutAction(formData: FormData): Promise<void>
     redirect(`/admin/referrals?error=stripe_failed`);
   }
 
-  // Payout in DB anlegen
+  // `inserent_id` = Bounty-Owner; der Zahlungsempfänger hier ist der Referrer,
+  // was durch `stripe_account_id` + `stripe_transfer_id` reflektiert wird.
+  const inserentId = (referral.bounties as { owner_id: string } | null)?.owner_id ?? referral.referrer_id;
   const { error: dbError } = await sb.from("payouts").insert({
     referral_id: referralId,
     bounty_id: referral.bounty_id,
-    referrer_id: referral.referrer_id,
+    inserent_id: inserentId,
     amount: netAmountCents / 100,
     currency: currency.toUpperCase(),
     status: "processing",

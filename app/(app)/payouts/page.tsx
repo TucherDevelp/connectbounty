@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { requireUser } from "@/lib/auth/roles";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { getConnectAccountStatus } from "@/lib/stripe/connect";
+import { getStripeClient } from "@/lib/stripe/client";
 import { formatBonus, formatDate, formatLocaleForLang } from "@/lib/format";
 import type { PayoutStatus } from "@/lib/supabase/types";
 import { FintechPayoutMark } from "@/components/icons/fintech-payout-mark";
@@ -53,10 +54,26 @@ export default async function PayoutsPage({
       .select(
         "id, amount, currency, status, stripe_transfer_id, stripe_error_code, created_at, paid_at, referral_id",
       )
-      .eq("referrer_id", user.id)
+      .eq("inserent_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50),
   ]);
+
+  let currentlyDue: string[] = [];
+  if (
+    connectStatus?.stripeAccountId &&
+    (connectStatus.onboardingStatus === "restricted" || connectStatus.onboardingStatus === "onboarding")
+  ) {
+    try {
+      const stripe = getStripeClient();
+      const account = await stripe.accounts.retrieve(connectStatus.stripeAccountId);
+      if (account.requirements?.currently_due) {
+        currentlyDue = account.requirements.currently_due;
+      }
+    } catch {
+      // Ignore stripe fetch error on load
+    }
+  }
 
   const totalPaid =
     payouts
@@ -124,15 +141,24 @@ export default async function PayoutsPage({
         </div>
       )}
 
+      {/* Status Card & Actions */}
+      <div className="mt-6 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex-1">
+          <ConnectOnboardingCard connectStatus={connectStatus} currentlyDue={currentlyDue} />
+        </div>
+        <div className="flex shrink-0 items-center justify-start sm:justify-end">
+          {connectStatus?.stripeAccountId && (
+            <RefreshStatusButton />
+          )}
+        </div>
+      </div>
+
       {/* Payout-Liste */}
       <div className="mt-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
             {t(lang, "payout_history_title")}
           </h2>
-          {connectStatus?.stripeAccountId && (
-            <RefreshStatusButton />
-          )}
         </div>
 
         {(payouts?.length ?? 0) === 0 ? (

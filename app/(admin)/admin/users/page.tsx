@@ -9,7 +9,7 @@ import { t, type TranslationKey } from "@/lib/i18n";
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/format";
 import type { KycStatus } from "@/lib/supabase/types";
-import { adminSetKycAction } from "@/lib/admin/user-actions";
+import { adminSetKycAction, adminDeleteUserAction, adminReprocessUserAction } from "@/lib/admin/user-actions";
 import { Button } from "@/components/ui/button";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -98,6 +98,7 @@ export default async function AdminUsersPage({
                   "admin_users_col_registered",
                   "admin_users_col_last_active",
                   "admin_users_col_set_kyc",
+                  "admin_bounty_col_actions",
                 ] as const
               ).map((key) => (
                 <th key={key} className="px-4 py-3 text-left font-medium">
@@ -146,11 +147,29 @@ export default async function AdminUsersPage({
                     )}
                   </div>
                 </td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    <form action={adminDeleteUserAction}>
+                      <input type="hidden" name="userId" value={u.id} />
+                      <Button size="sm" variant="ghost" type="submit"
+                        className="text-[var(--color-error)] hover:bg-[color-mix(in_oklab,var(--color-error)_10%,transparent)]">
+                        {t(lang, "admin_btn_delete")}
+                      </Button>
+                    </form>
+                    <form action={adminReprocessUserAction}>
+                      <input type="hidden" name="userId" value={u.id} />
+                      <Button size="sm" variant="ghost" type="submit"
+                        className="text-[var(--color-warning)] hover:bg-[color-mix(in_oklab,var(--color-warning)_10%,transparent)]">
+                        {t(lang, "admin_btn_reprocess")}
+                      </Button>
+                    </form>
+                  </div>
+                </td>
               </tr>
             ))}
             {(data ?? []).length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-[var(--color-text-muted)]">
+                <td colSpan={6} className="px-4 py-8 text-center text-[var(--color-text-muted)]">
                   {t(lang, "admin_users_empty")}
                 </td>
               </tr>

@@ -141,3 +141,30 @@ export async function adminDeleteBountyAction(formData: FormData): Promise<void>
   revalidatePath("/bounties");
   redirect("/admin/bounties?deleted=" + parsed.data.id);
 }
+
+// ── Bounty erneut prüfen (beliebiger Status → pending_review) ────────────
+
+export async function adminReprocessBountyAction(formData: FormData): Promise<void> {
+  try {
+    await requireAnyRole(["admin", "superadmin"]);
+  } catch {
+    redirect("/login");
+  }
+
+  const parsed = idSchema.safeParse(formToObject(formData));
+  if (!parsed.success) redirect("/admin/bounties?error=invalid_id");
+
+  const sb = getSupabaseServiceRoleClient();
+  const { error } = await sb
+    .from("bounties")
+    .update({ status: "pending_review", published_at: null, closed_at: null })
+    .eq("id", parsed.data.id);
+
+  if (error) redirect("/admin/bounties?error=reprocess_failed");
+
+  await auditSafe("admin.action", parsed.data.id, { type: "reprocess_bounty" });
+
+  revalidatePath("/admin/bounties");
+  revalidatePath("/bounties");
+  redirect("/admin/bounties?reprocessed=" + parsed.data.id);
+}

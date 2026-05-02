@@ -93,10 +93,14 @@ export function AppHeader({
   ];
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/40 bg-surface/90 px-4 py-3 backdrop-blur-md lg:px-6">
+    <header className="sticky top-0 z-30 flex min-h-[3.25rem] items-center justify-between gap-2 border-b border-border/40 bg-surface/90 px-[max(0.75rem,env(safe-area-inset-left))] py-2.5 pr-[max(0.75rem,env(safe-area-inset-right))] pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md sm:px-4 sm:py-3 lg:px-6">
       {/* Left: Logo + nav */}
-      <div className="flex min-w-0 items-center gap-4 lg:gap-6">
-        <Link href="/dashboard" className="flex shrink-0 items-center gap-2" aria-label="ConnectBounty">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 lg:gap-6">
+        <Link
+          href="/dashboard"
+          className="flex min-w-0 max-w-[min(100%,11rem)] shrink items-center gap-2 sm:max-w-none"
+          aria-label="ConnectBounty"
+        >
           <Logo size="sm" showWordmark compact />
         </Link>
 
@@ -111,7 +115,7 @@ export function AppHeader({
       </div>
 
       {/* Right: toggles + user chip + mobile hamburger */}
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         {/* Desktop-only: lang + theme toggles */}
         <div className="hidden items-center gap-2 lg:flex">
           <LangToggle />

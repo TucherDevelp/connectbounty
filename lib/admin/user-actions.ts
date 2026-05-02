@@ -49,3 +49,69 @@ export async function adminSetKycAction(formData: FormData): Promise<void> {
   revalidatePath("/admin/users");
   redirect("/admin/users?updated=" + parsed.data.userId);
 }
+
+// ── Nutzer hard-delete ───────────────────────────────────────────────────
+
+const userIdSchema = z.object({ userId: z.string().uuid() });
+
+export async function adminDeleteUserAction(formData: FormData): Promise<void> {
+  try {
+    await requireAnyRole(["admin", "superadmin"]);
+  } catch {
+    redirect("/login");
+  }
+
+  const parsed = userIdSchema.safeParse(formToObject(formData));
+  if (!parsed.success) redirect("/admin/users?error=invalid_input");
+
+  const sb = getSupabaseServiceRoleClient();
+  const { error } = await sb
+    .from("profiles")
+    .delete()
+    .eq("id", parsed.data.userId);
+
+  if (error) redirect("/admin/users?error=delete_failed");
+
+  try {
+    await logAuditEvent({
+      action: "admin.action",
+      targetId: parsed.data.userId,
+      metadata: { type: "delete_user" },
+    });
+  } catch { /* audit darf nicht blockieren */ }
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?deleted=" + parsed.data.userId);
+}
+
+// ── Nutzer KYC erneut prüfen (→ pending) ─────────────────────────────────
+
+export async function adminReprocessUserAction(formData: FormData): Promise<void> {
+  try {
+    await requireAnyRole(["admin", "superadmin"]);
+  } catch {
+    redirect("/login");
+  }
+
+  const parsed = userIdSchema.safeParse(formToObject(formData));
+  if (!parsed.success) redirect("/admin/users?error=invalid_input");
+
+  const sb = getSupabaseServiceRoleClient();
+  const { error } = await sb
+    .from("profiles")
+    .update({ kyc_status: "pending" as KycStatus })
+    .eq("id", parsed.data.userId);
+
+  if (error) redirect("/admin/users?error=reprocess_failed");
+
+  try {
+    await logAuditEvent({
+      action: "admin.action",
+      targetId: parsed.data.userId,
+      metadata: { type: "reprocess_user_kyc" },
+    });
+  } catch { /* audit darf nicht blockieren */ }
+
+  revalidatePath("/admin/users");
+  redirect("/admin/users?reprocessed=" + parsed.data.userId);
+}

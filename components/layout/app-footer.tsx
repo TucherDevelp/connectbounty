@@ -7,8 +7,8 @@ export function AppFooter() {
   const { t } = useLang();
 
   return (
-    <footer className="border-t border-border/40 bg-surface px-6 py-4">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+    <footer className="border-t border-border/40 bg-surface px-[max(1rem,env(safe-area-inset-left))] py-4 pb-[max(1rem,env(safe-area-inset-bottom))] pr-[max(1rem,env(safe-area-inset-right))]">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs text-muted-foreground">
         <span>
           © {new Date().getFullYear()} {t("footer_copy")}
         </span>

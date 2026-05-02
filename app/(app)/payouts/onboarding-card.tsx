@@ -53,9 +53,10 @@ const STATUS_CONFIG: Record<
 
 interface Props {
   connectStatus: ConnectAccountStatus | null;
+  currentlyDue?: string[];
 }
 
-export function ConnectOnboardingCard({ connectStatus }: Props) {
+export function ConnectOnboardingCard({ connectStatus, currentlyDue }: Props) {
   const { t } = useLang();
   const [pending, startTransition] = useTransition();
 
@@ -81,6 +82,21 @@ export function ConnectOnboardingCard({ connectStatus }: Props) {
                 {t("connect_account_id")}{" "}
                 <code className="rounded bg-black/20 px-1 py-0.5">{connectStatus.stripeAccountId}</code>
               </p>
+            )}
+            {currentlyDue && currentlyDue.length > 0 && (
+              <div className="mt-3 rounded-[var(--radius-sm)] bg-[var(--color-error)]/10 px-3 py-2">
+                <p className="text-xs font-medium text-[var(--color-error)]">
+                  {t("connect_req_missing")}
+                </p>
+                <ul className="mt-1 list-inside list-disc text-xs text-[var(--color-error)]">
+                  {currentlyDue.slice(0, 3).map((req) => (
+                    <li key={req}>{req.replace(/_/g, " ")}</li>
+                  ))}
+                  {currentlyDue.length > 3 && (
+                    <li>+ {currentlyDue.length - 3} {t("connect_req_more")}</li>
+                  )}
+                </ul>
+              </div>
             )}
           </div>
         </div>

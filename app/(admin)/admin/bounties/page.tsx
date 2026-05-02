@@ -14,6 +14,7 @@ import {
   adminRejectBountyAction,
   adminCloseBountyAction,
   adminDeleteBountyAction,
+  adminReprocessBountyAction,
 } from "@/lib/admin/bounty-actions";
 import { Button } from "@/components/ui/button";
 
@@ -200,6 +201,13 @@ export default async function AdminBountiesPage({
                         <Button size="sm" variant="ghost" type="submit"
                           className="text-[var(--color-error)] hover:bg-[color-mix(in_oklab,var(--color-error)_10%,transparent)]">
                           {t(lang, "admin_btn_delete")}
+                        </Button>
+                      </form>
+                      <form action={adminReprocessBountyAction}>
+                        <input type="hidden" name="id" value={b.id} />
+                        <Button size="sm" variant="ghost" type="submit"
+                          className="text-[var(--color-warning)] hover:bg-[color-mix(in_oklab,var(--color-warning)_10%,transparent)]">
+                          {t(lang, "admin_btn_reprocess")}
                         </Button>
                       </form>
                     </div>

@@ -11,7 +11,9 @@ import {
   ConfirmDataForwardedButton,
   RejectButton,
   OpenDisputeButton,
+  FlagApplicationButton,
 } from "@/components/referral/confirmation-buttons";
+import { RejectWithDocumentButton } from "@/components/referral/reject-with-document-button";
 import type { ReferralStatus } from "@/lib/supabase/types";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -50,6 +52,7 @@ export default async function ReferralDetailPage({
       all_confirmations_done, rejection_reason, rejection_stage,
       rejection_at, company_name, company_billing_email,
       payment_window_until, created_at,
+      application_submitted_at, contact_released_at,
       bounties!bounty_referrals_bounty_id_fkey(id, owner_id, title, bonus_amount, bonus_currency)
     `)
     .eq("id", rid)
@@ -67,9 +70,28 @@ export default async function ReferralDetailPage({
   const isOwner = bounty.owner_id === user.id;
   const status = referral.status as ReferralStatus;
 
+  // Konzept-Phasen (Abschnitt 4): anonyme Phase ⇒ Kontaktdaten verbergen.
+  const isApplicationFlagged = Boolean(referral.application_submitted_at);
+  const isContactReleased =
+    Boolean(referral.contact_released_at) && isApplicationFlagged;
+  const phaseKey: TranslationKey = isContactReleased
+    ? "ref_phase_contact_released"
+    : isApplicationFlagged
+      ? "ref_phase_application_submitted"
+      : "ref_phase_anonymous";
+
   const lang = parseLangCookie((await cookies()).get(LANG_COOKIE)?.value);
   const locale = formatLocaleForLang(lang);
   const tr = (key: TranslationKey) => t(lang, key);
+
+  // Sichtbarkeit der Kontaktdaten je nach Rolle und Phase:
+  // - Kandidat selbst sieht seine Daten immer
+  // - Inserent sieht sie nur nach Kontaktfreigabe
+  const showContactToOwner = !isOwner || isContactReleased;
+  const visibleName = showContactToOwner
+    ? referral.candidate_name
+    : tr("ref_owner_anonymous_label");
+  const visibleEmail = showContactToOwner ? referral.candidate_email : "—";
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -82,9 +104,27 @@ export default async function ReferralDetailPage({
       <PageHeader
         title={tr("referral_detail_title")}
         description={tr("referral_detail_desc")
-          .replace("{name}", referral.candidate_name)
-          .replace("{email}", referral.candidate_email)}
+          .replace("{name}", visibleName)
+          .replace("{email}", visibleEmail)}
       />
+
+      {/* Phasen-Banner (anonym → Bewerbung markiert → Kontakt freigegeben) */}
+      <div
+        className={`mt-4 rounded-[var(--radius-md)] border px-3 py-2 text-xs ${
+          isContactReleased
+            ? "border-[var(--color-success)] bg-[color-mix(in_oklab,var(--color-success)_8%,transparent)] text-[var(--color-success)]"
+            : isApplicationFlagged
+              ? "border-[var(--color-brand-400)] bg-[color-mix(in_oklab,var(--color-brand-400)_8%,transparent)] text-[var(--color-brand-400)]"
+              : "border-[var(--color-warning)] bg-[color-mix(in_oklab,var(--color-warning)_8%,transparent)] text-[var(--color-warning)]"
+        }`}
+      >
+        {tr(phaseKey)}
+        {isOwner && !isContactReleased && (
+          <p className="mt-1 text-[var(--color-text-muted)]">
+            {tr("ref_owner_anonymous_help")}
+          </p>
+        )}
+      </div>
 
       <div className="mt-6 flex items-center gap-3">
         <ReferralStatusBadge status={status} />
@@ -165,7 +205,11 @@ export default async function ReferralDetailPage({
           {status === "awaiting_claim" && (
             <div className="flex flex-col gap-3">
               <ConfirmClaimButton referralId={rid} />
-              <RejectButton referralId={rid} stage="claim" currentStatus={status} />
+              {isContactReleased ? (
+                <RejectWithDocumentButton referralId={rid} />
+              ) : (
+                <RejectButton referralId={rid} stage="claim" currentStatus={status} />
+              )}
             </div>
           )}
 
@@ -178,14 +222,22 @@ export default async function ReferralDetailPage({
                 {tr("referral_detail_cta_billing")}
                 <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
               </Link>
-              <RejectButton referralId={rid} stage="payout_account" currentStatus={status} />
+              {isContactReleased ? (
+                <RejectWithDocumentButton referralId={rid} />
+              ) : (
+                <RejectButton referralId={rid} stage="payout_account" currentStatus={status} />
+              )}
             </div>
           )}
 
           {status === "awaiting_data_forwarding" && (
             <div className="flex flex-col gap-3">
               <ConfirmDataForwardedButton referralId={rid} />
-              <RejectButton referralId={rid} stage="data_forwarding" currentStatus={status} />
+              {isContactReleased ? (
+                <RejectWithDocumentButton referralId={rid} />
+              ) : (
+                <RejectButton referralId={rid} stage="data_forwarding" currentStatus={status} />
+              )}
             </div>
           )}
         </div>
@@ -194,6 +246,11 @@ export default async function ReferralDetailPage({
       {/* ── Aktions-Bereich: Kandidat B ─────────────────────────────────── */}
       {!isOwner && (
         <div className="mt-8 flex flex-col gap-4">
+          {/* Bewerbungs-Flag setzen (beendet anonyme Phase) */}
+          {!isApplicationFlagged && status !== "rejected" && status !== "withdrawn" && (
+            <FlagApplicationButton referralId={rid} />
+          )}
+
           {status === "awaiting_hire_proof" && (
             <Link
               href={`/referrals/${rid}/upload`}

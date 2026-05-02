@@ -2,7 +2,11 @@ import "server-only";
 
 import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { logAuditEvent } from "@/lib/auth/roles";
-import { computeSplit, DEFAULT_SPLIT_CONFIG } from "./split";
+import {
+  computeFixedSplit,
+  assertFixedSplit,
+  FIXED_SPLIT_CONFIG,
+} from "./split";
 import { upsertCompanyCustomer } from "./customers";
 import { createBonusInvoice } from "./invoices";
 import { createSplitTransfers } from "./transfers";
@@ -87,7 +91,7 @@ export async function triggerSplitPayout(referralId: string): Promise<Orchestrat
   // ── 4. Bounty laden ────────────────────────────────────────────────────
   const { data: bounty } = await sb
     .from("bounties")
-    .select("id, owner_id, bonus_amount, bonus_currency, split_referrer_bps, split_candidate_bps, split_platform_bps")
+    .select("id, owner_id, bonus_amount, bonus_currency, split_inserent_bps, split_candidate_bps, split_platform_bps")
     .eq("id", referral.bounty_id)
     .single();
 
@@ -131,18 +135,40 @@ export async function triggerSplitPayout(referralId: string): Promise<Orchestrat
     return { kind: "blocked", reason: "Kandidat B hat kein aktives Stripe-Konto." };
   }
 
-  // ── 7. Split berechnen ─────────────────────────────────────────────────
-  const totalCents = Math.round(Number(bounty.bonus_amount) * 100);
-  const split = computeSplit({
-    totalCents,
-    splits: {
-      referrerBps: bounty.split_referrer_bps,
+  // ── 7. Split berechnen (verbindlicher Konzept-Schlüssel 40/35/5/20) ──
+  // Defense-in-Depth: Falls DB-Splits über eine andere Codeschicht modifiziert
+  // wurden, blockieren wir den Payout statt mit abweichendem Schlüssel zu zahlen.
+  // `split_inserent_bps` nach Migration 0013 (vorher: `split_referrer_bps`).
+  try {
+    assertFixedSplit({
+      inserentBps: bounty.split_inserent_bps,
       candidateBps: bounty.split_candidate_bps,
       platformBps: bounty.split_platform_bps,
-    },
-    hasReferrerOfA: referrerOfA !== null && accountMap.has(referrerOfA),
-    hasReferrerOfB: referrerOfB !== null && accountMap.has(referrerOfB),
+    });
+  } catch (err) {
+    return {
+      kind: "blocked",
+      reason: `Split-Konfiguration der Bounty entspricht nicht dem Konzept-Schlüssel ` +
+        `(Inserent=${FIXED_SPLIT_CONFIG.inserentBps}/Kandidat=${FIXED_SPLIT_CONFIG.candidateBps}/Plattform=${FIXED_SPLIT_CONFIG.platformBps}). ` +
+        `Details: ${(err as Error).message}`,
+    };
+  }
+
+  const totalCents = Math.round(Number(bounty.bonus_amount) * 100);
+  const fixedSplit = computeFixedSplit({
+    totalCents,
+    hasReferrerOfInserent: referrerOfA !== null && accountMap.has(referrerOfA),
+    hasReferrerOfCandidate: referrerOfB !== null && accountMap.has(referrerOfB),
   });
+  // Legacy-Feldnamen auf payouts-Tabelle (amount_*_cents) - 1:1-Mapping.
+  const split = {
+    personACents: fixedSplit.inserentCents,
+    personBCents: fixedSplit.candidateCents,
+    refOfACents: fixedSplit.referrerOfInserentCents,
+    refOfBCents: fixedSplit.referrerOfCandidateCents,
+    platformCents: fixedSplit.platformCents,
+    totalCents: fixedSplit.totalCents,
+  };
 
   // ── 8. Payout-Row anlegen (oder Update bei Retry) ─────────────────────
   const currency = bounty.bonus_currency.toLowerCase();
@@ -151,13 +177,13 @@ export async function triggerSplitPayout(referralId: string): Promise<Orchestrat
     await sb.from("payouts").insert({
       referral_id: referralId,
       bounty_id: bounty.id,
-      referrer_id: bounty.owner_id,
+      inserent_id: bounty.owner_id,
       stripe_account_id: acctA.stripe_account_id,
       amount: bounty.bonus_amount,
       currency: bounty.bonus_currency,
       status: "pending",
       total_cents: totalCents,
-      amount_referrer_cents: split.personACents,
+      amount_inserent_cents: split.personACents,
       amount_candidate_cents: split.personBCents,
       amount_ref_of_a_cents: split.refOfACents,
       amount_ref_of_b_cents: split.refOfBCents,
@@ -250,18 +276,21 @@ export async function dispatchSplitTransfers(opts: {
 }): Promise<void> {
   const sb = getSupabaseServiceRoleClient();
 
+  // `inserent_id` = bounty.owner_id, gespeichert beim ursprünglichen Payout-Insert.
   const { data: payout } = await sb
     .from("payouts")
-    .select("id, status, transfer_group, amount_referrer_cents, amount_candidate_cents, amount_ref_of_a_cents, amount_ref_of_b_cents, currency")
+    .select("id, status, transfer_group, inserent_id, amount_inserent_cents, amount_candidate_cents, amount_ref_of_a_cents, amount_ref_of_b_cents, currency")
     .eq("referral_id", opts.referralId)
     .maybeSingle();
 
   if (!payout) throw new Error("Kein Payout-Eintrag für dieses Referral gefunden.");
   if (payout.status === "paid") return; // bereits abgeschlossen - idempotent
 
+  // Nur Kandidat + Referrer-Paar aus bounty_referrals laden.
+  // Die Inserenten-ID kommt sicher aus payout.referrer_id (= bounty.owner_id beim Insert).
   const { data: referral } = await sb
     .from("bounty_referrals")
-    .select("bounty_id, referrer_id, candidate_user_id")
+    .select("bounty_id, candidate_user_id")
     .eq("id", opts.referralId)
     .single();
 
@@ -271,8 +300,10 @@ export async function dispatchSplitTransfers(opts: {
   const referrerOfA: string | null = referrerPair.data?.[0]?.referrer_of_a ?? null;
   const referrerOfB: string | null = referrerPair.data?.[0]?.referrer_of_b ?? null;
 
+  const inserentId: string = payout.inserent_id;
+
   const userIds = [
-    referral.referrer_id,
+    inserentId,
     referral.candidate_user_id,
     referrerOfA,
     referrerOfB,
@@ -287,7 +318,9 @@ export async function dispatchSplitTransfers(opts: {
     (connectAccounts ?? []).map((a) => [a.user_id, a]),
   );
 
-  const acctA = accountMap.get(referral.referrer_id);
+  // acctA = Inserent-Konto (40 % Anteil)
+  const acctA = accountMap.get(inserentId);
+  // acctB = Kandidaten-Konto (35 % Anteil)
   const acctB = referral.candidate_user_id ? accountMap.get(referral.candidate_user_id) : null;
   const acctRefA = referrerOfA ? accountMap.get(referrerOfA) : null;
   const acctRefB = referrerOfB ? accountMap.get(referrerOfB) : null;
@@ -297,7 +330,7 @@ export async function dispatchSplitTransfers(opts: {
   }
 
   const splitResult = {
-    personACents: payout.amount_referrer_cents ?? 0,
+    personACents: payout.amount_inserent_cents ?? 0,
     personBCents: payout.amount_candidate_cents ?? 0,
     refOfACents: payout.amount_ref_of_a_cents ?? 0,
     refOfBCents: payout.amount_ref_of_b_cents ?? 0,
@@ -323,7 +356,7 @@ export async function dispatchSplitTransfers(opts: {
     .from("payouts")
     .update({
       status: "processing",
-      referrer_transfer_id: transfers.personATransferId,
+      inserent_transfer_id: transfers.personATransferId,
       candidate_transfer_id: transfers.personBTransferId,
       ref_of_a_transfer_id: transfers.refOfATransferId,
       ref_of_b_transfer_id: transfers.refOfBTransferId,

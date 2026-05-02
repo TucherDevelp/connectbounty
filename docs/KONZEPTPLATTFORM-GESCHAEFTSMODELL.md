@@ -16,12 +16,14 @@ ConnectBounty ist eine **plattformgebundene Vermittlungsumgebung** für Job-Refe
 | Rolle                       | Funktion                                                                   | Erlös / Kosten                                                                                                                                                                  |
 | --------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Inserent (Privatperson)** | Schaltet einen „Bounty“ (Bonus bei erfolgreicher Vermittlung/Einstellung). | Trägt fix 40% als eigener Leistungs-/Kostenanteil und initiiert den gesamten Bounty-Prozess.                                                                                    |
-| **Referrer / Vermittler**   | Vermittelt einen qualifizierten Kandidaten über die Plattform.             | Erhält 5% Referral-Anteil; bei zwei beteiligten Referrern wird der Anteil fix auf 2,5% / 2,5% aufgeteilt. Wenn kein Referrer beteiligt ist, entfällt dieser Anteil vollständig. |
+| **Referrer / Vermittler**   | **Reine Akquisefunktion:** Wirbt Nutzer (Kandidaten) für die Plattform an und ordnet sie einem Bounty-Vorgang zu. Die Rolle des Referrers endet mit der Einreichung - er hat keine weitergehende operative oder inhaltliche Funktion im Bewerbungs- oder Einstellungsprozess. | Erhält 5% Referral-Anteil; bei zwei beteiligten Referrern wird der Anteil fix auf 2,5% / 2,5% aufgeteilt. Wenn kein Referrer beteiligt ist, entfällt dieser Anteil vollständig. |
 | **Kandidat**                | Bewirbt sich / wird vorgeschlagen; nimmt Anstellung an (falls zutreffend). | Erhält fix 35% des Bounty (Split „Candidate“).                                                                                                                                  |
 | **Plattform**               | Orchestrierung, Compliance (KYC), Streitschlichtung, Technik, Risiko.      | Erhält eine **fixe Plattformgebühr** von 20%; ohne Referrer zusätzlich den entfallenden 5%-Referreranteil (also 25%).                                                           |
 
 
 Das Modell ist damit ein **Clearing-House für Attribution + Auszahlung**: Der monetäre Mehrwert entsteht durch **Vertrauen**, **Nachweis** und **Automatisierung** - nicht durch einen anonymen Kontaktbrief.
+
+> **Rollenbeschränkung Referrer:** Der Referrer hat ausschließlich die Funktion, Nutzer für die Plattform anzuwerben. Er hat keinen Einblick in den weiteren Bewerbungs- oder Einstellungsverlauf und nimmt inhaltlich an diesem Prozess nicht teil.
 
 ---
 
@@ -80,13 +82,15 @@ Damit wird ein „still abgewickelter Deal“ schwerer mit einem konsistenten Au
 Ein überzeugender Nachweis für Investoren und Nutzer ist ein **gläserner Prozess** mit klaren Stationen (Auszug aus dem Schema-/Statusmodell):
 
 1. **Inserat / Anfrage auf Plattform** - Ein privater Inserent erstellt den Bounty-Vorgang auf der Plattform.
-2. **Kandidaten-Zuordnung und Kontakt** - Kandidat wird im Vorgang zugeordnet; Kontakt und Fortschritt laufen nachvollziehbar im Plattformprozess.
-3. **Nachweis der Einstellung / Hire Proof** - Upload und Prüfpfad (`hire_proof_documents`, Status „awaiting hire proof“ etc.).
-4. **Claims / Kontoinformation** - z. B. Auszahlungskonto bestätigt (`awaiting payout_account`).
-5. **Datenweitergabe / Abrechnung** - einheitliche Daten für Rechnungsstellung und Auszahlung.
-6. **Rechnung / Zahlung** - Status wie „invoice_pending“, „invoice_paid“.
-7. **Auszahlung / Split** - Aufteilung in Referrer-, Kandidaten- und Plattformanteile (`amount_*_cents`, Transfer-IDs).
-8. **Streit / Eskalation** - `referral_disputes`, dokumentierte Ablehnungen mit Mindestbegründung.
+2. **Kandidaten-Zuordnung (anonym)** - Der Kandidat wird einem Vorgang zugeordnet. Die Kommunikation zwischen Kandidat und Inserent ist zu diesem Zeitpunkt **vollständig anonym**: Kontaktdaten beider Seiten werden nicht ausgetauscht. Die Plattform fungiert als datenschutzwahrende Zwischenebene.
+3. **Bewerbungs-Flag und Kontaktfreigabe** - Sobald der Kandidat explizit das Signal setzt, dass eine Bewerbung abgeschickt wurde oder wird (Flag „Bewerbung eingereicht“), werden seine Kontaktdaten erstmalig an den Inserenten weitergegeben. Dieser Zeitpunkt ist im Audit-Trail protokolliert und markiert den Übergang von der anonymen in die operative Phase.
+4. **Aktiver Prozess und Ablehnungspflicht** - Nach der Kontaktfreigabe gilt: Will der Inserent den Prozess beenden oder ablehnen, muss er ein **offizielles Ablehnungsschreiben** in die Plattform hochladen. Eine informelle oder mündliche Ablehnung ist plattformseitig nicht ausreichend – ohne hochgeladenes Dokument verbleibt der Vorgang im aktiven Status. Das Schreiben wird vorgangsbezogen gespeichert und bildet die Grundlage für den Dispute- oder Abschluss-Flow.
+5. **Nachweis der Einstellung / Hire Proof** - Upload und Prüfpfad (`hire_proof_documents`, Status „awaiting hire proof“ etc.).
+6. **Claims / Kontoinformation** - z. B. Auszahlungskonto bestätigt (`awaiting payout_account`).
+7. **Datenweitergabe / Abrechnung** - einheitliche Daten für Rechnungsstellung und Auszahlung.
+8. **Rechnung / Zahlung** - Status wie „invoice_pending“, „invoice_paid“.
+9. **Auszahlung / Split** - Aufteilung in Referrer-, Kandidaten- und Plattformanteile (`amount_*_cents`, Transfer-IDs).
+10. **Streit / Eskalation** - `referral_disputes`, dokumentierte Ablehnungen mit Mindestbegründung; ein fehlendes Ablehnungsschreiben nach Kontaktfreigabe kann selbst Streitauslöser sein.
 
 Parallel laufen **Reminder** und **Reputation Events**, um Nichterfüllung und Spielverhalten zu bestrafen - ohne Tracking keine faire Marktplatzordnung.
 

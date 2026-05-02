@@ -22,7 +22,10 @@ import {
   createConfirmDataForwardedSchema,
   createRejectionSchema,
   createDisputeOpenSchema,
+  createApplicationFlagSchema,
+  createRejectionDocumentSchema,
 } from "./schemas";
+import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import { triggerSplitPayout } from "@/lib/stripe/payout-orchestrator";
 
 function toObj(fd: FormData): Record<string, FormDataEntryValue> {
@@ -90,7 +93,12 @@ export async function claimHireAction(
     .from("bounty_referrals")
     .insert({
       bounty_id: parsed.data.bountyId,
-      referrer_id: bounty.owner_id, // A ist technisch der "Referrer" (Besitzer)
+      // TODO: claimHireAction ist ein Direktbewerbungs-Flow ohne echten Referrer.
+      // In diesem Fall ist referrer_id konzeptionell falsch — es gibt keinen Referrer.
+      // Korrekte Lösung: referrer_id nullable machen (Migration erforderlich) oder
+      // diesen Flow nur über einen echten Referrer erlauben.
+      // Vorerst: kandidat selbst als Platzhalter (wird durch RLS-Check benötigt).
+      referrer_id: user.id,
       candidate_user_id: user.id,
       candidate_name: user.email ?? "Unbekannt",
       candidate_email: user.email ?? "",
@@ -492,4 +500,207 @@ export async function openDisputeAction(
   revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
   revalidatePath("/referrals/mine");
   return actionOk(t(lang, "ref_action_dispute_ok"));
+}
+
+// ── Kandidat flaggt „Bewerbung eingereicht" → Kontaktfreigabe ──────────────
+//
+// Konzept (docs/KONZEPTPLATTFORM-GESCHAEFTSMODELL.md, Abschnitt 4, Schritt 3):
+// Bis zu diesem Zeitpunkt ist die Kommunikation anonym. Das Setzen des Flags
+// markiert den Übergang in die operative Phase und gibt die Kontaktdaten an
+// den Inserenten frei. Beides geschieht atomar in einem Update.
+
+export async function flagApplicationSubmittedAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const lang = await actionLang();
+  const user = await requireUser().catch(() => null);
+  if (!user) return actionError(t(lang, "bounty_action_login"));
+
+  const parsed = createApplicationFlagSchema(lang).safeParse(toObj(formData));
+  if (!parsed.success) {
+    return actionError(t(lang, "ref_action_invalid_input"), fieldErrorsFromZod(parsed.error.issues));
+  }
+
+  const supabase = await getSupabaseServerClient();
+
+  // Nur der Kandidat selbst darf flaggen, und nur solange noch nicht geflaggt.
+  const { data: referral } = await supabase
+    .from("bounty_referrals")
+    .select("id, bounty_id, status, candidate_user_id, application_submitted_at")
+    .eq("id", parsed.data.referralId)
+    .eq("candidate_user_id", user.id)
+    .maybeSingle();
+
+  if (!referral) {
+    return actionError(t(lang, "ref_action_application_forbidden"));
+  }
+  if (referral.application_submitted_at) {
+    // Idempotent: bereits geflaggt → kein Fehler, kein erneutes Audit
+    revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
+    revalidatePath("/referrals/mine");
+    return actionOk(t(lang, "ref_action_application_already"));
+  }
+
+  const now = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("bounty_referrals")
+    .update({
+      application_submitted_at: now,
+      application_submitted_by: user.id,
+      contact_released_at: now,
+      contact_released_by: user.id,
+    })
+    .eq("id", referral.id);
+
+  if (error) {
+    return actionError(t(lang, "ref_action_application_failed"));
+  }
+
+  try {
+    await logAuditEvent({
+      action: "referral.application_flagged",
+      targetId: referral.id,
+      metadata: { bounty_id: referral.bounty_id },
+    });
+    await logAuditEvent({
+      action: "referral.contact_released",
+      targetId: referral.id,
+      metadata: { bounty_id: referral.bounty_id, trigger: "application_flag" },
+    });
+  } catch { /* non-blocking */ }
+
+  revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
+  revalidatePath("/referrals/mine");
+  return actionOk(t(lang, "ref_action_application_ok"));
+}
+
+// ── Inserent: offizielles Ablehnungsschreiben hochladen + Status setzen ──
+//
+// Konzept (docs/KONZEPTPLATTFORM-GESCHAEFTSMODELL.md, Abschnitt 4, Schritt 4):
+// Nach Kontaktfreigabe muss der Inserent ein offizielles Ablehnungsschreiben
+// hochladen, falls er den Vorgang stoppen will. Ohne Dokument bleibt der
+// Vorgang aktiv. Die UI vorab lädt die Datei via signed-upload in den
+// Bucket 'rejection-documents' und übergibt hier die Metadaten + Begründung.
+
+export async function rejectWithDocumentAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const lang = await actionLang();
+  const user = await requireUser().catch(() => null);
+  if (!user) return actionError(t(lang, "bounty_action_login"));
+
+  const parsed = createRejectionDocumentSchema(lang).safeParse(toObj(formData));
+  if (!parsed.success) {
+    return actionError(t(lang, "bounty_action_check_input"), fieldErrorsFromZod(parsed.error.issues));
+  }
+
+  const supabase = await getSupabaseServerClient();
+
+  // Nur der Bounty-Owner darf ablehnen, und nur nach Kontaktfreigabe.
+  const { data: referral } = await supabase
+    .from("bounty_referrals")
+    .select(
+      "id, bounty_id, status, contact_released_at, bounties!bounty_referrals_bounty_id_fkey(owner_id)",
+    )
+    .eq("id", parsed.data.referralId)
+    .maybeSingle();
+
+  const bounty = Array.isArray(referral?.bounties) ? referral.bounties[0] : referral?.bounties;
+  if (!referral || bounty?.owner_id !== user.id) {
+    return actionError(t(lang, "ref_action_not_owner"));
+  }
+  if (!referral.contact_released_at) {
+    return actionError(t(lang, "ref_action_rejection_doc_premature"));
+  }
+  if (referral.status === "rejected") {
+    return actionError(t(lang, "ref_action_rejection_doc_already"));
+  }
+
+  // Pfad-Konvention: {referral_id}/{...} - durchgesetzt von Storage-RLS.
+  if (!parsed.data.storagePath.startsWith(`${referral.id}/`)) {
+    return actionError(t(lang, "ref_action_rejection_doc_path_invalid"));
+  }
+
+  const sb = getSupabaseServiceRoleClient();
+
+  // Dokument-Metadaten persistieren (append-only).
+  const { error: insertErr } = await sb.from("rejection_documents").insert({
+    referral_id: referral.id,
+    uploaded_by: user.id,
+    storage_path: parsed.data.storagePath,
+    original_name: parsed.data.originalName,
+    mime_type: parsed.data.mimeType,
+    file_size: parsed.data.fileSize,
+  });
+  if (insertErr) {
+    return actionError(t(lang, "ref_action_rejection_doc_save_failed"));
+  }
+
+  // Stage aus aktuellem Status ableiten - bei Bedarf 'data_forwarding' als
+  // Default, da nach Kontaktfreigabe der Vorgang in der operativen Phase ist.
+  const stage = inferRejectionStage(referral.status as string);
+  const now = new Date().toISOString();
+
+  const { error: updateErr } = await sb
+    .from("bounty_referrals")
+    .update({
+      status: "rejected",
+      rejection_reason: parsed.data.reason,
+      rejection_stage: stage,
+      rejection_at: now,
+      rejection_by: user.id,
+    })
+    .eq("id", referral.id);
+
+  if (updateErr) {
+    return actionError(t(lang, "ref_action_reject_failed"));
+  }
+
+  // Append-only Audit-Trail.
+  await sb.from("referral_rejections").insert({
+    referral_id: referral.id,
+    stage,
+    reason: parsed.data.reason,
+    rejected_by: user.id,
+  });
+
+  try {
+    await logAuditEvent({
+      action: "referral.rejection_uploaded",
+      targetId: referral.id,
+      metadata: {
+        bounty_id: referral.bounty_id,
+        storage_path: parsed.data.storagePath,
+        stage,
+      },
+    });
+    await logAuditEvent({
+      action: "referral.confirmation_rejected",
+      targetId: referral.id,
+      metadata: { stage, bounty_id: referral.bounty_id, with_document: "true" },
+    });
+  } catch { /* non-blocking */ }
+
+  revalidatePath(`/bounties/${referral.bounty_id}/referrals/${referral.id}`);
+  revalidatePath("/referrals/mine");
+  return actionOk(t(lang, "ref_action_rejection_doc_ok"));
+}
+
+function inferRejectionStage(
+  status: string,
+): "hire_proof" | "claim" | "payout_account" | "data_forwarding" {
+  switch (status) {
+    case "awaiting_hire_proof":
+      return "hire_proof";
+    case "awaiting_claim":
+      return "claim";
+    case "awaiting_payout_account":
+      return "payout_account";
+    case "awaiting_data_forwarding":
+    default:
+      return "data_forwarding";
+  }
 }

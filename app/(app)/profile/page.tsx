@@ -32,17 +32,19 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-10 lg:py-12">
+    <div className="mx-auto w-full min-w-0 max-w-3xl py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-6 sm:px-6 sm:py-10 lg:py-12">
       {/* Page heading */}
-      <div className="mb-8">
-        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="font-display text-xl font-semibold leading-tight tracking-tight sm:text-2xl sm:text-3xl">
           {t(lang, "profile_page_title")}
         </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">{t(lang, "profile_page_intro")}</p>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted-foreground text-pretty [overflow-wrap:anywhere] sm:mt-1.5">
+          {t(lang, "profile_page_intro")}
+        </p>
       </div>
 
       {/* Profile card */}
-      <section className="rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
+      <section className="min-w-0 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
         <ProfileForm
           initialDisplayName={profile.display_name ?? ""}
           initialBio={profile.bio ?? ""}
@@ -52,18 +54,22 @@ export default async function ProfilePage() {
       </section>
 
       {/* Password card */}
-      <section className="mt-5 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
+      <section className="mt-5 min-w-0 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
         <h2 className="text-base font-semibold">{t(lang, "security_password_section_title")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t(lang, "security_password_section_desc")}</p>
+        <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground text-pretty [overflow-wrap:anywhere]">
+          {t(lang, "security_password_section_desc")}
+        </p>
         <div className="mt-4">
           <SecurityActions />
         </div>
       </section>
 
       {/* 2FA card */}
-      <section className="mt-5 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
+      <section className="mt-5 min-w-0 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
         <h2 className="text-base font-semibold">{t(lang, "security_2fa_section_title")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t(lang, "security_2fa_section_desc")}</p>
+        <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground text-pretty [overflow-wrap:anywhere]">
+          {t(lang, "security_2fa_section_desc")}
+        </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <MfaSetupCard />
           <MfaVerifyCard />
@@ -71,9 +77,11 @@ export default async function ProfilePage() {
       </section>
 
       {/* Sensitive changes card */}
-      <section className="mt-5 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
+      <section className="mt-5 min-w-0 rounded-[var(--radius-lg)] border border-border/60 bg-[var(--color-surface-1)] p-4 sm:p-6">
         <h2 className="text-base font-semibold">{t(lang, "security_sensitive_changes_title")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t(lang, "security_sensitive_changes_desc")}</p>
+        <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted-foreground text-pretty [overflow-wrap:anywhere]">
+          {t(lang, "security_sensitive_changes_desc")}
+        </p>
         <div className="mt-5">
           <SensitiveChangeForms
             initialEmail={user.email ?? ""}

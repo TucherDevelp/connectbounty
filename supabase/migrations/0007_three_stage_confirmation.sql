@@ -2,7 +2,12 @@
 -- ConnectBounty - Schema v7: Three-Stage Confirmation + Split Payout
 -- ============================================================================
 -- Neu in dieser Migration:
---   • Erweiterung bounties          - Split (40/40/20 in BPS), payment_mode, Escrow-Ref
+--   • Erweiterung bounties          - Konzept-Split (40 % Inserent / 35 % Kandidat /
+--                                     5 % Referrer / 20 % Plattform; 25 % Plattform
+--                                     ohne Referrer; 2×2,5 % bei zwei Referrern),
+--                                     gespeichert als Plattform-Basisblock 25 %.
+--                                     Verbindliche Verankerung erfolgt im Code
+--                                     (lib/stripe/split.ts → assertFixedSplit).
 --   • Erweiterung profiles          - referrer_id + referral_code
 --   • Erweiterung bounty_referrals  - drei Bestätigungs-Flags, Firmen-Billing,
 --                                     rejection_reason (>= 50 Zeichen), Fenster,
@@ -107,11 +112,16 @@ create trigger profiles_enforce_referrer
   for each row execute function public.enforce_referrer_immutable_and_acyclic();
 
 -- ── 3. bounties: Split + Payment-Mode ───────────────────────────────────────
+-- Hinweis: Diese Spalten halten den Konzept-Schlüssel als Plattform-Basisblock
+-- (40 / 35 / 25). Der 5 %-Referrer-Anteil wird laufzeitseitig vom Plattform-
+-- Block abgezogen, sobald ein Referrer beteiligt ist (computeFixedSplit).
+-- Konzept-Schlüssel ist verbindlich; Abweichungen werden vom Orchestrator
+-- via assertFixedSplit() blockiert.
 
 alter table public.bounties
   add column if not exists split_referrer_bps   int  not null default 4000,
-  add column if not exists split_candidate_bps  int  not null default 4000,
-  add column if not exists split_platform_bps   int  not null default 2000,
+  add column if not exists split_candidate_bps  int  not null default 3500,
+  add column if not exists split_platform_bps   int  not null default 2500,
   add column if not exists payment_mode         text not null default 'on_confirmation',
   add column if not exists escrow_payment_intent_id text;
 

@@ -1,5 +1,6 @@
 import { ArrowRight, Check, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { t, type Lang } from "@/lib/i18n";
 
 type TimelineEvent = {
   label: string;
@@ -59,7 +60,10 @@ function TimelineItem({ event, last }: { event: TimelineEvent; last: boolean }) 
         )}
         {event.date && (
           <p className="mt-0.5 text-xs text-[var(--color-text-faint)]">
-            {new Date(event.date).toLocaleString("de-DE")}
+            {new Date(event.date).toLocaleString(
+              // Simple language detection for date formatting
+              typeof window !== "undefined" ? navigator.language : "en-US",
+            )}
           </p>
         )}
       </div>
@@ -68,6 +72,7 @@ function TimelineItem({ event, last }: { event: TimelineEvent; last: boolean }) 
 }
 
 export type PayoutTimelineProps = {
+  lang: Lang;
   invoiceId: string | null;
   invoiceHostedUrl: string | null;
   invoiceCreatedAt?: string | null;
@@ -81,6 +86,7 @@ export type PayoutTimelineProps = {
 };
 
 export function PayoutTimeline({
+  lang,
   invoiceId,
   invoiceHostedUrl,
   invoiceCreatedAt,
@@ -94,30 +100,30 @@ export function PayoutTimeline({
 }: PayoutTimelineProps) {
   const events: TimelineEvent[] = [
     {
-      label: "Rechnung erstellt",
+      label: t(lang, "timeline_inv_created"),
       description: invoiceId
-        ? `Invoice ${invoiceId.slice(0, 12)}…`
+        ? t(lang, "timeline_inv_created_desc").replace("{id}", invoiceId.slice(0, 12))
         : undefined,
       date: invoiceCreatedAt,
       done: Boolean(invoiceId),
       active: !invoiceId,
     },
     {
-      label: "Rechnung versendet",
+      label: t(lang, "timeline_inv_sent"),
       description: invoiceHostedUrl
-        ? "Zahlungslink wurde an die Firma gesendet."
-        : "Wartet auf Invoice-Erstellung",
+        ? t(lang, "timeline_inv_sent_desc_done")
+        : t(lang, "timeline_inv_sent_desc_pending"),
       done: Boolean(invoiceHostedUrl),
       active: Boolean(invoiceId) && !invoiceHostedUrl,
     },
     {
-      label: "Rechnung bezahlt",
+      label: t(lang, "timeline_inv_paid"),
       date: invoicePaidAt,
       done: Boolean(invoicePaidAt),
       active: Boolean(invoiceHostedUrl) && !invoicePaidAt,
     },
     {
-      label: "Transfers ausgeführt",
+      label: t(lang, "timeline_transfers_done"),
       description: [
         referrerTransferId && `A: ${referrerTransferId.slice(0, 12)}…`,
         candidateTransferId && `B: ${candidateTransferId.slice(0, 12)}…`,
@@ -130,7 +136,7 @@ export function PayoutTimeline({
       active: Boolean(invoicePaidAt) && !referrerTransferId,
     },
     {
-      label: "Auszahlung abgeschlossen",
+      label: t(lang, "timeline_payout_complete"),
       date: paidAt,
       done: status === "paid",
       active: Boolean(referrerTransferId) && status !== "paid",
@@ -139,7 +145,9 @@ export function PayoutTimeline({
 
   return (
     <div className="rounded-[var(--radius-md)] border border-[var(--color-surface-border)] bg-[var(--color-surface-1)] p-6">
-      <h3 className="mb-4 text-sm font-semibold text-[var(--color-text-primary)]">Zahlungsverlauf</h3>
+      <h3 className="mb-4 text-sm font-semibold text-[var(--color-text-primary)]">
+        {t(lang, "timeline_title")}
+      </h3>
 
       {invoiceHostedUrl && status !== "paid" && (
         <a
@@ -149,7 +157,7 @@ export function PayoutTimeline({
           className="mb-4 flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-brand-400)] px-3 py-2 text-sm text-[var(--color-brand-400)] hover:bg-[var(--color-brand-400)]/10"
         >
           <span className="inline-flex items-center gap-1.5">
-            Rechnung öffnen & bezahlen
+            {t(lang, "timeline_open_invoice")}
             <ArrowRight className="size-4 shrink-0" strokeWidth={2} aria-hidden />
           </span>
         </a>

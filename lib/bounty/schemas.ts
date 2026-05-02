@@ -133,9 +133,9 @@ function buildBountyBaseSchema(lang: Lang) {
     return n;
   });
 
-  const splitReferrerBpsSchema = bpsSchema.default(4000);
-  const splitCandidateBpsSchema = bpsSchema.default(4000);
-  const splitPlatformBpsSchema = bpsSchema.default(2000);
+  const splitInserentBpsSchema = bpsSchema.default(4000);
+  const splitCandidateBpsSchema = bpsSchema.default(3500);
+  const splitPlatformBpsSchema = bpsSchema.default(2500);
 
   const paymentModeSchema = z.literal("on_confirmation").default("on_confirmation");
   const acceptPaymentTermsSchema = z
@@ -168,7 +168,7 @@ function buildBountyBaseSchema(lang: Lang) {
     industry: industrySchema,
     tags: tagsSchema,
     expiresAt: expiresAtSchema,
-    splitReferrerBps: splitReferrerBpsSchema,
+    splitInserentBps: splitInserentBpsSchema,
     splitCandidateBps: splitCandidateBpsSchema,
     splitPlatformBps: splitPlatformBpsSchema,
     paymentMode: paymentModeSchema,
@@ -179,7 +179,7 @@ function buildBountyBaseSchema(lang: Lang) {
 
 export function createBountyCreateSchema(lang: Lang) {
   return buildBountyBaseSchema(lang)
-    .refine((d) => d.splitReferrerBps + d.splitCandidateBps + d.splitPlatformBps === 10_000, {
+    .refine((d) => d.splitInserentBps + d.splitCandidateBps + d.splitPlatformBps === 10_000, {
       message: t(lang, "bounty_zod_split_sum"),
     })
     .refine((d) => d.splitPlatformBps >= 500, {

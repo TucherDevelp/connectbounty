@@ -62,12 +62,6 @@ export function ProfileForm({
     fd.set("bio", bio ?? "");
     fd.set("avatarUrl", avatarValue ?? "");
 
-    console.log("[ProfileForm] submitting:", {
-      displayName,
-      bio,
-      avatarValue,
-    });
-
     startTransition(async () => {
       const result = await updateProfileAction(state, fd);
       setState(result);
@@ -136,7 +130,6 @@ export function ProfileForm({
 
       // 4. Update local state so the main save includes the new path
       setAvatarValue(path);
-      console.log("[ProfileForm] avatar saved:", path);
     } catch (err) {
       console.error("[ProfileForm] avatar upload error:", err);
       setAvatarUploadError(
@@ -151,7 +144,7 @@ export function ProfileForm({
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+    <form onSubmit={handleSubmit} className="min-w-0 space-y-5" noValidate>
       {state.status === "error" && !fe && <FormAlert>{state.message}</FormAlert>}
       {state.status === "ok" && <FormAlert variant="success">{state.message}</FormAlert>}
 
@@ -159,7 +152,7 @@ export function ProfileForm({
       <div className="space-y-1.5">
         <Label>{t("profile_form_avatar")}</Label>
         {avatarUploadError && <FormAlert>{avatarUploadError}</FormAlert>}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
           <input
             id="profileAvatarFile"
             type="file"
