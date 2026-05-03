@@ -54,7 +54,7 @@ export async function resolveDisputeAction(
 
   // Dispute laden
   const { data: dispute } = await sb
-    .from("referral_disputes")
+    .from("bounty_disputes")
     .select("id, referral_id, status")
     .eq("id", disputeId)
     .eq("status", "open")
@@ -66,7 +66,7 @@ export async function resolveDisputeAction(
 
   // Dispute schließen
   const { error: disputeErr } = await sb
-    .from("referral_disputes")
+    .from("bounty_disputes")
     .update({
       status: decision === "pay" ? "resolved" : "dismissed",
       resolver_id: user.id,

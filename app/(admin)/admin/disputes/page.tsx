@@ -29,10 +29,10 @@ export default async function AdminDisputesPage() {
   const supabase = await getSupabaseServerClient();
 
   const { data: disputes } = await supabase
-    .from("referral_disputes")
+    .from("bounty_disputes")
     .select(`
       id, reason, status, created_at, resolved_at, resolution, opened_by,
-      bounty_referrals!referral_disputes_referral_id_fkey(
+      bounty_referrals!bounty_disputes_referral_id_fkey(
         id, status, candidate_name, candidate_email,
         bounties!bounty_referrals_bounty_id_fkey(id, title, bonus_amount, bonus_currency)
       )

@@ -163,7 +163,7 @@ export async function POST(request: Request) {
         if (!referralId) break;
 
         // Referral-Dispute anlegen (unique constraint verhindert Duplikate)
-        await sb.from("referral_disputes").upsert(
+        await sb.from("bounty_disputes").upsert(
           {
             referral_id: referralId,
             opened_by: referralId, // system-generated; kein echter User

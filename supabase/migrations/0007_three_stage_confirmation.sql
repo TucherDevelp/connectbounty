@@ -15,7 +15,7 @@
 --   • Erweiterung payouts           - Split-Beträge, Invoice-ID, transfer_group,
 --                                     Transfer-IDs je Empfänger
 --   • Neue Tabellen                 - hire_proof_documents, referral_rejections,
---                                     referral_disputes, payment_reminders,
+--                                     bounty_disputes, payment_reminders,
 --                                     reputation_events
 --   • Neue Enum-Werte               - referral_status & audit_action
 --   • Trigger                        - enforce_referral_transition erweitert
@@ -374,9 +374,9 @@ create policy referral_rejections_select_involved
 -- Insert ausschließlich via service_role (Server-Action).
 grant select on public.referral_rejections to authenticated;
 
--- ── 9. referral_disputes ───────────────────────────────────────────────────
+-- ── 9. bounty_disputes ───────────────────────────────────────────────────
 
-create table if not exists public.referral_disputes (
+create table if not exists public.bounty_disputes (
   id            uuid primary key default gen_random_uuid(),
   referral_id   uuid not null references public.bounty_referrals(id) on delete cascade,
   opened_by     uuid not null references public.profiles(id),
@@ -386,20 +386,20 @@ create table if not exists public.referral_disputes (
   resolution    text,
   created_at    timestamptz not null default now(),
   resolved_at   timestamptz,
-  constraint referral_disputes_one_per_referral unique (referral_id)
+  constraint bounty_disputes_one_per_referral unique (referral_id)
 );
 
-create index if not exists referral_disputes_status_idx on public.referral_disputes (status);
+create index if not exists bounty_disputes_status_idx on public.bounty_disputes (status);
 
-alter table public.referral_disputes enable row level security;
+alter table public.bounty_disputes enable row level security;
 
-create policy referral_disputes_select_involved
-  on public.referral_disputes for select
+create policy bounty_disputes_select_involved
+  on public.bounty_disputes for select
   to authenticated
   using (
     exists (
       select 1 from public.bounty_referrals r
-      where r.id = referral_disputes.referral_id
+      where r.id = bounty_disputes.referral_id
         and (r.referrer_id = auth.uid()
              or r.candidate_user_id = auth.uid()
              or public.owns_bounty(r.bounty_id))
@@ -407,7 +407,7 @@ create policy referral_disputes_select_involved
     or public.has_any_role(array['admin','superadmin','moderator','support']::public.user_role[])
   );
 
-grant select on public.referral_disputes to authenticated;
+grant select on public.bounty_disputes to authenticated;
 
 -- ── 10. payment_reminders ──────────────────────────────────────────────────
 

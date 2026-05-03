@@ -762,7 +762,7 @@ export type Database = {
           { foreignKeyName: "rejection_documents_uploaded_by_fkey"; columns: ["uploaded_by"]; referencedRelation: "profiles"; referencedColumns: ["id"]; },
         ];
       };
-      referral_disputes: {
+      bounty_disputes: {
         Row: {
           id: string;
           referral_id: string;
@@ -792,7 +792,7 @@ export type Database = {
           resolved_at?: string | null;
         };
         Relationships: [
-          { foreignKeyName: "referral_disputes_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
+          { foreignKeyName: "bounty_disputes_referral_id_fkey"; columns: ["referral_id"]; referencedRelation: "bounty_referrals"; referencedColumns: ["id"]; },
         ];
       };
       payment_reminders: {

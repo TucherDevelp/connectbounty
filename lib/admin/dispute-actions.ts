@@ -40,7 +40,7 @@ export async function adminDeleteDisputeAction(formData: FormData): Promise<void
 
   const sb = getSupabaseServiceRoleClient();
   const { error } = await sb
-    .from("referral_disputes")
+    .from("bounty_disputes")
     .delete()
     .eq("id", parsed.data.id);
 
@@ -66,7 +66,7 @@ export async function adminReprocessDisputeAction(formData: FormData): Promise<v
 
   const sb = getSupabaseServiceRoleClient();
   const { error } = await sb
-    .from("referral_disputes")
+    .from("bounty_disputes")
     .update({ status: "open", resolved_at: null, resolution: null, resolver_id: null })
     .eq("id", parsed.data.id);
 

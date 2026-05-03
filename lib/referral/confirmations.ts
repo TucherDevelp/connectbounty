@@ -470,7 +470,7 @@ export async function openDisputeAction(
     return actionError(t(lang, "ref_action_dispute_expired"));
   }
 
-  const { error } = await supabase.from("referral_disputes").insert({
+  const { error } = await supabase.from("bounty_disputes").insert({
     referral_id: referral.id,
     opened_by: user.id,
     reason: parsed.data.reason,
