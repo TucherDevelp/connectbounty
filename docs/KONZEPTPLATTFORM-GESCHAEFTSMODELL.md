@@ -6,7 +6,13 @@
 
 ## 1. Zweck und Positionierung
 
-ConnectBounty ist eine **plattformgebundene Vermittlungsumgebung** für Job-Referral-Boni und ähnliche Anreize (Freelancer-Rollen, Programme mit Sign-On-Bonus). Kern ist nicht nur „Matching“, sondern **messbare Attribution**, **Nachweise**, **regelbasierte Freigaben** und **verteilte Auszahlungen** - sodass Vermittlung und Vergütung **innerhalb eines nachvollziehbaren Prozesses** bleiben und nicht in einem unsichtbaren „Parallelhandel“ zwischen privaten Inserenten und Kandidaten stattfinden.
+ConnectBounty ist eine **plattformgebundene Vermittlungsumgebung** für Job-Referral-Boni und ähnliche Anreize (Freelancer-Rollen, Programme mit Sign-On-Bonus).
+
+**Was ist ein Bounty?** Viele Unternehmen zahlen ihren Mitarbeitern oder externen Personen eine Prämie, wenn diese erfolgreich einen geeigneten Kandidaten für eine offene Stelle vermitteln. Diese Prämie wird auf ConnectBounty als "Bounty" bezeichnet. Der Inserent - in der Regel eine Privatperson mit Zugang zu einem solchen Prämienprogramm - schaltet diesen Bounty auf der Plattform und initiiert damit den strukturierten Vermittlungsprozess.
+
+**Verhältnis Inserent und Unternehmen:** Das Unternehmen hat dem Inserenten eine Vermittlungsprämie zugesagt (z. B. im Rahmen eines internen Mitarbeiter-Referral-Programms). Im Erfolgsfall erhält der Inserent diese Prämie vom Unternehmen vollständig ausgezahlt. ConnectBounty regelt, wie diese Prämie anschliessend zwischen allen am Vermittlungserfolg beteiligten Parteien aufgeteilt wird.
+
+Kern der Plattform ist nicht nur „Matching“, sondern **messbare Attribution**, **Nachweise**, **regelbasierte Freigaben** und **verteilte Auszahlungen** - sodass Vermittlung und Vergütung **innerhalb eines nachvollziehbaren Prozesses** bleiben und nicht in einem unsichtbaren „Parallelhandel“ zwischen privaten Inserenten und Kandidaten stattfinden.
 
 ---
 
@@ -123,11 +129,20 @@ Parallel laufen **Reminder** und **Reputation Events**, um Nichterfüllung und S
 
 **Technik-Status:** Der feste 40/35/5/20-Schlüssel ist verbindliche Business-Regel und wird in einem separaten Implementierungsschritt in Datenmodell, Orchestrierung und Stripe-Transfers technisch verankert.
 
-## 7. Auszahlungen und Zahlungsinfrastruktur
+## 7. Zahlungsabwicklung und regulatorische Abgrenzung
 
-- **Stripe Connect Express** (laut README-Ziel): Auszahlungen an Referrer/Kandidaten über Connect-Konten; Plattformgebühr über dedizierte Buchungen.
-- **Application Fee / Split-Logik** wird über das Datenmodell (`payouts`) und Orchestrierung abgebildet - konkrete Stripe-Webhooks und Gebührensätze sind Deploy-spezifisch (`STRIPE`_* Env).
-- **Idempotenz:** Ein Auszahlungsdatensatz pro Referral (`payouts.referral_id` UNIQUE-Konzept laut Migration) verhindert Doppelzahlungen bei Retry.
+### 7.1 Stripe als Zahlungsinfrastruktur - die Plattform ist kein Zahlungsdienstleister
+
+**Grundprinzip:** ConnectBounty hält zu keinem Zeitpunkt Gelder und tritt nicht als Zahlungsdienstleister, Treuhänder oder Intermediar im Sinne des Zahlungsdiensteaufsichtsgesetzes (ZAG) bzw. der EU-Zahlungsdiensterichtlinie (PSD2) auf. Alle tatsächlichen Zahlungsflüsse - Einzug vom Inserenten sowie Auszahlungen an Kandidat, Referrer und Plattformgebühr - werden ausschliesslich über **Stripe Connect** als regulierten und PCI-DSS-konformen Zahlungsdienstleister abgewickelt.
+
+Die Plattform hat dabei ausschliesslich eine **orchestrierende Funktion**: Sie prüft, ob alle Prozessvoraussetzungen erfüllt sind (Three-Stage-Confirmation), und löst anschliessend den Auszahlungsvorgang bei Stripe aus. Der Geldfluss selbst liegt vollständig im Verantwortungsbereich von Stripe. ConnectBounty benötigt daher für diese Transaktionen keine eigene Zahlungsdienste-Lizenz.
+
+### 7.2 Technische Umsetzung
+
+- **Stripe Connect Express:** Jeder Auszahlungsempfänger (Kandidat, Referrer) verfügt über ein eigenes Stripe-Connect-Konto. Auszahlungen erfolgen direkt auf diese Konten - nicht über ein zentrales Plattformkonto, das als Durchlaufposten fungiert.
+- **Application Fee / Plattformgebühr:** Die Plattformgebühr (20 %) wird von Stripe im Rahmen des Connect-Modells automatisch einbehalten und dem Plattformkonto gutgeschrieben. Es findet kein manueller Geldtransfer durch die Plattform statt.
+- **Split-Ausführung:** Die Aufteilung 40/35/5/20 wird durch die Plattform berechnet und als Stripe-Transferparameter übergeben; die Ausführung und Verbuchung obliegt Stripe.
+- **Idempotenz:** Ein Auszahlungsdatensatz pro Vorgang verhindert Doppelzahlungen bei technischen Wiederholungsversuchen.
 
 ---
 
